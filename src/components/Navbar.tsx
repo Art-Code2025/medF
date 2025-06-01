@@ -48,8 +48,14 @@ function Navbar() {
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
-        console.log('👤 User loaded from localStorage:', userData);
-        setUser(userData);
+        // تأكد من أن هذا المستخدم عميل وليس أدمن
+        if (userData.role !== 'admin' && userData.email !== 'admin@admin') {
+          console.log('👤 Customer loaded from localStorage:', userData);
+          setUser(userData);
+        } else {
+          // إزالة بيانات الأدمن من localStorage العادي
+          localStorage.removeItem('user');
+        }
       } catch (error) {
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('user');

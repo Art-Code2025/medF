@@ -36,37 +36,37 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // تحقق أولاً من وجود بيانات مستخدم صحيحة
-  const userData = localStorage.getItem('user');
+  // التحقق من تسجيل دخول الأدمن المنفصل
+  const adminData = localStorage.getItem('adminUser');
   
-  if (!userData) {
-    // لا يوجد مستخدم مسجل دخول - توجيه لصفحة admin login
+  if (!adminData) {
+    // لا يوجد أدمن مسجل دخول - توجيه لصفحة admin login
     return <Navigate to="/login" />;
   }
   
   try {
-    const user = JSON.parse(userData);
+    const admin = JSON.parse(adminData);
     
-    // تحقق من وجود ID ومن أن المستخدم admin أو customer
-    if (!user?.id || !user?.email) {
-      // بيانات المستخدم غير صحيحة
-      localStorage.removeItem('user');
+    // التحقق من صحة بيانات الأدمن
+    if (!admin?.id || !admin?.email || !admin?.isAdmin) {
+      // بيانات الأدمن غير صحيحة
+      localStorage.removeItem('adminUser');
       return <Navigate to="/login" />;
     }
     
-    // تحقق من أن المستخدم له صلاحية الوصول للداش بورد
-    // يمكن للـ admin الوصول بشكل كامل فقط
-    if (user.role === 'admin' || user.email === 'admin') {
+    // التحقق من أن المستخدم أدمن فعلاً
+    if (admin.role === 'admin' && admin.isAdmin === true) {
       return <>{children}</>;
     } else {
-      // المستخدم العادي لا يمكنه الوصول للداش بورد
-      return <Navigate to="/" />;
+      // المستخدم ليس أدمن
+      localStorage.removeItem('adminUser');
+      return <Navigate to="/login" />;
     }
     
   } catch (error) {
-    // خطأ في قراءة بيانات المستخدم
-    console.error('Error parsing user data:', error);
-    localStorage.removeItem('user');
+    // خطأ في قراءة بيانات الأدمن
+    console.error('Error parsing admin data:', error);
+    localStorage.removeItem('adminUser');
     return <Navigate to="/login" />;
   }
 };
@@ -109,10 +109,10 @@ const LayoutWrapper: React.FC = () => {
           <Route path="/wishlist" element={<Wishlist />} />
           
           {/* Auth Routes */}
-          <Route path="/login" element={<Login />} /> {/* Admin Only */}
-          <Route path="/sign-in" element={<CustomerSignIn />} /> {/* Customers */}
+          <Route path="/login" element={<Login />} /> {/* Admin Only - Hardcoded */}
+          <Route path="/sign-in" element={<CustomerSignIn />} /> {/* Customers Only - Database */}
           
-          {/* Admin Dashboard Routes */}
+          {/* Admin Dashboard Routes - Protected by AdminUser */}
           <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           
           {/* Services Management Routes (Legacy) */}

@@ -65,8 +65,8 @@ const CustomerSignIn: React.FC = () => {
     }
 
     // منع الأدمن من تسجيل الدخول هنا
-    if (loginData.email === 'admin') {
-      setError('مستخدمو الإدارة يجب أن يسجلوا الدخول من صفحة الإدارة');
+    if (loginData.email === 'admin' || loginData.email === 'admin@admin') {
+      setError('هذه الصفحة للعملاء فقط. الإدارة لها نظام منفصل.');
       setLoading(false);
       return;
     }
@@ -77,14 +77,14 @@ const CustomerSignIn: React.FC = () => {
         body: JSON.stringify(loginData)
       });
 
-      // التحقق من أن المستخدم ليس أدمن
+      // التحقق من أن المستخدم عميل عادي فقط
       if (data.user.role === 'admin') {
-        setError('مستخدمو الإدارة يجب أن يسجلوا الدخول من صفحة الإدارة');
+        setError('هذه الصفحة للعملاء فقط. الإدارة لها نظام منفصل.');
         setLoading(false);
         return;
       }
 
-      // حفظ بيانات المستخدم
+      // حفظ بيانات العميل فقط
       localStorage.setItem('user', JSON.stringify(data.user));
       
       toast.success(`مرحباً بك ${data.user.name}!`);
@@ -114,7 +114,7 @@ const CustomerSignIn: React.FC = () => {
     }
 
     // منع إنشاء حساب بـ email admin
-    if (registerData.email === 'admin') {
+    if (registerData.email === 'admin' || registerData.email === 'admin@admin') {
       setError('لا يمكن إنشاء حساب بهذا البريد الإلكتروني');
       setLoading(false);
       return;

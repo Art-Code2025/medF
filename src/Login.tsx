@@ -2,7 +2,6 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, Shield, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { apiCall, API_ENDPOINTS } from './config/api';
 
 const Login: React.FC = () => {
   const [loginData, setLoginData] = useState({
@@ -54,51 +53,49 @@ const Login: React.FC = () => {
       return;
     }
 
-    // التحقق من أن هذا المدخل للأدمن فقط
-    if (loginData.email !== 'admin') {
-      setError('هذه صفحة تسجيل دخول الإدارة فقط. العملاء يسجلون الدخول من الصفحة الرئيسية.');
-      setLoading(false);
-      return;
-    }
+    // تحديد كريدنشالز الأدمن الثابتة
+    const ADMIN_EMAIL = 'admin@admin';
+    const ADMIN_PASSWORD = 'admin';
 
-    try {
-      const data = await apiCall(API_ENDPOINTS.LOGIN, {
-        method: 'POST',
-        body: JSON.stringify(loginData)
-      });
+    // محاكاة تأخير الشبكة
+    setTimeout(() => {
+      // التحقق من البيانات المدخلة
+      if (loginData.email.toLowerCase() === ADMIN_EMAIL && loginData.password === ADMIN_PASSWORD) {
+        // إنشاء بيانات أدمن ثابتة
+        const adminUser = {
+          id: 'admin_001',
+          email: 'admin@admin',
+          name: 'مدير النظام',
+          role: 'admin',
+          isAdmin: true,
+          loginTime: new Date().toISOString()
+        };
 
-      // التحقق من أن المستخدم أدمن
-      if (data.user.role !== 'admin' && data.user.email !== 'admin') {
-        setError('غير مصرح لك بالوصول لصفحة الإدارة');
-        setLoading(false);
-        return;
-      }
-
-      // حفظ بيانات المستخدم
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // إشارة نجاح
-      const form = document.querySelector('.login-form');
-      form?.classList.add('success-animation');
-      
-      toast.success(`مرحباً بك في لوحة الإدارة ${data.user.name}!`);
+        // حفظ بيانات الأدمن
+        localStorage.setItem('adminUser', JSON.stringify(adminUser));
         
-      setTimeout(() => {
-        navigate('/admin'); // توجيه للداش بورد فقط
-      }, 500);
+        // إشارة نجاح
+        const form = document.querySelector('.login-form');
+        form?.classList.add('success-animation');
+        
+        toast.success(`مرحباً بك في لوحة الإدارة!`);
+          
+        setTimeout(() => {
+          navigate('/admin'); // توجيه للداش بورد فقط
+        }, 500);
+        
+      } else {
+        setError('بيانات تسجيل الدخول غير صحيحة');
+        
+        const errorElement = document.querySelector('.error-message');
+        errorElement?.classList.add('shake-animation');
+        setTimeout(() => {
+          errorElement?.classList.remove('shake-animation');
+        }, 500);
+      }
       
-    } catch (error: any) {
-      console.error('Login error:', error);
-      setError(error.message || 'خطأ في تسجيل الدخول');
-      
-      const errorElement = document.querySelector('.error-message');
-      errorElement?.classList.add('shake-animation');
-      setTimeout(() => {
-        errorElement?.classList.remove('shake-animation');
-      }, 500);
-    } finally {
       setLoading(false);
-    }
+    }, 1000); // محاكاة تأخير الشبكة
   };
 
   return (
@@ -118,10 +115,10 @@ const Login: React.FC = () => {
               لوحة الإدارة
             </h1>
             <p className="text-white/80 text-lg">
-              تسجيل دخول المديرين
+              نظام إدارة منفصل
             </p>
             <p className="text-white/60 text-sm mt-2">
-              للإدارة فقط • صفحة محمية
+              للإدارة فقط • نظام مستقل
             </p>
           </div>
 
@@ -140,15 +137,15 @@ const Login: React.FC = () => {
               {/* Email */}
               <div>
                 <label className="block text-white/90 text-sm font-medium mb-2">
-                  اسم المستخدم
+                  البريد الإلكتروني
                 </label>
                 <div className="relative">
                   <input
-                    type="text"
+                    type="email"
                     value={loginData.email}
                     onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm"
-                    placeholder="admin"
+                    placeholder="admin@admin"
                     disabled={loading}
                   />
                   <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
@@ -202,12 +199,15 @@ const Login: React.FC = () => {
             {/* Admin Info */}
             <div className="mt-6 text-center">
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                <p className="text-white/70 text-xs mb-2">🔐 بيانات الدخول للاختبار:</p>
+                <p className="text-white/70 text-xs mb-2">🔐 بيانات الدخول الثابتة:</p>
                 <p className="text-white/90 text-sm font-mono">
-                  اسم المستخدم: <span className="text-yellow-300">admin</span>
+                  البريد: <span className="text-yellow-300">admin@admin</span>
                 </p>
                 <p className="text-white/90 text-sm font-mono">
-                  كلمة المرور: <span className="text-yellow-300">11111</span>
+                  كلمة المرور: <span className="text-yellow-300">admin</span>
+                </p>
+                <p className="text-white/60 text-xs mt-2">
+                  🔒 نظام منفصل - لا يتصل بقاعدة البيانات
                 </p>
               </div>
             </div>
@@ -215,13 +215,13 @@ const Login: React.FC = () => {
             {/* Back to site */}
             <div className="mt-6 text-center">
               <p className="text-white/80 text-sm">
-                عميل عادي؟
+                العودة للمتجر؟
                 <button
                   type="button"
-                  onClick={() => navigate('/sign-in')}
+                  onClick={() => navigate('/')}
                   className="text-white font-medium mr-2 underline hover:text-white/80"
                 >
-                  تسجيل دخول العملاء
+                  الموقع الرئيسي
                 </button>
               </p>
             </div>
@@ -230,14 +230,11 @@ const Login: React.FC = () => {
           {/* Footer */}
           <div className="text-center mt-8">
             <p className="text-white/60 text-sm">
-              صفحة محمية للإدارة فقط • جميع الأنشطة مُراقبة
+              نظام إدارة منفصل • لا يتأثر بالمتجر
             </p>
-            <button
-              onClick={() => navigate('/')}
-              className="text-white/80 hover:text-white text-sm mt-2 underline"
-            >
-              ← العودة للموقع الرئيسي
-            </button>
+            <p className="text-white/50 text-xs mt-2">
+              🚀 Dashboard System v2.0
+            </p>
           </div>
         </div>
       </div>
