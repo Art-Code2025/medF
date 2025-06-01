@@ -15,7 +15,7 @@ import Dashboard from './components/Dashboard';
 import ProductForm from './components/ProductForm';
 import CategoryAdd from './CategoryAdd';
 import CategoryEdit from './CategoryEdit';
-import ShoppingCart from './components/ShoppingCart';
+import Cart from './components/Cart';
 import Wishlist from './components/Wishlist';
 import Checkout from './components/Checkout';
 
@@ -52,7 +52,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
         <Routes>
           {/* Public Routes */}
@@ -60,7 +60,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/products" element={<AllProducts />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/sign-in" element={<CustomerSignIn />} />
-          <Route path="/cart" element={<ShoppingCart />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
           

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Star, Heart, ShoppingCart, Package, Grid, List, Filter, SlidersHorizontal, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { buildImageUrl, apiCall, API_ENDPOINTS } from '../config/api';
@@ -26,7 +26,8 @@ interface Category {
 }
 
 const AllProducts: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -65,6 +66,19 @@ const AllProducts: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCategoryChange = (categoryId: number | null) => {
+    setSelectedCategory(categoryId);
+    const newSearchParams = new URLSearchParams(searchParams);
+    
+    if (categoryId) {
+      newSearchParams.set('category', categoryId.toString());
+    } else {
+      newSearchParams.delete('category');
+    }
+    
+    setSearchParams(newSearchParams);
   };
 
   const handleAddToCart = async (product: Product) => {
@@ -163,7 +177,7 @@ const AllProducts: React.FC = () => {
               
               <div className="space-y-1">
                 <button
-                  onClick={() => setSelectedCategory(null)}
+                  onClick={() => handleCategoryChange(null)}
                   className={`w-full text-right px-4 py-3 rounded-lg transition-colors duration-200 flex items-center justify-between ${
                     selectedCategory === null 
                       ? 'bg-blue-50 text-blue-600 border border-blue-200' 
@@ -177,7 +191,7 @@ const AllProducts: React.FC = () => {
                 {categories.map((category) => (
                   <button
                     key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
+                    onClick={() => handleCategoryChange(category.id)}
                     className={`w-full text-right px-4 py-3 rounded-lg transition-colors duration-200 flex items-center justify-between ${
                       selectedCategory === category.id 
                         ? 'bg-blue-50 text-blue-600 border border-blue-200' 
@@ -248,7 +262,7 @@ const AllProducts: React.FC = () => {
                 {categories.slice(0, 6).map((category) => (
                   <button
                     key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
+                    onClick={() => handleCategoryChange(category.id)}
                     className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                   >
                     <img
@@ -336,7 +350,7 @@ const AllProducts: React.FC = () => {
                     <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
                       {categories.find(c => c.id === selectedCategory)?.name}
                       <button
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => handleCategoryChange(null)}
                         className="ml-1 text-blue-600 hover:text-blue-800"
                       >
                         ×
@@ -525,7 +539,7 @@ const AllProducts: React.FC = () => {
                 </p>
                 <button
                   onClick={() => {
-                    setSelectedCategory(null);
+                    handleCategoryChange(null);
                     setSearchQuery('');
                   }}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
