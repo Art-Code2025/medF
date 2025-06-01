@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Phone, Mail, Instagram, Facebook, Twitter, Stethoscope } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Phone, Mail, Instagram, Facebook, Twitter, Stethoscope, Crown, Sparkles, Gem } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface CartItem {
@@ -92,46 +92,40 @@ const Navbar: React.FC = () => {
   }
 
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalCartValue = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <>
-      {/* Top Bar - Red Background like OTE Store */}
-      <div className="bg-red-600 text-white py-2">
+      {/* Premium Top Bar */}
+      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white py-3 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2 font-medium">
                 <Phone className="w-4 h-4" />
-                <span>للاستفسار عن طلبك</span>
+                <span>للاستفسار: 920033213</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span>☰</span>
-                <span>قائمة المفضلة</span>
+              <div className="flex items-center gap-2 font-medium">
+                <Sparkles className="w-4 h-4" />
+                <span>خدمة VIP متاحة</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span>❤</span>
-                <span>تسجيل</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>💰</span>
-                <span>دخول</span>
+              <div className="flex items-center gap-2 font-medium">
+                <Crown className="w-4 h-4" />
+                <span>شحن مجاني +500 ر.س</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <span>تواصل معنا</span>
-              <div className="flex items-center gap-2">
-                <a href="#" className="hover:text-gray-200">
+            <div className="flex items-center gap-6">
+              <span className="font-semibold">تواصل معنا</span>
+              <div className="flex items-center gap-3">
+                <a href="#" className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 border border-white/30">
                   <Instagram className="w-4 h-4" />
                 </a>
-                <a href="#" className="hover:text-gray-200">
+                <a href="#" className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 border border-white/30">
                   <Facebook className="w-4 h-4" />
                 </a>
-                <a href="#" className="hover:text-gray-200">
+                <a href="#" className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 border border-white/30">
                   <Twitter className="w-4 h-4" />
-                </a>
-                <a href="#" className="hover:text-gray-200">
-                  <Phone className="w-4 h-4" />
                 </a>
               </div>
             </div>
@@ -139,115 +133,155 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Header - White Background with Red Accents */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      {/* Main Header - Premium Design */}
+      <header className="bg-white shadow-xl border-b border-gray-100 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-24">
             
-            {/* Cart Icon - Left Side like OTE */}
+            {/* Premium Cart Display - Left Side */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4 text-white" />
+              <Link to="/cart" className="group">
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-50 to-rose-50 rounded-2xl border border-red-100 hover:shadow-lg transition-all duration-300">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                      <ShoppingCart className="w-5 h-5 text-white" />
+                    </div>
+                    {totalCartItems > 0 && (
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg animate-pulse">
+                        {totalCartItems}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 font-medium">إجمالي السلة</div>
+                    <div className="font-black text-red-600">{totalCartValue.toFixed(2)} ر.س</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-gray-500">0.00 - منتجات 0</div>
-                </div>
-              </div>
+              </Link>
             </div>
 
-            {/* Search Bar - Center */}
-            <div className="flex-1 max-w-2xl mx-8">
+            {/* Premium Search Bar - Center */}
+            <div className="flex-1 max-w-3xl mx-12">
               <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="البحث عن..."
-                  className="w-full px-4 py-3 pr-12 border-2 border-red-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-600 hover:text-red-700 transition-colors duration-200"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="ابحث عن المنتجات الطبية الفاخرة..."
+                    className="w-full px-6 py-4 pr-14 border-2 border-red-200 rounded-2xl focus:ring-4 focus:ring-red-100 focus:border-red-500 bg-gradient-to-r from-white to-red-50/30 text-lg font-medium placeholder-gray-400 shadow-lg transition-all duration-300"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl flex items-center justify-center text-white hover:shadow-lg transition-all duration-300 group"
+                  >
+                    <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </button>
+                </div>
               </form>
             </div>
 
-            {/* Logo - Right Side */}
-            <Link to="/" className="flex items-center gap-3">
+            {/* Premium Logo - Right Side */}
+            <Link to="/" className="group flex items-center gap-4">
               <div className="text-right">
-                <h1 className="text-2xl font-bold text-gray-900">العينة الطبية</h1>
-                <p className="text-sm text-red-600">لوازم مستشفيات وأدوات طبية</p>
+                <h1 className="text-3xl font-black bg-gradient-to-r from-gray-900 via-red-600 to-gray-900 bg-clip-text text-transparent">
+                  العينة الطبية
+                </h1>
+                <p className="text-sm font-semibold text-red-600">لوازم مستشفيات وأدوات طبية فاخرة</p>
               </div>
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                <div className="text-white font-bold text-xs text-center">
-                  <div>OTE</div>
-                  <div className="text-[8px]">STORE</div>
+              <div className="relative">
+                <div className="w-20 h-20 bg-gradient-to-r from-red-600 via-rose-500 to-red-700 rounded-2xl flex items-center justify-center shadow-2xl border-4 border-white group-hover:shadow-3xl transition-all duration-300 group-hover:scale-105">
+                  <div className="text-white font-black text-sm text-center">
+                    <div className="text-lg">OTE</div>
+                    <div className="text-xs opacity-90">STORE</div>
+                  </div>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center animate-pulse border-2 border-white shadow-lg">
+                  <Crown className="w-4 h-4 text-white" />
                 </div>
               </div>
             </Link>
           </div>
         </div>
 
-        {/* Navigation Menu - Red Background */}
-        <div className="bg-red-600 text-white">
+        {/* Premium Navigation Menu */}
+        <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 shadow-2xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center h-12">
-              <nav className="flex items-center space-x-8 space-x-reverse">
+            <div className="flex items-center justify-center h-14">
+              <nav className="flex items-center space-x-1 space-x-reverse">
                 <Link 
                   to="/products" 
-                  className="px-4 py-2 text-sm font-medium hover:bg-red-700 rounded transition-colors duration-200"
+                  className="group px-6 py-3 text-sm font-bold text-white hover:bg-white/20 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-white/30 hover:shadow-lg"
                 >
-                  جميع المنتجات
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                    جميع المنتجات
+                  </span>
                 </Link>
                 <Link 
                   to="/products?category=1" 
-                  className="px-4 py-2 text-sm font-medium hover:bg-red-700 rounded transition-colors duration-200"
+                  className="group px-6 py-3 text-sm font-bold text-white hover:bg-white/20 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-white/30 hover:shadow-lg"
                 >
-                  عروضنا التجارية
+                  <span className="flex items-center gap-2">
+                    <Crown className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    العروض المميزة
+                  </span>
                 </Link>
                 <Link 
                   to="/products?category=2" 
-                  className="px-4 py-2 text-sm font-medium hover:bg-red-700 rounded transition-colors duration-200"
+                  className="group px-6 py-3 text-sm font-bold text-white hover:bg-white/20 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-white/30 hover:shadow-lg"
                 >
-                  تسوق حسب الأقسام
+                  <span className="flex items-center gap-2">
+                    <Gem className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    التصنيفات الفاخرة
+                  </span>
                 </Link>
               </nav>
             </div>
           </div>
         </div>
 
-        {/* User Actions Bar */}
-        <div className="bg-gray-50 border-b border-gray-200">
+        {/* Premium User Actions Bar */}
+        <div className="bg-gradient-to-r from-gray-50 to-red-50/30 border-b border-gray-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-12">
+            <div className="flex items-center justify-between h-14">
               
-              {/* Left Side - User Actions */}
-              <div className="flex items-center gap-6">
-                {/* User Menu */}
+              {/* Left Side - Premium User Actions */}
+              <div className="flex items-center gap-8">
+                {/* Premium User Menu */}
                 <div className="relative">
                   {isCustomerLoggedIn ? (
                     <div>
                       <button
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                        className="flex items-center gap-2 text-gray-700 hover:text-red-600 transition-colors duration-200"
+                        className="group flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300"
                       >
-                        <User className="w-5 h-5" />
-                        <span className="text-sm">{customerName}</span>
-                        <ChevronDown className="w-4 h-4" />
+                        <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-rose-600 rounded-lg flex items-center justify-center">
+                          <User className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-bold text-gray-900">{customerName}</div>
+                          <div className="text-xs text-red-600 font-medium">عضو VIP</div>
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors" />
                       </button>
 
                       {isUserMenuOpen && (
-                        <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                          <div className="px-4 py-2 border-b border-gray-100">
-                            <p className="text-sm font-medium text-gray-900">{customerName}</p>
-                            <p className="text-xs text-gray-500">عميل مسجل</p>
+                        <div className="absolute left-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 backdrop-blur-md">
+                          <div className="px-6 py-3 border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl flex items-center justify-center">
+                                <Crown className="w-6 h-6 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-black text-gray-900">{customerName}</p>
+                                <p className="text-sm text-red-600 font-semibold">عضو VIP مميز</p>
+                              </div>
+                            </div>
                           </div>
                           <button
                             onClick={handleLogout}
-                            className="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                            className="w-full text-right px-6 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-all duration-300"
                           >
                             تسجيل الخروج
                           </button>
@@ -257,81 +291,87 @@ const Navbar: React.FC = () => {
                   ) : (
                     <Link
                       to="/sign-in"
-                      className="flex items-center gap-1 text-gray-700 hover:text-red-600 transition-colors duration-200"
+                      className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
                     >
                       <User className="w-5 h-5" />
-                      <span className="text-sm">مرحبا تسجيل الدخول</span>
+                      <span>تسجيل الدخول VIP</span>
                     </Link>
                   )}
                 </div>
 
-                {/* Wishlist */}
+                {/* Premium Wishlist */}
                 <Link
                   to="/wishlist"
-                  className="relative text-gray-700 hover:text-red-600 transition-colors duration-200 flex items-center gap-1"
+                  className="group relative flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300"
                 >
-                  <Heart className="w-5 h-5" />
-                  <span className="text-sm">رغباتي</span>
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                      {wishlistCount}
-                    </span>
-                  )}
+                  <div className="relative">
+                    <Heart className="w-5 h-5 text-gray-600 group-hover:text-red-600 transition-colors" />
+                    {wishlistCount > 0 && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-red-500 to-rose-600 rounded-full flex items-center justify-center text-white text-xs font-black">
+                        {wishlistCount}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 group-hover:text-red-600 transition-colors">المفضلة</span>
                 </Link>
 
-                {/* Cart */}
+                {/* Premium Cart Link */}
                 <Link
                   to="/cart"
-                  className="relative text-gray-700 hover:text-red-600 transition-colors duration-200 flex items-center gap-1"
+                  className="group relative flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300"
                 >
-                  <ShoppingCart className="w-5 h-5" />
-                  <span className="text-sm">سلة التسوق</span>
-                  {totalCartItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                      {totalCartItems}
-                    </span>
-                  )}
+                  <div className="relative">
+                    <ShoppingCart className="w-5 h-5 text-gray-600 group-hover:text-red-600 transition-colors" />
+                    {totalCartItems > 0 && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-red-600 to-rose-600 rounded-full flex items-center justify-center text-white text-xs font-black">
+                        {totalCartItems}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 group-hover:text-red-600 transition-colors">السلة</span>
                 </Link>
               </div>
 
-              {/* Right Side - Breadcrumb Style */}
-              <div className="text-sm text-gray-600">
-                <Link to="/" className="hover:text-red-600">الرئيسية</Link>
-                <span className="mx-2">/</span>
-                <span>المتجر</span>
+              {/* Right Side - Premium Breadcrumb */}
+              <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                  <Link to="/" className="font-semibold text-red-600 hover:text-red-800 transition-colors">الرئيسية</Link>
+                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-600 font-medium">المتجر الفاخر</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Premium Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-200">
-            <div className="px-4 py-3 space-y-2">
+          <div className="lg:hidden bg-white border-t border-gray-200 shadow-xl">
+            <div className="px-6 py-6 space-y-4">
               <Link
                 to="/"
-                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
+                className="block px-4 py-3 text-sm font-bold rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
                 الرئيسية
               </Link>
               <Link
                 to="/products"
-                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
+                className="block px-4 py-3 text-sm font-bold rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
                 جميع المنتجات
               </Link>
               <Link
                 to="/cart"
-                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
+                className="block px-4 py-3 text-sm font-bold rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
                 سلة التسوق
               </Link>
               <Link
                 to="/wishlist"
-                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
+                className="block px-4 py-3 text-sm font-bold rounded-xl text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
                 المفضلة
