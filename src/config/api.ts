@@ -188,6 +188,10 @@ export const API_ENDPOINTS = {
   REGISTER: 'auth/register',
   CHANGE_PASSWORD: 'auth/change-password',
   
+  // Customer Authentication
+  CUSTOMER_LOGIN: 'auth/customer/login',
+  CUSTOMER_REGISTER: 'auth/customer/register',
+  
   // Coupons
   COUPONS: 'coupons',
   VALIDATE_COUPON: 'coupons/validate',
