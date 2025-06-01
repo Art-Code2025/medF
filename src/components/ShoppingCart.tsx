@@ -635,21 +635,6 @@ const ShoppingCart: React.FC = () => {
             </button>
           </div>
 
-          {/* Debug Instructions */}
-          <div className="bg-blue-900 text-white p-4 rounded-xl mb-6 border-2 border-blue-700">
-            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-              <span>🔧</span>
-              تم إصلاح مشكلة حفظ البيانات!
-            </h3>
-            <div className="text-sm space-y-1">
-              <p>✅ تم إزالة fetchCart التلقائي الذي كان يمحي البيانات</p>
-              <p>✅ تم إصلاح دالة saveOptionsToBackend لتعمل مثل ProductDetail</p>
-              <p>✅ البيانات تُحفظ الآن فوراً في البكند والواجهة</p>
-              <p>🧪 استخدم زر "اختبار" للتأكد من عمل الحفظ</p>
-              <p>🔍 افتح Developer Tools (F12) لمراقبة العملية</p>
-            </div>
-          </div>
-
           {/* Status Indicator */}
           <div className="flex items-center justify-center gap-4">
             {!canProceedToCheckout && (

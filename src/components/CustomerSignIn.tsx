@@ -87,6 +87,17 @@ const CustomerSignIn: React.FC = () => {
       // حفظ بيانات العميل فقط
       localStorage.setItem('user', JSON.stringify(data.user));
       
+      // حفظ بيانات إضافية لاستخدامها في الـ Checkout
+      const checkoutData = {
+        name: data.user.name,
+        phone: data.user.phone || '',
+        city: data.user.city || '',
+        email: data.user.email,
+        userId: data.user.id
+      };
+      localStorage.setItem('userCheckoutData', JSON.stringify(checkoutData));
+      console.log('💾 Checkout data saved for smooth experience:', checkoutData);
+      
       toast.success(`مرحباً بك ${data.user.name}!`);
       
       setTimeout(() => {
@@ -146,6 +157,17 @@ const CustomerSignIn: React.FC = () => {
 
       // حفظ بيانات المستخدم
       localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // حفظ بيانات إضافية لاستخدامها في الـ Checkout
+      const checkoutData = {
+        name: data.user.name,
+        phone: data.user.phone || '',
+        city: data.user.city || '',
+        email: data.user.email,
+        userId: data.user.id
+      };
+      localStorage.setItem('userCheckoutData', JSON.stringify(checkoutData));
+      console.log('💾 Checkout data saved for smooth experience:', checkoutData);
       
       toast.success('تم إنشاء حسابك بنجاح!');
       

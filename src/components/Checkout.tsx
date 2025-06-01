@@ -167,6 +167,61 @@ const Checkout: React.FC = () => {
     fetchCart();
   }, [fetchCart]);
 
+  // تحميل بيانات المستخدم المحفوظة من Sign-up
+  useEffect(() => {
+    const loadCustomerData = () => {
+      try {
+        // محاولة تحميل البيانات من userCheckoutData أولاً (محفوظة من Sign-up)
+        const checkoutData = localStorage.getItem('userCheckoutData');
+        if (checkoutData) {
+          const data = JSON.parse(checkoutData);
+          console.log('💾 Loading customer data from checkout cache:', data);
+          
+          setCustomerInfo(prev => ({
+            ...prev,
+            name: data.name || prev.name,
+            phone: data.phone || prev.phone,
+            email: data.email || prev.email,
+            city: data.city || prev.city
+          }));
+          
+          toast.success('✨ تم تحميل بياناتك تلقائياً!', {
+            position: "top-center",
+            autoClose: 2000,
+            hideProgressBar: true,
+            style: {
+              background: '#10B981',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }
+          });
+          
+          return;
+        }
+
+        // إذا لم توجد بيانات الـ checkout، جرب من بيانات المستخدم العادية
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('👤 Loading customer data from user cache:', user);
+          
+          setCustomerInfo(prev => ({
+            ...prev,
+            name: user.name || prev.name,
+            phone: user.phone || prev.phone,
+            email: user.email || prev.email,
+            city: user.city || prev.city
+          }));
+        }
+      } catch (error) {
+        console.error('❌ Error loading customer data:', error);
+      }
+    };
+
+    loadCustomerData();
+  }, []);
+
   const getTotalSavings = () => {
     return cartItems.reduce((total, item) => {
       if (item.product && item.product.originalPrice && item.product.originalPrice > item.product.price) {
@@ -828,6 +883,21 @@ const Checkout: React.FC = () => {
                 {/* Step 2: Delivery Information */}
                 {currentStep === 2 && (
                   <div className="space-y-10 animate-fade-in">
+                    {/* Data Source Indicator */}
+                    {(customerInfo.name || customerInfo.phone || customerInfo.email || customerInfo.city) && (
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4 mb-6 animate-slide-in">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-green-800 text-sm">✨ تم تحميل بياناتك تلقائياً!</h3>
+                            <p className="text-green-600 text-xs mt-1">تم ملء البيانات من ملفك الشخصي لتوفير الوقت. يمكنك تعديلها إذا أردت.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="grid md:grid-cols-2 gap-8">
                       <div className="animate-slide-in" style={{ animationDelay: '100ms' }}>
                         <label className="flex items-center gap-3 text-sm font-bold text-gray-700 mb-4">

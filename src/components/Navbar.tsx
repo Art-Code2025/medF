@@ -235,6 +235,17 @@ function Navbar() {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     
+    // حفظ بيانات إضافية لاستخدامها في الـ Checkout
+    const checkoutData = {
+      name: userData.name,
+      phone: userData.phone || '',
+      city: userData.city || '',
+      email: userData.email,
+      userId: userData.id
+    };
+    localStorage.setItem('userCheckoutData', JSON.stringify(checkoutData));
+    console.log('💾 Checkout data saved for smooth experience:', checkoutData);
+    
     // تحديث العدادات فوراً للمستخدم الجديد
     fetchCartCount();
     fetchWishlistCount();
@@ -246,6 +257,7 @@ function Navbar() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('userCheckoutData');
     
     // إعادة تعيين العدادات
     setCartItemsCount(0);
