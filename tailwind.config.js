@@ -7,6 +7,40 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Professional Navy Blue Primary Colors
+        primary: {
+          50: '#f0f4ff',
+          100: '#e0eaff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#1e3a8a', // Main Navy Blue
+          600: '#1e40af',
+          700: '#1d4ed8',
+          800: '#1e3a8a',
+          900: '#1e293b',
+          950: '#0f172a'
+        },
+        
+        // Medical Professional Colors
+        medical: {
+          white: '#ffffff',
+          snow: '#fafbfc',
+          light: '#f8fafc',
+          gray: '#64748b',
+          dark: '#475569',
+          charcoal: '#334155',
+          steel: '#1e293b'
+        },
+        
+        // Professional Accent Colors
+        accent: {
+          emerald: '#059669',
+          amber: '#d97706',
+          red: '#dc2626',
+          blue: '#2563eb',
+          teal: '#0891b2'
+        },
         cream: {
           50: '#f8f5f0', // اللون الكريمي الفاتح
           100: '#f0ece5',
@@ -49,29 +83,56 @@ export default {
         'container-2xl': '1536px',
       },
       animation: {
-        'fade-in': 'fadeIn 0.6s ease-in-out',
-        'fade-in-up': 'fadeInUp 0.8s ease-out',
-        'slide-in': 'slideIn 0.5s ease-out',
-        'bounce-gentle': 'bounceGentle 2s infinite',
-        'pulse-slow': 'pulse 3s infinite',
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.6s ease-out',
+        'float': 'float 6s ease-in-out infinite',
+        'pulse-slow': 'pulse 3s ease-in-out infinite'
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         },
-        fadeInUp: {
+        slideUp: {
           '0%': { opacity: '0', transform: 'translateY(30px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         },
-        slideIn: {
-          '0%': { opacity: '0', transform: 'translateX(-20px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        bounceGentle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' },
-        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' }
+        }
+      },
+      // Professional Gradients
+      backgroundImage: {
+        'gradient-primary': 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%)',
+        'gradient-header': 'linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+        'gradient-card': 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+        'gradient-button': 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+        'gradient-hero': 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)',
+        'gradient-navy': 'linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%)'
+      },
+      
+      // Professional Shadows
+      boxShadow: {
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'button': '0 10px 15px -3px rgba(30, 58, 138, 0.3), 0 4px 6px -2px rgba(30, 58, 138, 0.2)',
+        'nav': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        'hero': '0 25px 50px -12px rgba(30, 58, 138, 0.25)',
+        'professional': '0 20px 25px -5px rgba(30, 58, 138, 0.1), 0 10px 10px -5px rgba(30, 58, 138, 0.04)'
+      },
+      
+      // Professional Typography
+      fontFamily: {
+        'primary': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        'heading': ['Poppins', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        'mono': ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace']
+      },
+      
+      // Professional Border Radius
+      borderRadius: {
+        'xl': '1rem',
+        '2xl': '1.5rem',
+        '3xl': '2rem'
       },
     },
   },
