@@ -1,12 +1,27 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { apiCall, API_ENDPOINTS } from './config/api';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
+  });
+  const [registerData, setRegisterData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    phone: '',
+    city: ''
+  });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,392 +79,442 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    // محاكاة للتأخير البسيط للتأثير البصري
-    setTimeout(() => {
-      if (email === 'admin' && password === '11111') {
-        const form = document.querySelector('.login-form');
-        form?.classList.add('success-animation');
-        
-        localStorage.setItem('isAuthenticated', 'true');
-        
-        setTimeout(() => {
-          navigate('/admin');
-        }, 500);
-      } else {
-        setError('الإيميل أو كلمة المرور غير صحيحة');
-        const errorElement = document.querySelector('.error-message');
-        errorElement?.classList.add('shake-animation');
-        setTimeout(() => {
-          errorElement?.classList.remove('shake-animation');
-        }, 500);
-      }
+    // التحقق من البيانات
+    if (!loginData.email.trim() || !loginData.password.trim()) {
+      setError('الرجاء إدخال جميع البيانات المطلوبة');
       setLoading(false);
-    }, 600);
+      return;
+    }
+
+    try {
+      const data = await apiCall(API_ENDPOINTS.LOGIN, {
+        method: 'POST',
+        body: JSON.stringify(loginData)
+      });
+
+      // حفظ بيانات المستخدم
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // إشارة نجاح
+      const form = document.querySelector('.login-form');
+      form?.classList.add('success-animation');
+      
+      toast.success(`مرحباً بك ${data.user.name}!`);
+      
+      setTimeout(() => {
+        // توجيه حسب صلاحية المستخدم
+        if (data.user.role === 'admin' || data.user.email === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setError(error.message || 'خطأ في تسجيل الدخول');
+      
+      const errorElement = document.querySelector('.error-message');
+      errorElement?.classList.add('shake-animation');
+      setTimeout(() => {
+        errorElement?.classList.remove('shake-animation');
+      }, 500);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    // التحقق من البيانات
+    if (!registerData.email.trim() || !registerData.password.trim() || !registerData.name.trim()) {
+      setError('الرجاء إدخال جميع البيانات المطلوبة');
+      setLoading(false);
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      setLoading(false);
+      return;
+    }
+
+    if (registerData.password !== registerData.confirmPassword) {
+      setError('كلمة المرور غير متطابقة');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await apiCall(API_ENDPOINTS.REGISTER, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: registerData.email.toLowerCase(),
+          password: registerData.password,
+          name: registerData.name,
+          phone: registerData.phone,
+          city: registerData.city
+        })
+      });
+
+      // حفظ بيانات المستخدم
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      toast.success('تم إنشاء حسابك بنجاح!');
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('Register error:', error);
+      setError(error.message || 'خطأ في إنشاء الحساب');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format Saudi phone number
+  const formatSaudiPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)}`;
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center font-sans overflow-hidden relative px-4 sm:px-6 lg:px-8" dir="rtl">
-      {/* التنسيقات المخصصة */}
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
-          
-          * {
-            font-family: 'Tajawal', sans-serif;
-          }
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      {/* Particles Container */}
+      <div className="particles-container absolute inset-0 pointer-events-none"></div>
+      
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-lg border border-white/30">
+              <User className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+              {mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
+            </h1>
+            <p className="text-white/80 text-lg">
+              {mode === 'login' ? 'أدخل بيانات حسابك للمتابعة' : 'أنشئ حساباً جديداً معنا'}
+            </p>
+          </div>
 
-          /* تأثير الخلفية المتدرجة */
-          @keyframes gradientShift {
-            0% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
-            100% { background-position: 0% 0%; }
-          }
-          
-          .background-gradient {
-            background: linear-gradient(-45deg, #0B132B, #1C2541, #3A506B, #5BC0BE, #0B132B);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-          }
-          
-          /* تأثير الكارت والظل */
-          .card-shadow {
-            box-shadow: 0 0 50px rgba(91, 192, 190, 0.3), 0 0 100px rgba(91, 192, 190, 0.1);
-          }
-          
-          .glass-effect {
-            background: rgba(28, 37, 65, 0.7);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(91, 192, 190, 0.3);
-            border-radius: 24px;
-            transition: all 0.5s ease;
-          }
-          
-          .glass-effect:hover {
-            box-shadow: 0 0 80px rgba(91, 192, 190, 0.5);
-            transform: translateY(-5px);
-          }
-          
-          /* تأثير تعويم الشعار */
-          @keyframes floating {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
-            100% { transform: translateY(0px); }
-          }
-          
-          .logo-float {
-            animation: floating 6s ease-in-out infinite;
-          }
-          
-          /* تأثير الجزيئات المتحركة */
-          .particles-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 0;
-          }
-          
-          .particle {
-            position: absolute;
-            background: rgba(91, 192, 190, 0.5);
-            border-radius: 50%;
-            opacity: 0.5;
-            pointer-events: none;
-            transform: scale(0);
-            z-index: 0;
-            animation: floatUp 20s linear infinite;
-          }
-          
-          @keyframes floatUp {
-            0% { 
-              transform: translateY(100vh) scale(0);
-              opacity: 0;
-            }
-            25% {
-              opacity: 0.8;
-            }
-            50% {
-              transform: translateY(50vh) scale(1);
-              opacity: 0.5;
-            }
-            75% {
-              opacity: 0.8;
-            }
-            100% { 
-              transform: translateY(-100px) scale(0);
-              opacity: 0;
-            }
-          }
-          
-          /* تأثيرات حقول الإدخال */
-          .input-field {
-            background: rgba(11, 19, 43, 0.5);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-          }
-          
-          .input-field:focus {
-            background: rgba(11, 19, 43, 0.8);
-            border-color: #5BC0BE;
-            box-shadow: 0 0 15px rgba(91, 192, 190, 0.5);
-          }
-          
-          /* تأثير الانعكاس عند النقر */
-          .focus-ripple {
-            position: absolute;
-            width: 5px;
-            height: 5px;
-            background: rgba(91, 192, 190, 0.8);
-            border-radius: 50%;
-            transform: scale(0);
-            animation: ripple 1s linear;
-            z-index: 0;
-          }
-          
-          @keyframes ripple {
-            0% {
-              transform: scale(0);
-              opacity: 0.8;
-            }
-            100% {
-              transform: scale(200);
-              opacity: 0;
-            }
-          }
-          
-          /* تأثيرات زر تسجيل الدخول */
-          .login-button {
-            background: linear-gradient(45deg, #5BC0BE, #3A506B);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-          }
-          
-          .login-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #3A506B, #5BC0BE);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            z-index: -1;
-          }
-          
-          .login-button:hover::before {
-            opacity: 1;
-          }
-          
-          .login-button:active {
-            transform: scale(0.98);
-          }
-          
-          .button-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-          }
-          
-          /* تأثير الدوران للوودر */
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          
-          .spinner {
-            animation: spin 1.5s linear infinite;
-          }
-          
-          /* تأثير الاهتزاز لرسالة الخطأ */
-          .shake-animation {
-            animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-          }
-          
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-          }
-          
-          /* تأثير نجاح تسجيل الدخول */
-          .success-animation {
-            animation: successPulse 0.8s ease;
-          }
-          
-          @keyframes successPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(91, 192, 190, 0.8); }
-            100% { transform: scale(0.95); opacity: 0; }
-          }
-          
-          /* تأثير إظهار/إخفاء كلمة المرور */
-          .toggle-password {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #a0aec0;
-            cursor: pointer;
-            transition: color 0.3s ease;
-          }
-          
-          .toggle-password:hover {
-            color: #5BC0BE;
-          }
-          
-          /* تنسيق تسميات الحقول */
-          .input-label {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 10px;
-            padding-right: 10px;
-            transition: all 0.3s ease;
-          }
-          
-          .input-label::before {
-            content: '';
-            position: absolute;
-            height: 100%;
-            width: 3px;
-            background: #5BC0BE;
-            right: 0;
-            border-radius: 3px;
-          }
-        `}
-      </style>
+          {/* Form Container */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl login-form">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/40 rounded-xl p-4 mb-6 error-message flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-300 mr-3 mt-0.5 flex-shrink-0" />
+                <p className="text-red-300 text-sm">{error}</p>
+              </div>
+            )}
 
-      {/* الخلفية المتدرجة المتحركة */}
-      <div className="background-gradient absolute inset-0">
-        <div className="particles-container"></div>
-      </div>
+            {/* Login Form */}
+            {mode === 'login' && (
+              <form onSubmit={handleLogin} className="space-y-6">
+                {/* Email */}
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2">
+                    البريد الإلكتروني
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                      className="input-field w-full pl-12 pr-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm"
+                      placeholder="example@domain.com"
+                      disabled={loading}
+                    />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+                  </div>
+                </div>
 
-      {/* كارت تسجيل الدخول */}
-      <div className="relative z-10 glass-effect p-6 sm:p-8 lg:p-10 w-full max-w-sm sm:max-w-md lg:max-w-lg card-shadow">
-        {/* الشعار المتحرك */}
-        <div className="flex justify-center mb-6 sm:mb-8">
-          <div className="logo-float bg-white bg-opacity-10 p-3 sm:p-4 lg:p-5 rounded-full">
-            <svg className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 text-teal-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12 8V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M8 12H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+                {/* Password */}
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2">
+                    كلمة المرور
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={loginData.password}
+                      onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                      className="input-field w-full pl-12 pr-12 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm"
+                      placeholder="••••••••"
+                      disabled={loading}
+                    />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-gray-900 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:scale-105"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                      جاري تسجيل الدخول...
+                    </div>
+                  ) : (
+                    'تسجيل الدخول'
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Register Form */}
+            {mode === 'register' && (
+              <form onSubmit={handleRegister} className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2">
+                    الاسم الكامل
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={registerData.name}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, name: e.target.value }))}
+                      className="input-field w-full pl-12 pr-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm text-sm"
+                      placeholder="أحمد محمد"
+                      disabled={loading}
+                    />
+                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2">
+                    البريد الإلكتروني
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                      className="input-field w-full pl-12 pr-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm text-sm"
+                      placeholder="example@domain.com"
+                      disabled={loading}
+                    />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                  </div>
+                </div>
+
+                {/* Phone & City */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-white/90 text-sm font-medium mb-2">
+                      الجوال
+                    </label>
+                    <input
+                      type="text"
+                      value={registerData.phone}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        if (digits.length <= 9) {
+                          const formatted = formatSaudiPhone(digits);
+                          setRegisterData(prev => ({ ...prev, phone: formatted }));
+                        }
+                      }}
+                      className="input-field w-full px-3 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm text-sm"
+                      placeholder="5XX XXX XXX"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/90 text-sm font-medium mb-2">
+                      المدينة
+                    </label>
+                    <input
+                      type="text"
+                      value={registerData.city}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, city: e.target.value }))}
+                      className="input-field w-full px-3 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm text-sm"
+                      placeholder="الرياض"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                {/* Passwords */}
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="block text-white/90 text-sm font-medium mb-2">
+                      كلمة المرور
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
+                        className="input-field w-full pl-12 pr-12 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm text-sm"
+                        placeholder="••••••••"
+                        disabled={loading}
+                      />
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-white/90 text-sm font-medium mb-2">
+                      تأكيد كلمة المرور
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={registerData.confirmPassword}
+                        onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        className="input-field w-full pl-12 pr-12 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-white/50 backdrop-blur-sm text-sm"
+                        placeholder="••••••••"
+                        disabled={loading}
+                      />
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-gray-900 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:scale-105"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                      جاري إنشاء الحساب...
+                    </div>
+                  ) : (
+                    'إنشاء حساب جديد'
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Toggle Mode */}
+            <div className="mt-6 text-center">
+              <p className="text-white/80 text-sm">
+                {mode === 'login' ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode(mode === 'login' ? 'register' : 'login');
+                    setError('');
+                  }}
+                  className="text-white font-medium mr-2 underline hover:text-white/80"
+                >
+                  {mode === 'login' ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
+                </button>
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center mt-8">
+            <p className="text-white/60 text-sm">
+              بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية
+            </p>
           </div>
         </div>
-        
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-center mb-2">تسجيل الدخول</h2>
-        <p className="text-gray-300 text-center mb-6 sm:mb-8 text-sm sm:text-base">قم بتسجيل الدخول للوصول إلى لوحة التحكم</p>
-
-        {/* رسالة الخطأ */}
-        {error && (
-          <div className="bg-red-500 bg-opacity-20 border border-red-500 border-opacity-40 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 error-message">
-            <div className="flex items-center">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 ml-2 sm:ml-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <p className="text-red-300 text-xs sm:text-sm font-medium">{error}</p>
-            </div>
-          </div>
-        )}
-
-        {/* نموذج تسجيل الدخول */}
-        <form onSubmit={handleLogin} className="login-form">
-          {/* حقل البريد الإلكتروني */}
-          <div className="mb-4 sm:mb-5">
-            <div className="input-label">
-              <label className="text-white font-medium text-xs sm:text-sm">البريد الإلكتروني</label>
-            </div>
-            <div className="relative mt-1">
-              <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-teal-400">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field w-full p-3 sm:p-4 pr-10 sm:pr-12 text-white rounded-xl border border-gray-700 focus:outline-none focus:ring-0 text-sm sm:text-base"
-                placeholder="أدخل البريد الإلكتروني"
-                required
-              />
-            </div>
-          </div>
-          
-          {/* حقل كلمة المرور */}
-          <div className="mb-6 sm:mb-8">
-            <div className="input-label">
-              <label className="text-white font-medium text-xs sm:text-sm">كلمة المرور</label>
-            </div>
-            <div className="relative mt-1">
-              <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-teal-400">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                </svg>
-              </div>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field w-full p-3 sm:p-4 pr-10 sm:pr-12 text-white rounded-xl border border-gray-700 focus:outline-none focus:ring-0 text-sm sm:text-base"
-                placeholder="أدخل كلمة المرور"
-                required
-              />
-              {/* زر إظهار/إخفاء كلمة المرور */}
-              <div 
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                  </svg>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* زر تسجيل الدخول */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="login-button w-full py-3 sm:py-4 rounded-xl text-white text-base sm:text-lg font-semibold transition-all duration-300"
-          >
-            <div className="button-content">
-              {loading ? (
-                <svg className="spinner w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <>
-                  <span>تسجيل الدخول</span>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                  </svg>
-                </>
-              )}
-            </div>
-          </button>
-        </form>
       </div>
+
+      {/* Styles */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .particle {
+          position: absolute;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          animation: float linear infinite;
+        }
+
+        @keyframes float {
+          0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-100px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        .focus-ripple {
+          position: absolute;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(0);
+          animation: ripple 0.6s linear;
+          pointer-events: none;
+        }
+
+        @keyframes ripple {
+          to {
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+
+        .shake-animation {
+          animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+
+        .success-animation {
+          animation: success 0.5s ease-in-out;
+        }
+
+        @keyframes success {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+      `}} />
     </div>
   );
 };

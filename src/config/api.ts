@@ -132,9 +132,9 @@ export const API_ENDPOINTS = {
   ORDER_STATUS: (id: string | number) => `orders/${id}/status`,
   
   // Auth
-  SEND_OTP: 'auth/send-otp',
-  VERIFY_OTP: 'auth/verify-otp',
-  COMPLETE_REGISTRATION: 'auth/complete-registration',
+  LOGIN: 'auth/login',
+  REGISTER: 'auth/register',
+  CHANGE_PASSWORD: 'auth/change-password',
   
   // Coupons
   COUPONS: 'coupons',

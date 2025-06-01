@@ -35,8 +35,39 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+  // تحقق أولاً من وجود بيانات مستخدم صحيحة
+  const userData = localStorage.getItem('user');
+  
+  if (!userData) {
+    // لا يوجد مستخدم مسجل دخول
+    return <Navigate to="/login" />;
+  }
+  
+  try {
+    const user = JSON.parse(userData);
+    
+    // تحقق من وجود ID ومن أن المستخدم admin أو customer
+    if (!user?.id || !user?.email) {
+      // بيانات المستخدم غير صحيحة
+      localStorage.removeItem('user');
+      return <Navigate to="/login" />;
+    }
+    
+    // تحقق من أن المستخدم له صلاحية الوصول للداش بورد
+    // يمكن للـ admin الوصول بشكل كامل، المستخدمين العاديين يحتاجون admin role
+    if (user.role === 'admin' || user.email === 'admin') {
+      return <>{children}</>;
+    } else {
+      // المستخدم العادي لا يمكنه الوصول للداش بورد
+      return <Navigate to="/" />;
+    }
+    
+  } catch (error) {
+    // خطأ في قراءة بيانات المستخدم
+    console.error('Error parsing user data:', error);
+    localStorage.removeItem('user');
+    return <Navigate to="/login" />;
+  }
 };
 
 // مكون للتحكم في النافبار والـ padding

@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import { apiCall, API_ENDPOINTS, buildApiUrl } from '../config/api';
 
-// دالة موحدة لإضافة منتج إلى السلة
+// دالة موحدة لإضافة منتج إلى السلة (تدعم الضيوف والمستخدمين المسجلين)
 export const addToCartUnified = async (
   productId: number, 
   productName: string, 
@@ -11,18 +11,21 @@ export const addToCartUnified = async (
 ) => {
   try {
     const userData = localStorage.getItem('user');
-    if (!userData) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      return false;
+    let userId = 'guest'; // افتراضي للضيوف
+    
+    // إذا كان المستخدم مسجل دخول، استخدم ID الخاص به
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user?.id) {
+          userId = user.id.toString();
+        }
+      } catch (parseError) {
+        console.warn('Error parsing user data, using guest mode:', parseError);
+      }
     }
 
-    const user = JSON.parse(userData);
-    if (!user?.id) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      return false;
-    }
-
-    console.log('🛒 Adding to cart:', { productId, productName, quantity, selectedOptions, attachments });
+    console.log('🛒 Adding to cart:', { productId, productName, quantity, selectedOptions, attachments, userId });
 
     // التحقق من المواصفات قبل الإرسال
     if (selectedOptions && Object.keys(selectedOptions).length > 0) {
@@ -50,7 +53,20 @@ export const addToCartUnified = async (
 
     console.log('📤 [Cart] Final request body:', requestBody);
 
-    const response = await fetch(buildApiUrl(`/user/${user.id}/cart`), {
+    // استخدم endpoint مختلف حسب نوع المستخدم
+    let endpoint: string;
+    if (userId === 'guest') {
+      // للضيوف: استخدم API العامة
+      endpoint = 'cart';
+      requestBody.userId = 'guest';
+      requestBody.productName = productName;
+      requestBody.price = 0; // سيتم تحديده من قاعدة البيانات
+    } else {
+      // للمستخدمين المسجلين: استخدم API المخصصة
+      endpoint = `user/${userId}/cart`;
+    }
+
+    const response = await fetch(buildApiUrl(endpoint), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
