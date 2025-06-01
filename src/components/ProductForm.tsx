@@ -147,7 +147,7 @@ const ProductForm: React.FC = () => {
             fontWeight: 'bold'
           }
         });
-        navigate('/dashboard');
+        navigate('/admin');
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'حدث خطأ أثناء حفظ المنتج');
@@ -204,7 +204,7 @@ const ProductForm: React.FC = () => {
             </div>
             
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/admin')}
               className="flex items-center gap-2 px-4 py-2 text-medical-gray hover:text-medical-charcoal transition-colors duration-200"
             >
               <ArrowRight className="w-4 h-4" />
@@ -449,7 +449,7 @@ const ProductForm: React.FC = () => {
             <div className="flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/admin')}
                 className="px-6 py-3 border border-gray-300 rounded-xl text-medical-gray hover:text-medical-charcoal hover:border-gray-400 transition-all duration-200"
               >
                 إلغاء

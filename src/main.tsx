@@ -1,175 +1,126 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './index.css';
+
 import Navbar from './components/Navbar';
-import App from './App';
+import HomePage from './components/HomePage';
+import AllProducts from './components/AllProducts';
 import ProductDetail from './components/ProductDetail';
-import ProductsByCategory from './components/ProductsByCategory';
-import ShoppingCart from './components/ShoppingCart';
-import CartDiagnostics from './components/CartDiagnostics';
-import Wishlist from './components/Wishlist';
-import Login from './Login';
 import CustomerSignIn from './components/CustomerSignIn';
-import Dashboard from './Dashboard';
-import ServiceForm from './ServiceForm';
+import Login from './Login';
+import Dashboard from './components/Dashboard';
 import ProductForm from './components/ProductForm';
 import CategoryAdd from './CategoryAdd';
 import CategoryEdit from './CategoryEdit';
-import CouponForm from './components/CouponForm';
-import AllProducts from './components/AllProducts';
+import ShoppingCart from './components/ShoppingCart';
+import Wishlist from './components/Wishlist';
 import Checkout from './components/Checkout';
-import ThankYou from './components/ThankYou';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Media from './pages/Media';
-import Partners from './pages/Partners';
-import CategoryPage from './components/CategoryPage';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import ReturnPolicy from './components/ReturnPolicy';
-import './index.css';
 
-// تعريف Props لـ ProtectedRoute
+// ProtectedRoute Component
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requiredRole?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // التحقق من تسجيل دخول الأدمن المنفصل
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole = "admin" }) => {
   const adminData = localStorage.getItem('adminUser');
   
   if (!adminData) {
-    // لا يوجد أدمن مسجل دخول - توجيه لصفحة admin login
-    return <Navigate to="/login" />;
+    window.location.href = '/login';
+    return null;
   }
   
   try {
     const admin = JSON.parse(adminData);
-    
-    // التحقق من صحة بيانات الأدمن
-    if (!admin?.id || !admin?.email || !admin?.isAdmin) {
-      // بيانات الأدمن غير صحيحة
-      localStorage.removeItem('adminUser');
-      return <Navigate to="/login" />;
-    }
-    
-    // التحقق من أن المستخدم أدمن فعلاً
-    if (admin.role === 'admin' && admin.isAdmin === true) {
+    if (admin?.isAdmin && admin?.role === 'admin') {
       return <>{children}</>;
     } else {
-      // المستخدم ليس أدمن
       localStorage.removeItem('adminUser');
-      return <Navigate to="/login" />;
+      window.location.href = '/login';
+      return null;
     }
-    
   } catch (error) {
-    // خطأ في قراءة بيانات الأدمن
-    console.error('Error parsing admin data:', error);
     localStorage.removeItem('adminUser');
-    return <Navigate to="/login" />;
+    window.location.href = '/login';
+    return null;
   }
-};
-
-// مكون للتحكم في النافبار والـ padding
-const LayoutWrapper: React.FC = () => {
-  const location = useLocation();
-  const hideNavbarPaths = ['/login', '/sign-in', '/admin'];
-
-  // التحقق إذا المسار الحالي يحتاج لإخفاء النافبار
-  const shouldHideNavbar = hideNavbarPaths.some(path => 
-    path === '/login' ? location.pathname === path : 
-    path === '/sign-in' ? location.pathname === path :
-    location.pathname.startsWith(path)
-  );
-
-  // إضافة responsive padding بس لو النافبار موجود
-  // للصفحة الرئيسية، نخلي الصورة تبدأ من النافبار مباشرة
-  const isHomePage = location.pathname === '/';
-  const contentClass = shouldHideNavbar ? '' : isHomePage ? '' : 'pt-16 sm:pt-20 lg:pt-24';
-
-  return (
-    <>
-      {!shouldHideNavbar && <Navbar />}
-      <div className={contentClass}>
-        <Routes>
-          {/* E-commerce Routes */}
-          <Route path="/" element={<App />} />
-          <Route path="/products" element={<AllProducts />} />
-          {/* SEO-friendly product routes */}
-          <Route path="/product/:slug" element={<ProductDetail />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          {/* SEO-friendly category routes */}
-          <Route path="/category/:slug" element={<CategoryPage />} />
-          <Route path="/category/:id" element={<CategoryPage />} />
-          <Route path="/cart" element={<ShoppingCart />} />
-          <Route path="/cart/diagnostics" element={<CartDiagnostics />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/thank-you" element={<ThankYou />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} /> {/* Admin Only - Hardcoded */}
-          <Route path="/sign-in" element={<CustomerSignIn />} /> {/* Customers Only - Database */}
-          
-          {/* Admin Dashboard Routes - Protected by AdminUser */}
-          <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          
-          {/* Services Management Routes (Legacy) */}
-          <Route path="/admin/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
-          <Route path="/admin/service/add" element={<ProtectedRoute><ServiceForm /></ProtectedRoute>} />
-          <Route path="/admin/service/edit/:id" element={<ProtectedRoute><ServiceForm /></ProtectedRoute>} />
-          
-          {/* New E-commerce Management Routes */}
-          <Route path="/admin/product/add" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
-          <Route path="/admin/product/edit/:id" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
-          <Route path="/admin/category/add" element={<ProtectedRoute><CategoryAdd /></ProtectedRoute>} />
-          <Route path="/admin/category/edit/:id" element={<ProtectedRoute><CategoryEdit /></ProtectedRoute>} />
-          <Route path="/admin/coupon/add" element={<ProtectedRoute><CouponForm /></ProtectedRoute>} />
-          <Route path="/admin/coupon/edit/:id" element={<ProtectedRoute><CouponForm /></ProtectedRoute>} />
-          
-          {/* Other Routes */}
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/media" element={<Media />} />
-          <Route path="/partners" element={<Partners />} />
-          
-          {/* Policy Routes */}
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/return-policy" element={<ReturnPolicy />} />
-        </Routes>
-      </div>
-    </>
-  );
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <LayoutWrapper />
-      {/* Global ToastContainer for all pages */}
-      <ToastContainer 
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick
-        rtl
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        limit={3}
-        style={{ 
-          zIndex: 999999,
-          top: '80px',
-          fontSize: '16px'
-        }}
-        toastStyle={{
-          minHeight: '60px',
-          fontSize: '16px'
-        }}
-      />
-    </BrowserRouter>
-  </React.StrictMode>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <Navbar />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<AllProducts />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/sign-in" element={<CustomerSignIn />} />
+          <Route path="/cart" element={<ShoppingCart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/checkout" element={<Checkout />} />
+          
+          {/* Admin Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/product/new" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ProductForm />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/product/:id" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ProductForm />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/category/new" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <CategoryAdd />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/category/:id" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <CategoryEdit />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+        
+        <ToastContainer 
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+      </div>
+    </Router>
+  </React.StrictMode>,
 );
