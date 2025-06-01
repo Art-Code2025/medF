@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Menu, X, ShoppingCart, Heart, User, LogOut, Search, Package, Settings, Phone, Mail, MapPin, Clock, ChevronDown, Home, Grid3X3, Star, Award, Truck, Shield, Sparkles, Bell, ChevronLeft } from 'lucide-react';
 import logo from '../assets/logo.png';
-import AuthModal from './AuthModal';
 import { createCategorySlug } from '../utils/slugify';
 import { apiCall, API_ENDPOINTS, buildImageUrl } from '../config/api';
 
@@ -33,7 +32,6 @@ function Navbar() {
       return [];
     }
   });
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const location = useLocation();
@@ -198,15 +196,16 @@ function Navbar() {
       
       console.log('🔄 [Navbar] Fetching wishlist count for user:', user.id);
       const data = await apiCall(API_ENDPOINTS.USER_WISHLIST(user.id));
+      const totalItems = data.length;
       
-      console.log('📊 [Navbar] Wishlist count fetched:', data.length);
-      setWishlistItemsCount(data.length);
+      console.log('📊 [Navbar] Wishlist count fetched:', totalItems);
+      setWishlistItemsCount(totalItems);
       
-      // حفظ العداد في localStorage بنفس طريقة cartUtils
-      localStorage.setItem('lastWishlistCount', data.length.toString());
-      localStorage.setItem(`wishlistCount_${user.id}`, data.length.toString());
+      // حفظ العداد في localStorage
+      localStorage.setItem('lastWishlistCount', totalItems.toString());
+      localStorage.setItem(`wishlistCount_${user.id}`, totalItems.toString());
       
-      console.log('💾 [Navbar] Wishlist count saved to localStorage:', data.length);
+      console.log('💾 [Navbar] Wishlist count saved to localStorage:', totalItems);
     } catch (error) {
       console.error('❌ [Navbar] Error fetching wishlist count:', error);
       setWishlistItemsCount(0);
@@ -218,7 +217,6 @@ function Navbar() {
     try {
       const data = await apiCall(API_ENDPOINTS.CATEGORIES);
       setCategories(data);
-      // حفظ في localStorage لتجنب الفلاش في المرة القادمة
       localStorage.setItem('cachedCategories', JSON.stringify(data));
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -230,40 +228,34 @@ function Navbar() {
   const handleLoginSuccess = (userData: any) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-    setIsAuthModalOpen(false);
     
-    // تحميل بيانات المستخدم الجديد فقط
-    setTimeout(() => {
-      fetchCartCount();
-      fetchWishlistCount();
-    }, 100);
+    // تحديث العدادات فوراً للمستخدم الجديد
+    fetchCartCount();
+    fetchWishlistCount();
     
-    toast.success(`مرحباً بك ${userData.name || userData.firstName || 'عزيزي العميل'}`);
+    console.log('✅ User logged in successfully:', userData);
+    toast.success(`مرحباً بك ${userData.name}!`);
   };
 
   const handleLogout = () => {
-    // مسح جميع بيانات المستخدم
-    const currentUser = user;
     setUser(null);
     localStorage.removeItem('user');
     
-    // مسح بيانات السلة والمفضلة للمستخدم الحالي
-    if (currentUser?.id) {
-      localStorage.removeItem(`cartCount_${currentUser.id}`);
-      localStorage.removeItem(`wishlistCount_${currentUser.id}`);
-    }
-    
-    setIsUserMenuOpen(false);
+    // إعادة تعيين العدادات
     setCartItemsCount(0);
     setWishlistItemsCount(0);
+    localStorage.setItem('lastCartCount', '0');
+    localStorage.setItem('lastWishlistCount', '0');
     
-    // إعادة توجيه للصفحة الرئيسية
-    navigate('/');
+    setIsUserMenuOpen(false);
     toast.success('تم تسجيل الخروج بنجاح');
+    
+    // توجيه للصفحة الرئيسية
+    navigate('/');
   };
 
-  const openAuthModal = () => {
-    setIsAuthModalOpen(true);
+  const navigateToSignIn = () => {
+    navigate('/sign-in');
     setIsMenuOpen(false);
   };
 
@@ -509,7 +501,7 @@ function Navbar() {
               </div>
             ) : (
               <button
-                onClick={openAuthModal}
+                onClick={navigateToSignIn}
                 className="mobile-touch-target relative bg-gradient-to-r from-pink-500 to-rose-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl backdrop-blur-xl border border-pink-400/30 hover:from-pink-600 hover:to-rose-600 transition-all duration-300 ease-out transform hover:scale-105 shadow-md hover:shadow-lg font-medium group z-[60] no-select"
                 style={{ 
                   pointerEvents: 'auto',
@@ -681,12 +673,6 @@ function Navbar() {
           </div>
         </div>
       </div>
-      
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </>
   );
 }

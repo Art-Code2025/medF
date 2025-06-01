@@ -11,6 +11,7 @@ import ShoppingCart from './components/ShoppingCart';
 import CartDiagnostics from './components/CartDiagnostics';
 import Wishlist from './components/Wishlist';
 import Login from './Login';
+import CustomerSignIn from './components/CustomerSignIn';
 import Dashboard from './Dashboard';
 import ServiceForm from './ServiceForm';
 import ProductForm from './components/ProductForm';
@@ -39,7 +40,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const userData = localStorage.getItem('user');
   
   if (!userData) {
-    // لا يوجد مستخدم مسجل دخول
+    // لا يوجد مستخدم مسجل دخول - توجيه لصفحة admin login
     return <Navigate to="/login" />;
   }
   
@@ -54,7 +55,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
     
     // تحقق من أن المستخدم له صلاحية الوصول للداش بورد
-    // يمكن للـ admin الوصول بشكل كامل، المستخدمين العاديين يحتاجون admin role
+    // يمكن للـ admin الوصول بشكل كامل فقط
     if (user.role === 'admin' || user.email === 'admin') {
       return <>{children}</>;
     } else {
@@ -73,11 +74,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 // مكون للتحكم في النافبار والـ padding
 const LayoutWrapper: React.FC = () => {
   const location = useLocation();
-  const hideNavbarPaths = ['/login', '/admin'];
+  const hideNavbarPaths = ['/login', '/sign-in', '/admin'];
 
-  // التحقق إذا المسار الحالي هو /login أو بيبدأ بـ /admin
+  // التحقق إذا المسار الحالي يحتاج لإخفاء النافبار
   const shouldHideNavbar = hideNavbarPaths.some(path => 
-    path === '/login' ? location.pathname === path : location.pathname.startsWith(path)
+    path === '/login' ? location.pathname === path : 
+    path === '/sign-in' ? location.pathname === path :
+    location.pathname.startsWith(path)
   );
 
   // إضافة responsive padding بس لو النافبار موجود
@@ -106,7 +109,8 @@ const LayoutWrapper: React.FC = () => {
           <Route path="/wishlist" element={<Wishlist />} />
           
           {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login />} /> {/* Admin Only */}
+          <Route path="/sign-in" element={<CustomerSignIn />} /> {/* Customers */}
           
           {/* Admin Dashboard Routes */}
           <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
