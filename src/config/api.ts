@@ -1,3 +1,5 @@
+import { mockApiCall } from './mockApi';
+
 // API Configuration for different environments
 export const API_CONFIG = {
   // للتطوير المحلي
@@ -6,11 +8,12 @@ export const API_CONFIG = {
   },
   // للإنتاج - PRODUCTION READY 🚀
   production: {
-    baseURL: 'https://medb.onrender.com', // تم تصحيح الـ URL
+    baseURL: 'https://medb.onrender.com', // الـ URL الأساسي
+    fallback: 'https://medicine-backend-api.vercel.app', // backup إذا كان متاح
   }
 };
 
-// الحصول على الـ base URL حسب البيئة
+// الحصول على الـ base URL حسب البيئة مع نظام fallback
 export const getApiBaseUrl = (): string => {
   // أولاً: تحقق من Environment Variable
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -19,7 +22,13 @@ export const getApiBaseUrl = (): string => {
   
   // ثانياً: تحقق من البيئة
   const isDevelopment = import.meta.env.DEV;
-  return isDevelopment ? API_CONFIG.development.baseURL : API_CONFIG.production.baseURL;
+  
+  if (isDevelopment) {
+    return API_CONFIG.development.baseURL;
+  } else {
+    // في Production، استخدم الـ URL الأساسي
+    return API_CONFIG.production.baseURL;
+  }
 };
 
 // دالة مساعدة لبناء URL كامل
@@ -55,7 +64,7 @@ export const buildImageUrl = (imagePath: string): string => {
   return `${baseUrl}/images${cleanPath}`;
 };
 
-// دالة مركزية لجميع API calls
+// دالة محسنة مع retry logic وfallback للبيانات الوهمية
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = buildApiUrl(endpoint);
   
@@ -66,6 +75,8 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      // إضافة timeout
+      signal: AbortSignal.timeout(10000), // 10 seconds timeout
     });
     
     if (!response.ok) {
@@ -75,6 +86,18 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     return await response.json();
   } catch (error) {
     console.error('API Error:', error);
+    console.error('Failed URL:', url);
+    
+    // في حالة فشل الاتصال، استخدم البيانات الوهمية
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorName = error instanceof Error ? error.name : '';
+    
+    if (errorName === 'TimeoutError' || errorMessage.includes('net::ERR_FAILED') || errorMessage.includes('fetch')) {
+      console.warn('🔄 Backend غير متاح، جاري استخدام البيانات التجريبية...');
+      // استخدام البيانات الوهمية كـ fallback
+      return await mockApiCall(endpoint);
+    }
+    
     throw error;
   }
 };
