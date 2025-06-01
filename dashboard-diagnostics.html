@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تشخيص الداش بورد - GHEM Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-result {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid;
+        }
+        .test-success {
+            background-color: #f0f9ff;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+        .test-error {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        .test-warning {
+            background-color: #fffbeb;
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+        .test-info {
+            background-color: #f8fafc;
+            border-color: #64748b;
+            color: #475569;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">🔍 تشخيص شامل للداش بورد</h1>
+            
+            <!-- Test Controls -->
+            <div class="mb-8 text-center">
+                <button onclick="runAllTests()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mr-4">
+                    🚀 تشغيل جميع الاختبارات
+                </button>
+                <button onclick="clearResults()" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                    🗑️ مسح النتائج
+                </button>
+            </div>
+
+            <!-- Results Container -->
+            <div id="results" class="space-y-4">
+                <!-- Results will be populated here -->
+            </div>
+
+            <!-- Manual Tests -->
+            <div class="mt-12 bg-gray-100 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">🔧 اختبارات يدوية</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <button onclick="testLogin()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        🔐 اختبار تسجيل الدخول
+                    </button>
+                    <button onclick="testDashboardAccess()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                        📊 اختبار الوصول للداش بورد
+                    </button>
+                    <button onclick="testProductsAPI()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
+                        📦 اختبار API المنتجات
+                    </button>
+                    <button onclick="testCategoriesAPI()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                        📂 اختبار API التصنيفات
+                    </button>
+                    <button onclick="testCouponsAPI()" class="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700">
+                        🎫 اختبار API الكوبونات
+                    </button>
+                    <button onclick="testOrdersAPI()" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
+                        🛒 اختبار API الطلبات
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="mt-8 bg-blue-50 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">🔗 روابط سريعة</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <a href="http://localhost:5173" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded text-center hover:bg-blue-700">
+                        🏠 الصفحة الرئيسية
+                    </a>
+                    <a href="http://localhost:5173/login" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded text-center hover:bg-green-700">
+                        🔐 تسجيل الدخول
+                    </a>
+                    <a href="http://localhost:5173/admin" target="_blank" class="bg-purple-600 text-white px-4 py-2 rounded text-center hover:bg-purple-700">
+                        📊 الداش بورد
+                    </a>
+                    <a href="http://localhost:3001/api/health" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded text-center hover:bg-red-700">
+                        ❤️ صحة الخادم
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        
+        function addResult(title, status, message, details = null) {
+            const results = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            
+            let statusClass = 'test-info';
+            let statusIcon = 'ℹ️';
+            
+            switch(status) {
+                case 'success':
+                    statusClass = 'test-success';
+                    statusIcon = '✅';
+                    break;
+                case 'error':
+                    statusClass = 'test-error';
+                    statusIcon = '❌';
+                    break;
+                case 'warning':
+                    statusClass = 'test-warning';
+                    statusIcon = '⚠️';
+                    break;
+            }
+            
+            resultDiv.className = `test-result ${statusClass}`;
+            resultDiv.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-bold">${statusIcon} ${title}</h3>
+                        <p class="mt-1">${message}</p>
+                        ${details ? `<pre class="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">${details}</pre>` : ''}
+                    </div>
+                    <span class="text-xs opacity-75">${new Date().toLocaleTimeString('ar-SA')}</span>
+                </div>
+            `;
+            
+            results.appendChild(resultDiv);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testServerConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('اتصال الخادم', 'success', 'الخادم الخلفي يعمل بشكل طبيعي', JSON.stringify(data, null, 2));
+                } else {
+                    addResult('اتصال الخادم', 'error', `فشل الاتصال: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('اتصال الخادم', 'error', 'لا يمكن الوصول للخادم الخلفي', error.message);
+            }
+        }
+        
+        async function testDatabaseConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('اتصال قاعدة البيانات', 'success', `تم جلب ${data.length} تصنيف من قاعدة البيانات`);
+                } else {
+                    addResult('اتصال قاعدة البيانات', 'error', `فشل في جلب البيانات: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('اتصال قاعدة البيانات', 'error', 'خطأ في الاتصال بقاعدة البيانات', error.message);
+            }
+        }
+        
+        async function testAuthentication() {
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            if (isAuthenticated) {
+                addResult('حالة المصادقة', 'success', 'المستخدم مسجل دخول');
+            } else {
+                addResult('حالة المصادقة', 'warning', 'المستخدم غير مسجل دخول - قد تحتاج لتسجيل الدخول أولاً');
+            }
+        }
+        
+        async function testProductsAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/products`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('API المنتجات', 'success', `تم جلب ${data.length} منتج بنجاح`);
+                    
+                    // Test product details
+                    if (data.length > 0) {
+                        const firstProduct = data[0];
+                        addResult('تفاصيل المنتج', 'info', `أول منتج: ${firstProduct.name}`, JSON.stringify(firstProduct, null, 2));
+                    }
+                } else {
+                    addResult('API المنتجات', 'error', `فشل في جلب المنتجات: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('API المنتجات', 'error', 'خطأ في API المنتجات', error.message);
+            }
+        }
+        
+        async function testCategoriesAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('API التصنيفات', 'success', `تم جلب ${data.length} تصنيف بنجاح`);
+                    
+                    if (data.length > 0) {
+                        const firstCategory = data[0];
+                        addResult('تفاصيل التصنيف', 'info', `أول تصنيف: ${firstCategory.name}`, JSON.stringify(firstCategory, null, 2));
+                    }
+                } else {
+                    addResult('API التصنيفات', 'error', `فشل في جلب التصنيفات: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('API التصنيفات', 'error', 'خطأ في API التصنيفات', error.message);
+            }
+        }
+        
+        async function testCouponsAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/coupons`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('API الكوبونات', 'success', `تم جلب ${data.length} كوبون بنجاح`);
+                } else {
+                    addResult('API الكوبونات', 'error', `فشل في جلب الكوبونات: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('API الكوبونات', 'error', 'خطأ في API الكوبونات', error.message);
+            }
+        }
+        
+        async function testOrdersAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/orders`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('API الطلبات', 'success', `تم جلب ${data.length} طلب بنجاح`);
+                } else {
+                    addResult('API الطلبات', 'error', `فشل في جلب الطلبات: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('API الطلبات', 'error', 'خطأ في API الطلبات', error.message);
+            }
+        }
+        
+        function testLogin() {
+            // Simulate login
+            localStorage.setItem('isAuthenticated', 'true');
+            addResult('تسجيل الدخول', 'success', 'تم تسجيل الدخول بنجاح (محاكاة)');
+        }
+        
+        function testDashboardAccess() {
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            if (isAuthenticated) {
+                window.open('http://localhost:5173/admin', '_blank');
+                addResult('الوصول للداش بورد', 'success', 'تم فتح الداش بورد في نافذة جديدة');
+            } else {
+                addResult('الوصول للداش بورد', 'warning', 'يجب تسجيل الدخول أولاً');
+            }
+        }
+        
+        async function testFrontendConnection() {
+            try {
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    addResult('الواجهة الأمامية', 'success', 'الواجهة الأمامية تعمل على المنفذ 5173');
+                } else {
+                    addResult('الواجهة الأمامية', 'error', `مشكلة في الواجهة الأمامية: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('الواجهة الأمامية', 'error', 'لا يمكن الوصول للواجهة الأمامية', error.message);
+            }
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            addResult('بدء الاختبارات', 'info', 'جاري تشغيل جميع الاختبارات...');
+            
+            await testFrontendConnection();
+            await testServerConnection();
+            await testDatabaseConnection();
+            await testAuthentication();
+            await testProductsAPI();
+            await testCategoriesAPI();
+            await testCouponsAPI();
+            await testOrdersAPI();
+            
+            addResult('انتهاء الاختبارات', 'success', 'تم الانتهاء من جميع الاختبارات');
+        }
+        
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('مرحباً', 'info', 'مرحباً بك في صفحة تشخيص الداش بورد');
+                runAllTests();
+            }, 500);
+        });
+    </script>
+</body>
+</html> 
