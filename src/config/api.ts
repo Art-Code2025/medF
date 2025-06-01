@@ -76,11 +76,26 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
         ...options.headers,
       },
       // إضافة timeout
-      signal: AbortSignal.timeout(10000), // 10 seconds timeout
+      signal: AbortSignal.timeout(15000), // 15 seconds timeout
     });
     
+    // إذا لم تكن الاستجابة ناجحة
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: response.statusText };
+      }
+      
+      // إنشاء خطأ مفصل مع معلومات إضافية
+      const error = new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      (error as any).status = response.status;
+      (error as any).statusText = response.statusText;
+      (error as any).url = url;
+      (error as any).data = errorData;
+      
+      throw error;
     }
     
     return await response.json();
@@ -92,10 +107,47 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : '';
     
-    if (errorName === 'TimeoutError' || errorMessage.includes('net::ERR_FAILED') || errorMessage.includes('fetch')) {
+    // أخطاء الشبكة والاتصال
+    if (errorName === 'TimeoutError' || 
+        errorName === 'AbortError' ||
+        errorMessage.includes('net::ERR_FAILED') || 
+        errorMessage.includes('fetch') ||
+        errorMessage.includes('NetworkError') ||
+        errorMessage.includes('Failed to fetch')) {
+      
       console.warn('🔄 Backend غير متاح، جاري استخدام البيانات التجريبية...');
-      // استخدام البيانات الوهمية كـ fallback
+      
+      // في حالة أخطاء المصادقة أو الحساب، لا نستخدم البيانات الوهمية
+      if (endpoint.includes('auth/') || endpoint.includes('login') || endpoint.includes('register')) {
+        const networkError = new Error('Network connection failed');
+        (networkError as any).status = 0;
+        (networkError as any).isNetworkError = true;
+        throw networkError;
+      }
+      
+      // استخدام البيانات الوهمية للـ endpoints الأخرى فقط
       return await mockApiCall(endpoint);
+    }
+    
+    // إضافة معلومات إضافية للخطأ إذا لم تكن موجودة
+    if (error instanceof Error && !(error as any).status) {
+      if (errorMessage.includes('400')) {
+        (error as any).status = 400;
+      } else if (errorMessage.includes('401')) {
+        (error as any).status = 401;
+      } else if (errorMessage.includes('403')) {
+        (error as any).status = 403;
+      } else if (errorMessage.includes('404')) {
+        (error as any).status = 404;
+      } else if (errorMessage.includes('409')) {
+        (error as any).status = 409;
+      } else if (errorMessage.includes('422')) {
+        (error as any).status = 422;
+      } else if (errorMessage.includes('429')) {
+        (error as any).status = 429;
+      } else if (errorMessage.includes('500')) {
+        (error as any).status = 500;
+      }
     }
     
     throw error;

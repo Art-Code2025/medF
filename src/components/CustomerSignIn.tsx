@@ -120,16 +120,46 @@ const CustomerSignIn: React.FC = () => {
     } catch (error: any) {
       console.error('Login error:', error);
       
-      // رسائل خطأ مفصلة ودقيقة
-      if (error.message.includes('User not found') || error.message.includes('Invalid email')) {
-        setError('❌ البريد الإلكتروني غير موجود في نظامنا');
-      } else if (error.message.includes('Invalid password') || error.message.includes('Incorrect password')) {
-        setError('❌ كلمة المرور غير صحيحة');
-      } else if (error.message.includes('Invalid credentials')) {
-        setError('❌ البيانات المدخلة غير صحيحة، تحقق من البريد وكلمة المرور');
+      // معالجة محسنة لرسائل الخطأ مع ترجمة واضحة
+      let errorMessage = '';
+      
+      // التحقق من نوع الخطأ ورقم HTTP
+      if ((error as any).isNetworkError || (error as any).status === 0) {
+        // مشكلة في الشبكة أو انقطاع الإنترنت
+        errorMessage = '🌐 لا يمكن الاتصال بالخادم\n📶 تحقق من اتصالك بالإنترنت وحاول مرة أخرى';
+      } else if (error.status === 401 || error.message.includes('401')) {
+        // خطأ 401 - غير مصرح
+        errorMessage = '❌ البيانات المدخلة غير صحيحة\n📧 تأكد من البريد الإلكتروني وكلمة المرور';
+      } else if (error.status === 404 || error.message.includes('404') || error.message.includes('User not found') || error.message.includes('Invalid email')) {
+        // المستخدم غير موجود
+        errorMessage = '❌ هذا البريد الإلكتروني غير موجود في نظامنا\n📝 تأكد من البريد أو قم بإنشاء حساب جديد';
+      } else if (error.message.includes('Invalid password') || error.message.includes('Incorrect password') || error.message.includes('Wrong password')) {
+        // كلمة مرور خاطئة
+        errorMessage = '❌ كلمة المرور غير صحيحة\n🔑 تأكد من كلمة المرور أو استخدم "نسيت كلمة المرور"';
+      } else if (error.status === 400 || error.message.includes('400')) {
+        // بيانات غير صحيحة
+        errorMessage = '⚠️ البيانات المدخلة غير صحيحة\n📋 تحقق من صحة البريد الإلكتروني وكلمة المرور';
+      } else if (error.status === 429 || error.message.includes('429') || error.message.includes('Too many')) {
+        // محاولات كثيرة
+        errorMessage = '⏰ محاولات تسجيل دخول كثيرة\n⏱️ انتظر قليلاً ثم حاول مرة أخرى';
+      } else if (error.status === 500 || error.message.includes('500') || error.message.includes('Internal server')) {
+        // خطأ في الخادم
+        errorMessage = '🔧 مشكلة مؤقتة في النظام\n🔄 يرجى المحاولة مرة أخرى بعد قليل';
+      } else if (error.message.includes('Network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+        // مشكلة في الشبكة
+        errorMessage = '🌐 مشكلة في الاتصال بالإنترنت\n📶 تحقق من اتصالك وحاول مرة أخرى';
+      } else if (error.message.includes('Email already exists') || error.message.includes('User already exists')) {
+        // بريد موجود (للتسجيل)
+        errorMessage = '❌ البريد الإلكتروني مستخدم بالفعل\n🔄 جرب تسجيل الدخول أو استخدم بريد آخر';
+      } else if (error.message.includes('Invalid email format')) {
+        // تنسيق بريد خاطئ
+        errorMessage = '📧 تنسيق البريد الإلكتروني غير صحيح\n✏️ تأكد من كتابة البريد بالشكل الصحيح (example@domain.com)';
       } else {
-        setError(error.message || '❌ حدث خطأ في تسجيل الدخول، حاول مرة أخرى');
+        // رسالة عامة للأخطاء غير المتوقعة
+        errorMessage = '❌ حدث خطأ غير متوقع\n🔄 يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني';
       }
+      
+      setError(errorMessage);
       
       // تأثير اهتزاز عند الخطأ
       const form = document.querySelector('.customer-form');
@@ -149,26 +179,34 @@ const CustomerSignIn: React.FC = () => {
     
     // التحقق من البيانات
     if (!registerData.email.trim() || !registerData.password.trim() || !registerData.name.trim()) {
-      setError('⚠️ يرجى إدخال جميع البيانات المطلوبة');
+      setError('⚠️ يرجى إدخال جميع البيانات المطلوبة\n📝 الاسم والبريد وكلمة المرور ضرورية');
       setLoading(false);
       return;
     }
 
     // منع إنشاء حساب بـ email admin
     if (registerData.email === 'admin' || registerData.email === 'admin@admin') {
-      setError('🚫 لا يمكن إنشاء حساب بهذا البريد الإلكتروني');
+      setError('🚫 لا يمكن إنشاء حساب بهذا البريد الإلكتروني\n🔒 هذا البريد محجوز للنظام');
       setLoading(false);
       return;
     }
 
     if (registerData.password.length < 6) {
-      setError('⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      setError('⚠️ كلمة المرور قصيرة جداً\n🔒 يجب أن تكون 6 أحرف على الأقل');
       setLoading(false);
       return;
     }
 
     if (registerData.password !== registerData.confirmPassword) {
-      setError('❌ كلمة المرور غير متطابقة');
+      setError('❌ كلمة المرور غير متطابقة\n🔄 تأكد من إعادة كتابة نفس كلمة المرور');
+      setLoading(false);
+      return;
+    }
+
+    // التحقق من تنسيق البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(registerData.email)) {
+      setError('📧 تنسيق البريد الإلكتروني غير صحيح\n✏️ مثال صحيح: user@example.com');
       setLoading(false);
       return;
     }
@@ -217,14 +255,39 @@ const CustomerSignIn: React.FC = () => {
     } catch (error: any) {
       console.error('Register error:', error);
       
-      // رسائل خطأ مفصلة
-      if (error.message.includes('Email already exists') || error.message.includes('User already exists')) {
-        setError('❌ البريد الإلكتروني مستخدم بالفعل، جرب تسجيل الدخول أو استخدم بريد آخر');
-      } else if (error.message.includes('Invalid email')) {
-        setError('❌ تأكد من صحة البريد الإلكتروني');
+      // معالجة محسنة لرسائل خطأ التسجيل
+      let errorMessage = '';
+      
+      if ((error as any).isNetworkError || (error as any).status === 0) {
+        // مشكلة في الشبكة أو انقطاع الإنترنت
+        errorMessage = '🌐 لا يمكن الاتصال بالخادم\n📶 تحقق من اتصالك بالإنترنت وحاول مرة أخرى';
+      } else if (error.status === 409 || error.message.includes('409') || error.message.includes('Email already exists') || error.message.includes('User already exists')) {
+        // بريد مستخدم بالفعل
+        errorMessage = '❌ البريد الإلكتروني مستخدم بالفعل\n🔄 جرب تسجيل الدخول أو استخدم بريد إلكتروني آخر';
+      } else if (error.status === 400 || error.message.includes('400') || error.message.includes('Invalid email')) {
+        // بيانات غير صحيحة
+        errorMessage = '⚠️ البيانات المدخلة غير صحيحة\n📧 تأكد من صحة البريد الإلكتروني وقوة كلمة المرور';
+      } else if (error.message.includes('weak password') || error.message.includes('Password too weak')) {
+        // كلمة مرور ضعيفة
+        errorMessage = '🔒 كلمة المرور ضعيفة\n💪 استخدم مزيج من الأحرف والأرقام والرموز';
+      } else if (error.status === 422 || error.message.includes('422')) {
+        // بيانات غير مكتملة
+        errorMessage = '📝 بيانات غير مكتملة أو غير صحيحة\n✏️ تحقق من جميع الحقول المطلوبة';
+      } else if (error.status === 429 || error.message.includes('429') || error.message.includes('Too many')) {
+        // محاولات كثيرة
+        errorMessage = '⏰ محاولات إنشاء حساب كثيرة\n⏱️ انتظر قليلاً ثم حاول مرة أخرى';
+      } else if (error.status === 500 || error.message.includes('500') || error.message.includes('Internal server')) {
+        // خطأ في الخادم
+        errorMessage = '🔧 مشكلة مؤقتة في النظام\n🔄 يرجى المحاولة مرة أخرى بعد قليل';
+      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+        // مشكلة في الشبكة
+        errorMessage = '🌐 مشكلة في الاتصال بالإنترنت\n📶 تحقق من اتصالك وحاول مرة أخرى';
       } else {
-        setError(error.message || '❌ حدث خطأ في إنشاء الحساب، حاول مرة أخرى');
+        // رسالة عامة
+        errorMessage = '❌ حدث خطأ أثناء إنشاء الحساب\n🔄 يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني';
       }
+      
+      setError(errorMessage);
       
       // تأثير اهتزاز عند الخطأ
       const form = document.querySelector('.customer-form');
@@ -335,7 +398,13 @@ const CustomerSignIn: React.FC = () => {
             {error && (
               <div className="bg-red-500/20 border-2 border-red-500/40 rounded-xl p-4 mb-6 flex items-start animate-shake">
                 <AlertCircle className="w-6 h-6 text-red-300 mr-3 mt-0.5 flex-shrink-0" />
-                <p className="text-red-200 font-medium">{error}</p>
+                <div className="flex-1">
+                  {error.split('\n').map((line, index) => (
+                    <p key={index} className={`text-red-200 font-medium ${index > 0 ? 'mt-1 text-sm' : ''}`}>
+                      {line}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
 
