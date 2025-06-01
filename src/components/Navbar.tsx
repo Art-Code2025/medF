@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, Heart, Search, Menu, X, User, 
-  ChevronDown, Package, Stethoscope, Phone, Mail, MapPin
-} from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Phone, Mail, Instagram, Facebook, Twitter, Stethoscope } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getWishlistItems } from '../utils/wishlistUtils';
 
 interface CartItem {
   id: number;
@@ -16,68 +12,68 @@ interface CartItem {
 }
 
 const Navbar: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [wishlistCount, setWishlistCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  
   const location = useLocation();
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+  const [customerName, setCustomerName] = useState('');
 
-  // المسارات التي لا تحتاج للنافبار
-  const hideNavbarPaths = ['/login'];
-  const shouldShowNavbar = !hideNavbarPaths.includes(location.pathname);
+  // Check for routes where navbar should be hidden
+  const shouldShowNavbar = !location.pathname.startsWith('/admin') && location.pathname !== '/login';
 
   useEffect(() => {
-    // تحديث عدد المنتجات في السلة
+    // Load cart and wishlist counts
     const updateCartCount = () => {
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       setCartItems(cart);
     };
 
-    // تحديث عدد منتجات المفضلة
     const updateWishlistCount = () => {
-      const wishlistItems = getWishlistItems();
-      setWishlistCount(wishlistItems.length);
+      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      setWishlistCount(wishlist.length);
     };
 
-    updateCartCount();
-    updateWishlistCount();
-
-    // مراقبة تغييرات LocalStorage
     const handleStorageChange = () => {
       updateCartCount();
       updateWishlistCount();
     };
 
+    // Check customer login status
+    const customerData = localStorage.getItem('customerUser');
+    if (customerData) {
+      try {
+        const customer = JSON.parse(customerData);
+        setIsCustomerLoggedIn(true);
+        setCustomerName(customer.name || customer.email);
+      } catch (error) {
+        localStorage.removeItem('customerUser');
+      }
+    }
+
+    // Initial load
+    updateCartCount();
+    updateWishlistCount();
+
+    // Listen for storage changes
+    window.addEventListener('cartUpdated', handleStorageChange);
+    window.addEventListener('wishlistUpdated', handleStorageChange);
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('cartUpdated', updateCartCount);
-    window.addEventListener('wishlistUpdated', updateWishlistCount);
 
     return () => {
+      window.removeEventListener('cartUpdated', handleStorageChange);
+      window.removeEventListener('wishlistUpdated', handleStorageChange);
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cartUpdated', updateCartCount);
-      window.removeEventListener('wishlistUpdated', updateWishlistCount);
     };
   }, []);
 
-  // التحقق من تسجيل دخول العميل
-  const customerData = localStorage.getItem('customerUser');
-  const isCustomerLoggedIn = !!customerData;
-  let customerName = '';
-
-  if (isCustomerLoggedIn) {
-    try {
-      const customer = JSON.parse(customerData);
-      customerName = customer.name || 'عميل';
-    } catch (error) {
-      console.error('Error parsing customer data:', error);
-    }
-  }
-
   const handleLogout = () => {
     localStorage.removeItem('customerUser');
+    setIsCustomerLoggedIn(false);
+    setCustomerName('');
     setIsUserMenuOpen(false);
     toast.success('تم تسجيل الخروج بنجاح');
     navigate('/');
@@ -99,180 +95,212 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      {/* Top Bar - Similar to OTE Store */}
-      <div className="hidden lg:block bg-gray-100 border-b border-gray-200 py-2">
+      {/* Top Bar - Red Background like OTE Store */}
+      <div className="bg-red-600 text-white py-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <span>للاستفسار: 920033213</span>
+                <span>للاستفسار عن طلبك</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Mail className="w-4 h-4" />
-                <span>info@mawasim-medical.com</span>
+              <div className="flex items-center gap-2">
+                <span>☰</span>
+                <span>قائمة المفضلة</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>❤</span>
+                <span>تسجيل</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>💰</span>
+                <span>دخول</span>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
-              <span className="text-gray-600">تابعنا على:</span>
+              <span>تواصل معنا</span>
               <div className="flex items-center gap-2">
-                <a href="#" className="text-blue-600 hover:text-blue-800">Facebook</a>
-                <a href="#" className="text-blue-400 hover:text-blue-600">Twitter</a>
-                <a href="#" className="text-pink-600 hover:text-pink-800">Instagram</a>
-                <a href="#" className="text-green-600 hover:text-green-800">WhatsApp</a>
+                <a href="#" className="hover:text-gray-200">
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a href="#" className="hover:text-gray-200">
+                  <Facebook className="w-4 h-4" />
+                </a>
+                <a href="#" className="hover:text-gray-200">
+                  <Twitter className="w-4 h-4" />
+                </a>
+                <a href="#" className="hover:text-gray-200">
+                  <Phone className="w-4 h-4" />
+                </a>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Header - Clean Medical Style */}
+      {/* Main Header - White Background with Red Accents */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             
-            {/* Logo - Medical Style */}
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-white" />
+            {/* Cart Icon - Left Side like OTE */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                  <ShoppingCart className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">0.00 - منتجات 0</div>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">مواسم الطب</h1>
-                <p className="text-xs text-gray-500">للمنتجات الطبية</p>
+            </div>
+
+            {/* Search Bar - Center */}
+            <div className="flex-1 max-w-2xl mx-8">
+              <form onSubmit={handleSearch} className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="البحث عن..."
+                  className="w-full px-4 py-3 pr-12 border-2 border-red-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-600 hover:text-red-700 transition-colors duration-200"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
+
+            {/* Logo - Right Side */}
+            <Link to="/" className="flex items-center gap-3">
+              <div className="text-right">
+                <h1 className="text-2xl font-bold text-gray-900">العينة الطبية</h1>
+                <p className="text-sm text-red-600">لوازم مستشفيات وأدوات طبية</p>
+              </div>
+              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
+                <div className="text-white font-bold text-xs text-center">
+                  <div>OTE</div>
+                  <div className="text-[8px]">STORE</div>
+                </div>
               </div>
             </Link>
+          </div>
+        </div>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center space-x-8 space-x-reverse">
-              <Link 
-                to="/" 
-                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                  location.pathname === '/' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-700 hover:text-blue-600'
-                }`}
-              >
-                الرئيسية
-              </Link>
-              <Link 
-                to="/products" 
-                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                  location.pathname === '/products' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-700 hover:text-blue-600'
-                }`}
-              >
-                جميع المنتجات
-              </Link>
-              <a href="#categories" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200">
-                الأقسام
-              </a>
-              <a href="#about" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200">
-                من نحن
-              </a>
-              <a href="#contact" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200">
-                تواصل معنا
-              </a>
-            </nav>
-
-            {/* Right Side Actions */}
-            <div className="flex items-center gap-4">
-              
-              {/* User Menu */}
-              <div className="relative">
-                {isCustomerLoggedIn ? (
-                  <div>
-                    <button
-                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors duration-200"
-                    >
-                      <User className="w-5 h-5" />
-                      <span className="hidden sm:block text-sm">{customerName}</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-
-                    {isUserMenuOpen && (
-                      <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                        <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-sm font-medium text-gray-900">{customerName}</p>
-                          <p className="text-xs text-gray-500">عميل مسجل</p>
-                        </div>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                        >
-                          تسجيل الخروج
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link
-                    to="/sign-in"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors duration-200"
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="hidden sm:block text-sm">دخول</span>
-                  </Link>
-                )}
-              </div>
-
-              {/* Wishlist */}
-              <Link
-                to="/wishlist"
-                className="relative text-gray-700 hover:text-red-600 transition-colors duration-200"
-              >
-                <Heart className="w-5 h-5" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Cart */}
-              <Link
-                to="/cart"
-                className="relative text-gray-700 hover:text-blue-600 transition-colors duration-200"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {totalCartItems > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {totalCartItems}
-                  </span>
-                )}
-              </Link>
-
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="lg:hidden text-gray-700 hover:text-blue-600 transition-colors duration-200"
-              >
-                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
+        {/* Navigation Menu - Red Background */}
+        <div className="bg-red-600 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center h-12">
+              <nav className="flex items-center space-x-8 space-x-reverse">
+                <Link 
+                  to="/products" 
+                  className="px-4 py-2 text-sm font-medium hover:bg-red-700 rounded transition-colors duration-200"
+                >
+                  جميع المنتجات
+                </Link>
+                <Link 
+                  to="/products?category=1" 
+                  className="px-4 py-2 text-sm font-medium hover:bg-red-700 rounded transition-colors duration-200"
+                >
+                  عروضنا التجارية
+                </Link>
+                <Link 
+                  to="/products?category=2" 
+                  className="px-4 py-2 text-sm font-medium hover:bg-red-700 rounded transition-colors duration-200"
+                >
+                  تسوق حسب الأقسام
+                </Link>
+              </nav>
             </div>
           </div>
         </div>
 
-        {/* Search Bar - Prominent like OTE Store */}
-        <div className="bg-gray-50 border-t border-gray-200 py-3">
+        {/* User Actions Bar */}
+        <div className="bg-gray-50 border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث عن المنتجات الطبية، الأدوات، الأجهزة..."
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              />
-              <button
-                type="submit"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            </form>
+            <div className="flex items-center justify-between h-12">
+              
+              {/* Left Side - User Actions */}
+              <div className="flex items-center gap-6">
+                {/* User Menu */}
+                <div className="relative">
+                  {isCustomerLoggedIn ? (
+                    <div>
+                      <button
+                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                        className="flex items-center gap-2 text-gray-700 hover:text-red-600 transition-colors duration-200"
+                      >
+                        <User className="w-5 h-5" />
+                        <span className="text-sm">{customerName}</span>
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+
+                      {isUserMenuOpen && (
+                        <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                          <div className="px-4 py-2 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900">{customerName}</p>
+                            <p className="text-xs text-gray-500">عميل مسجل</p>
+                          </div>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                          >
+                            تسجيل الخروج
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link
+                      to="/sign-in"
+                      className="flex items-center gap-1 text-gray-700 hover:text-red-600 transition-colors duration-200"
+                    >
+                      <User className="w-5 h-5" />
+                      <span className="text-sm">مرحبا تسجيل الدخول</span>
+                    </Link>
+                  )}
+                </div>
+
+                {/* Wishlist */}
+                <Link
+                  to="/wishlist"
+                  className="relative text-gray-700 hover:text-red-600 transition-colors duration-200 flex items-center gap-1"
+                >
+                  <Heart className="w-5 h-5" />
+                  <span className="text-sm">رغباتي</span>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Cart */}
+                <Link
+                  to="/cart"
+                  className="relative text-gray-700 hover:text-red-600 transition-colors duration-200 flex items-center gap-1"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="text-sm">سلة التسوق</span>
+                  {totalCartItems > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {totalCartItems}
+                    </span>
+                  )}
+                </Link>
+              </div>
+
+              {/* Right Side - Breadcrumb Style */}
+              <div className="text-sm text-gray-600">
+                <Link to="/" className="hover:text-red-600">الرئيسية</Link>
+                <span className="mx-2">/</span>
+                <span>المتجر</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -282,38 +310,36 @@ const Navbar: React.FC = () => {
             <div className="px-4 py-3 space-y-2">
               <Link
                 to="/"
-                className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                  location.pathname === '/' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
+                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
                 onClick={() => setIsMenuOpen(false)}
               >
                 الرئيسية
               </Link>
               <Link
                 to="/products"
-                className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                  location.pathname === '/products' 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
+                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
                 onClick={() => setIsMenuOpen(false)}
               >
                 جميع المنتجات
+              </Link>
+              <Link
+                to="/cart"
+                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                سلة التسوق
+              </Link>
+              <Link
+                to="/wishlist"
+                className="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-red-600 hover:bg-gray-50"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                المفضلة
               </Link>
             </div>
           </div>
         )}
       </header>
-
-      {/* Click outside handler for user menu */}
-      {isUserMenuOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsUserMenuOpen(false)}
-        />
-      )}
     </>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Heart, ShoppingCart, Package, Grid, List, Filter, SlidersHorizontal, Search } from 'lucide-react';
+import { ChevronLeft, Star, Heart, ShoppingCart, Package, Grid, List, Filter, SlidersHorizontal, Search, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { buildImageUrl, apiCall, API_ENDPOINTS } from '../config/api';
 import { addToCartUnified } from '../utils/cartUtils';
@@ -153,7 +153,7 @@ const AllProducts: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-32">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">جاري تحميل المنتجات...</p>
         </div>
       </div>
@@ -161,17 +161,17 @@ const AllProducts: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-32">
+    <div className="min-h-screen bg-white pt-40">
       <div className="max-w-7xl mx-auto">
         <div className="flex gap-6 p-4">
           
-          {/* Sidebar - Exact OTE Store Style */}
-          <aside className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-fit sticky top-36">
+          {/* Sidebar - OTE Store Style */}
+          <aside className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-fit sticky top-44">
             
             {/* Categories Section */}
             <div className="p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5 text-blue-600" />
+                <Package className="w-5 h-5 text-red-600" />
                 تسوق حسب الأقسام
               </h2>
               
@@ -180,7 +180,7 @@ const AllProducts: React.FC = () => {
                   onClick={() => handleCategoryChange(null)}
                   className={`w-full text-right px-4 py-3 rounded-lg transition-colors duration-200 flex items-center justify-between ${
                     selectedCategory === null 
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                      ? 'bg-red-50 text-red-600 border border-red-200' 
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -194,7 +194,7 @@ const AllProducts: React.FC = () => {
                     onClick={() => handleCategoryChange(category.id)}
                     className={`w-full text-right px-4 py-3 rounded-lg transition-colors duration-200 flex items-center justify-between ${
                       selectedCategory === category.id 
-                        ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                        ? 'bg-red-50 text-red-600 border border-red-200' 
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -208,7 +208,7 @@ const AllProducts: React.FC = () => {
             {/* Filter Section */}
             <div className="px-6 pb-6 border-t border-gray-200">
               <h3 className="text-sm font-bold text-gray-900 mb-4 mt-6 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+                <SlidersHorizontal className="w-4 h-4 text-red-600" />
                 فلترة النتائج
               </h3>
               
@@ -217,19 +217,19 @@ const AllProducts: React.FC = () => {
                 <h4 className="text-sm font-medium text-gray-700 mb-2">السعر</h4>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     أقل من 100 ر.س
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     100 - 500 ر.س
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     500 - 1000 ر.س
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     أكثر من 1000 ر.س
                   </label>
                 </div>
@@ -240,42 +240,18 @@ const AllProducts: React.FC = () => {
                 <h4 className="text-sm font-medium text-gray-700 mb-2">العلامة التجارية</h4>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     العلامة المميزة
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     علامة طبية
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input type="checkbox" className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
                     مستورد
                   </label>
                 </div>
-              </div>
-            </div>
-
-            {/* Featured Categories - Like OTE */}
-            <div className="p-6 border-t border-gray-200">
-              <h3 className="text-sm font-bold text-gray-900 mb-4">الأقسام الرئيسية</h3>
-              <div className="space-y-3">
-                {categories.slice(0, 6).map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategoryChange(category.id)}
-                    className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                  >
-                    <img
-                      src={buildImageUrl(category.image)}
-                      alt={category.name}
-                      className="w-12 h-12 object-cover rounded-lg"
-                    />
-                    <div className="text-right flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm">{category.name}</h4>
-                      <p className="text-xs text-gray-500 line-clamp-1">{category.description}</p>
-                    </div>
-                  </button>
-                ))}
               </div>
             </div>
           </aside>
@@ -307,7 +283,7 @@ const AllProducts: React.FC = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     >
                       <option value="newest">الأحدث</option>
                       <option value="price-low">السعر: من الأقل للأعلى</option>
@@ -322,7 +298,7 @@ const AllProducts: React.FC = () => {
                       onClick={() => setViewMode('grid')}
                       className={`p-2 rounded-lg border transition-colors duration-200 ${
                         viewMode === 'grid' 
-                          ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                          ? 'bg-red-50 border-red-200 text-red-600' 
                           : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -332,7 +308,7 @@ const AllProducts: React.FC = () => {
                       onClick={() => setViewMode('list')}
                       className={`p-2 rounded-lg border transition-colors duration-200 ${
                         viewMode === 'list' 
-                          ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                          ? 'bg-red-50 border-red-200 text-red-600' 
                           : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -347,11 +323,11 @@ const AllProducts: React.FC = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-gray-600">الفلاتر النشطة:</span>
                   {selectedCategory && (
-                    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    <div className="flex items-center gap-1 bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm">
                       {categories.find(c => c.id === selectedCategory)?.name}
                       <button
                         onClick={() => handleCategoryChange(null)}
-                        className="ml-1 text-blue-600 hover:text-blue-800"
+                        className="ml-1 text-red-600 hover:text-red-800"
                       >
                         ×
                       </button>
@@ -372,7 +348,7 @@ const AllProducts: React.FC = () => {
               )}
             </div>
 
-            {/* Products Grid - Exact OTE Style */}
+            {/* Products Grid - OTE Store Style */}
             <div className={`grid gap-6 ${
               viewMode === 'grid' 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
@@ -381,10 +357,17 @@ const AllProducts: React.FC = () => {
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 group ${
+                  className={`bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 group relative ${
                     viewMode === 'list' ? 'flex' : ''
                   }`}
                 >
+                  {/* Discount Badge */}
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold z-10">
+                      خصم {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                    </div>
+                  )}
+
                   {/* Product Image */}
                   <div className={`relative overflow-hidden ${
                     viewMode === 'list' ? 'w-48 h-48' : 'aspect-square'
@@ -397,28 +380,25 @@ const AllProducts: React.FC = () => {
                       />
                     </Link>
                     
-                    {/* Wishlist Button */}
-                    <button
-                      onClick={() => handleWishlistToggle(product)}
-                      className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 ${
-                        isInWishlist(product.id)
-                          ? 'bg-red-500 text-white'
-                          : 'bg-white/80 text-gray-600 hover:bg-red-50 hover:text-red-600'
-                      }`}
-                    >
-                      <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
-                    </button>
-
-                    {/* Discount Badge */}
-                    {product.originalPrice && product.originalPrice > product.price && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                        خصم {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-                      </div>
-                    )}
+                    {/* Quick Actions */}
+                    <div className="absolute bottom-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleWishlistToggle(product)}
+                        className="bg-white p-2 rounded-full shadow-md hover:bg-red-50"
+                      >
+                        <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'text-red-600 fill-current' : 'text-gray-600'}`} />
+                      </button>
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="bg-white p-2 rounded-full shadow-md hover:bg-blue-50"
+                      >
+                        <Eye className="w-4 h-4 text-gray-600" />
+                      </Link>
+                    </div>
 
                     {/* Stock Status */}
                     {product.stock < 10 && product.stock > 0 && (
-                      <div className="absolute bottom-3 left-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      <div className="absolute bottom-3 right-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                         آخر {product.stock} قطع
                       </div>
                     )}
@@ -433,13 +413,12 @@ const AllProducts: React.FC = () => {
 
                   {/* Product Info - OTE Style */}
                   <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                    {/* Product Model/Brand */}
                     <div className="text-xs text-gray-500 mb-1">
-                      الموديل: {product.id}
+                      {categories.find(c => c.id === product.categoryId)?.name || 'منتج طبي'}
                     </div>
 
                     <Link to={`/product/${product.id}`}>
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors duration-200">
+                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-red-600 transition-colors duration-200">
                         {product.name}
                       </h3>
                     </Link>
@@ -448,7 +427,7 @@ const AllProducts: React.FC = () => {
                       {product.description}
                     </p>
 
-                    {/* Rating - Like OTE */}
+                    {/* Rating - OTE Style */}
                     <div className="flex items-center gap-1 mb-3">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -460,10 +439,10 @@ const AllProducts: React.FC = () => {
                       ))}
                     </div>
 
-                    {/* Price Section - Exact OTE Style */}
+                    {/* Price Section - OTE Style */}
                     <div className="mb-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-lg font-bold text-red-600">
                           {product.price.toFixed(2)} ر.س
                         </span>
                         {product.originalPrice && product.originalPrice > product.price && (
@@ -471,9 +450,6 @@ const AllProducts: React.FC = () => {
                             {product.originalPrice.toFixed(2)} ر.س
                           </span>
                         )}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        السعر بدون ضريبة: {product.price.toFixed(2)} ر.س
                       </div>
                     </div>
 
@@ -484,7 +460,7 @@ const AllProducts: React.FC = () => {
                       className={`w-full py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 font-medium text-sm ${
                         product.stock === 0
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-red-600 text-white hover:bg-red-700'
                       }`}
                     >
                       <ShoppingCart className="w-4 h-4" />
@@ -495,11 +471,11 @@ const AllProducts: React.FC = () => {
                     <div className="flex items-center justify-between mt-3 text-xs">
                       <button
                         onClick={() => handleWishlistToggle(product)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                        className="text-red-600 hover:text-red-800 transition-colors duration-200"
                       >
                         إضافة لرغباتي
                       </button>
-                      <button className="text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                      <button className="text-red-600 hover:text-red-800 transition-colors duration-200">
                         اضافة للمقارنة
                       </button>
                     </div>
@@ -542,7 +518,7 @@ const AllProducts: React.FC = () => {
                     handleCategoryChange(null);
                     setSearchQuery('');
                   }}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                  className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors duration-200"
                 >
                   عرض جميع المنتجات
                 </button>
