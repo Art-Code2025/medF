@@ -12,7 +12,7 @@ import cover1 from './assets/cover1.jpg';
 import { createCategorySlug, createProductSlug } from './utils/slugify';
 import cover2 from './assets/cover2.jpg';
 import cover3 from './assets/cover3.jpg';
-import { apiCall, API_ENDPOINTS, buildImageUrl } from './config/api';
+import { apiCall, API_ENDPOINTS, buildImageUrl, getFallbackImage } from './config/api';
 import { addToCartUnified } from './utils/cartUtils';
 
 interface Product {
@@ -58,7 +58,32 @@ const App: React.FC = () => {
   // Add quantity state for mobile cards
   const [quantities, setQuantities] = useState<{[key: number]: number}>({});
 
-  const heroImages = [cover1, cover2, cover3];
+  const heroSlides = [
+    {
+      id: 1,
+      image: cover1,
+      title: 'العينة الطبية',
+      subtitle: 'أحدث المعدات الطبية عالية الجودة للمؤسسات الطبية',
+      buttonText: 'استكشف المنتجات',
+      buttonLink: '/products'
+    },
+    {
+      id: 2,
+      image: cover2,
+      title: 'معدات طبية متطورة',
+      subtitle: 'تقنيات حديثة ومبتكرة للمؤسسات الطبية والرعاية الصحية',
+      buttonText: 'تصفح الآن',
+      buttonLink: '/products'
+    },
+    {
+      id: 3,
+      image: cover3,
+      title: 'رعاية صحية شاملة',
+      subtitle: 'كل ما تحتاجه من معدات طبية وأدوات عالية الجودة',
+      buttonText: 'ابدأ التسوق',
+      buttonLink: '/products'
+    }
+  ];
 
   // Load cart count from localStorage
   useEffect(() => {
@@ -187,13 +212,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 3000); // Faster slide transition
     return () => clearInterval(timer);
-  }, [heroImages.length]);
+  }, [heroSlides.length]);
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
 
   // No loading screen - instant display
 
@@ -280,7 +305,7 @@ const App: React.FC = () => {
       {/* Premium Hero Slider - أبعاد مضبوطة بدون فراغات */}
       <section className="relative h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] xl:h-[450px] overflow-hidden -mt-16 sm:-mt-20 lg:-mt-24">
         <div className="absolute inset-0">
-          <ImageSlider images={heroImages} currentIndex={currentSlide} />
+          <ImageSlider slides={heroSlides} />
         </div>
         
         {/* Modern Navigation Buttons - لون موحد رمادي */}
@@ -343,7 +368,7 @@ const App: React.FC = () => {
                                 alt={categoryProduct.category.name}
                                 className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
                                 onError={(e) => {
-                                  e.currentTarget.src = `https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=60&ixlib=rb-4.0.3`;
+                                  e.currentTarget.src = getFallbackImage('category');
                                 }}
                               />
                               
@@ -414,7 +439,7 @@ const App: React.FC = () => {
                               alt={categoryProduct.category.name}
                               className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
                               onError={(e) => {
-                                e.currentTarget.src = `https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=60&ixlib=rb-4.0.3`;
+                                e.currentTarget.src = getFallbackImage('category');
                               }}
                             />
                             
@@ -527,7 +552,7 @@ const App: React.FC = () => {
                             alt={product.name}
                             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
                             onError={(e) => {
-                              e.currentTarget.src = '/placeholder-image.png';
+                              e.currentTarget.src = getFallbackImage('product');
                             }}
                           />
                           {/* Premium Overlay */}

@@ -20,7 +20,40 @@ import b2 from '../assets/b1.png';
 import b3 from '../assets/b3.png';
 import b4 from '../assets/b4.png';
 
-const heroImages = [b1, b2, b3, b4];
+const heroSlides = [
+  {
+    id: 1,
+    image: b1,
+    title: 'شركة مواسم الخدمات',
+    subtitle: 'حلول راقية ومبتكرة لنظافة الفلل والقصور والفنادق والمولات بأعلى معايير الجودة العالمية',
+    buttonText: 'استكشف منتجاتنا',
+    buttonLink: '/products'
+  },
+  {
+    id: 2,
+    image: b2,
+    title: 'معدات طبية متطورة',
+    subtitle: 'تقنيات حديثة ومبتكرة للمؤسسات الطبية والرعاية الصحية',
+    buttonText: 'تصفح الآن',
+    buttonLink: '/products'
+  },
+  {
+    id: 3,
+    image: b3,
+    title: 'رعاية صحية شاملة',
+    subtitle: 'كل ما تحتاجه من معدات طبية وأدوات عالية الجودة',
+    buttonText: 'ابدأ التسوق',
+    buttonLink: '/products'
+  },
+  {
+    id: 4,
+    image: b4,
+    title: 'العينة الطبية',
+    subtitle: 'أحدث المعدات الطبية عالية الجودة للمؤسسات الطبية',
+    buttonText: 'اكتشف المزيد',
+    buttonLink: '/products'
+  }
+];
 
 // تعريف نوع الخدمة
 interface Service {
@@ -383,7 +416,7 @@ function Home() {
       {/* قسم الهيرو */}
       <div className="w-full h-[400px] md:h-[600px] relative overflow-hidden">
         <Suspense fallback={<div className="w-full h-full bg-gradient-to-r from-pink-200 to-purple-200"></div>}>
-          <ImageSlider images={heroImages} />
+          <ImageSlider slides={heroSlides} />
         </Suspense>
         <div className="absolute inset-0 bg-gradient-to-b from-pink-900/40 to-purple-900/30 flex flex-col items-center justify-center text-white px-4">
           <div className="max-w-4xl mx-auto text-center">

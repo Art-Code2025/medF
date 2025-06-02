@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Star, Heart, ShoppingCart, Package, Truck, Shield, Award, Phone, Mail, MapPin, Clock, Facebook, Twitter, Instagram, Eye, Users, Briefcase, Home, Accessibility, Stethoscope, Sparkles, Crown, Gem, Zap } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { buildImageUrl, apiCall, API_ENDPOINTS } from '../config/api';
+import { buildImageUrl, apiCall, API_ENDPOINTS, getFallbackImage } from '../config/api';
 import { addToCartUnified } from '../utils/cartUtils';
 import { isInWishlist, addToWishlist, removeFromWishlist } from '../utils/wishlistUtils';
 import ImageSlider from './ImageSlider';
@@ -209,6 +209,9 @@ const HomePage: React.FC = () => {
                       src={buildImageUrl(product.mainImage)}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = getFallbackImage('product');
+                      }}
                     />
                   </Link>
                   
@@ -309,6 +312,9 @@ const HomePage: React.FC = () => {
                     src={buildImageUrl(category.image)}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      e.currentTarget.src = getFallbackImage('category');
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                   <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
@@ -381,6 +387,9 @@ const HomePage: React.FC = () => {
                       src={buildImageUrl(product.mainImage)}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = getFallbackImage('product');
+                      }}
                     />
                   </Link>
                   

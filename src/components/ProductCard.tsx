@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { Heart, Eye } from 'lucide-react';
 import { createProductSlug } from '../utils/slugify';
 import { addToCartUnified, addToWishlistUnified, removeFromWishlistUnified } from '../utils/cartUtils';
-import { buildImageUrl, apiCall, API_ENDPOINTS } from '../config/api';
+import { buildImageUrl, apiCall, API_ENDPOINTS, getFallbackImage } from '../config/api';
 
 
 interface Product {
@@ -159,6 +159,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
               alt={product.name}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = getFallbackImage('product');
+              }}
             />
             <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-pink-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold shadow-md">
               جديد
@@ -272,8 +275,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
           src={buildImageUrl(product.mainImage)}
           alt={product.name}
           className="w-full h-full object-cover transition-all duration-500 sm:duration-700 group-hover:scale-105"
+          loading="lazy"
           onError={(e) => {
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=60&ixlib=rb-4.0.3';
+            e.currentTarget.src = getFallbackImage('product');
           }}
         />
         

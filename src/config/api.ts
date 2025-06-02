@@ -41,11 +41,22 @@ export const buildApiUrl = (endpoint: string): string => {
   return `${baseUrl}/api/${finalEndpoint}`;
 };
 
-// دالة مساعدة لبناء URL الصور - محدثة
+// دالة مساعدة لبناء URL الصور - محدثة ومحسنة
 export const buildImageUrl = (imagePath: string): string => {
-  if (!imagePath) return '/placeholder-image.png';
-  if (imagePath.startsWith('http')) return imagePath;
-  if (imagePath.startsWith('data:image/')) return imagePath;
+  // إذا لم يكن هناك مسار، استخدم صورة طبية افتراضية
+  if (!imagePath) {
+    return 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3';
+  }
+  
+  // إذا كان المسار يبدأ بـ http، فهو URL كامل
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  
+  // إذا كان base64 data URL
+  if (imagePath.startsWith('data:image/')) {
+    return imagePath;
+  }
   
   const baseUrl = getApiBaseUrl();
   
@@ -62,6 +73,17 @@ export const buildImageUrl = (imagePath: string): string => {
   // إذا كان مسار عادي، أضف /images/ قبله
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
   return `${baseUrl}/images${cleanPath}`;
+};
+
+// دالة مساعدة للحصول على صورة احتياطية حسب النوع
+export const getFallbackImage = (type: 'product' | 'category' | 'general' = 'general'): string => {
+  const fallbackImages = {
+    product: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3',
+    category: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3',
+    general: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+  };
+  
+  return fallbackImages[type];
 };
 
 // دالة محسنة مع retry logic وfallback للبيانات الوهمية

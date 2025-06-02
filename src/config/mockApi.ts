@@ -1,25 +1,188 @@
 // Mock API للاختبار عند عدم توفر الخادم
 export const MOCK_DATA = {
   categories: [
-    { id: 1, name: 'ملابس التخرج', description: 'مجموعة متنوعة من ملابس التخرج الأنيقة', image: '/images/graduation-clothes.jpg', isActive: true, createdAt: '2025-05-30T00:00:00Z' },
-    { id: 2, name: 'الإكسسوارات', description: 'إكسسوارات التخرج والمناسبات الخاصة', image: '/images/accessories.jpg', isActive: true, createdAt: '2025-05-30T00:00:00Z' },
-    { id: 3, name: 'الملابس المدرسية', description: 'زي مدرسي عالي الجودة ومريح', image: '/images/school-uniforms.jpg', isActive: true, createdAt: '2025-05-30T00:00:00Z' }
+    { 
+      id: 1, 
+      name: 'معدات طبية أساسية', 
+      description: 'أدوات ومعدات طبية أساسية للعيادات والمستشفيات', 
+      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 2, 
+      name: 'أجهزة التشخيص', 
+      description: 'أجهزة التشخيص والفحص الطبي المتقدمة', 
+      image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 3, 
+      name: 'مستلزمات طبية', 
+      description: 'مستلزمات ولوازم طبية يومية للرعاية الصحية', 
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 4, 
+      name: 'أدوات جراحية', 
+      description: 'أدوات جراحية عالية الدقة والجودة', 
+      image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 5, 
+      name: 'أجهزة مراقبة', 
+      description: 'أجهزة مراقبة العلامات الحيوية والحالة الصحية', 
+      image: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccf?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    }
   ],
   
   products: [
-    { id: 1, name: 'عباية تخرج كلاسيكية', description: 'عباية تخرج أنيقة مصنوعة من أجود الخامات', price: 250, originalPrice: 300, stock: 50, categoryId: 1, productType: 'عباية تخرج', mainImage: '/images/graduation-gown-1.jpg', detailedImages: [], specifications: [{ name: 'المادة', value: 'بوليستر عالي الجودة' }], isActive: true, createdAt: '2025-05-30T00:00:00Z' },
-    { id: 2, name: 'كاب التخرج الأكاديمي', description: 'كاب تخرج تقليدي مع شرابة ذهبية', price: 80, stock: 100, categoryId: 2, productType: 'كاب فقط', mainImage: '/images/graduation-cap-1.jpg', detailedImages: [], specifications: [{ name: 'المادة', value: 'قطن مخلوط' }], isActive: true, createdAt: '2025-05-30T00:00:00Z' },
-    { id: 3, name: 'وشاح التخرج الذهبي', description: 'وشاح تخرج أنيق باللون الذهبي', price: 45, stock: 75, categoryId: 2, productType: 'وشاح وكاب', mainImage: '/images/graduation-sash-1.jpg', detailedImages: [], specifications: [{ name: 'المادة', value: 'ساتان' }], isActive: true, createdAt: '2025-05-30T00:00:00Z' },
-    { id: 4, name: 'مريول مدرسي للبنات', description: 'مريول مدرسي مريح وعملي', price: 120, stock: 60, categoryId: 3, productType: 'مريول مدرسي', mainImage: '/images/school-uniform-1.jpg', detailedImages: [], specifications: [{ name: 'المادة', value: 'قطن 100%' }], isActive: true, createdAt: '2025-05-30T00:00:00Z' },
-    { id: 5, name: 'جاكيت التخرج الرسمي', description: 'جاكيت تخرج رسمي للمناسبات الخاصة', price: 180, originalPrice: 220, stock: 30, categoryId: 1, productType: 'جاكيت', mainImage: '/images/graduation-jacket-1.jpg', detailedImages: [], specifications: [{ name: 'المادة', value: 'صوف مخلوط' }], isActive: true, createdAt: '2025-05-30T00:00:00Z' }
+    { 
+      id: 1, 
+      name: 'سماعة طبية رقمية', 
+      description: 'سماعة طبية رقمية عالية الجودة لتشخيص دقيق', 
+      price: 450, 
+      originalPrice: 550, 
+      stock: 25, 
+      categoryId: 1, 
+      productType: 'أداة تشخيص', 
+      mainImage: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3',
+        'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'المادة', value: 'ستانلس ستيل طبي' }, { name: 'الضمان', value: 'سنتان' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 2, 
+      name: 'جهاز قياس ضغط الدم', 
+      description: 'جهاز قياس ضغط الدم الرقمي للاستخدام المنزلي والطبي', 
+      price: 280, 
+      stock: 40, 
+      categoryId: 2, 
+      productType: 'جهاز مراقبة', 
+      mainImage: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'الدقة', value: '±3 mmHg' }, { name: 'البطارية', value: 'قابلة للشحن' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 3, 
+      name: 'ترمومتر رقمي بالأشعة تحت الحمراء', 
+      description: 'ترمومتر رقمي دقيق وسريع للقياس عن بعد', 
+      price: 120, 
+      stock: 60, 
+      categoryId: 2, 
+      productType: 'أداة قياس', 
+      mainImage: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccf?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccf?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'الدقة', value: '±0.2°C' }, { name: 'المدى', value: '3-5 سم' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 4, 
+      name: 'قفازات طبية معقمة', 
+      description: 'قفازات طبية معقمة للاستخدام الواحد عالية الجودة', 
+      price: 45, 
+      stock: 200, 
+      categoryId: 3, 
+      productType: 'مستلزم طبي', 
+      mainImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'المادة', value: 'نيترايل' }, { name: 'العدد', value: '100 قفاز/علبة' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 5, 
+      name: 'أدوات جراحية أساسية', 
+      description: 'مجموعة أدوات جراحية أساسية للعمليات البسيطة', 
+      price: 850, 
+      originalPrice: 950, 
+      stock: 15, 
+      categoryId: 4, 
+      productType: 'أدوات جراحية', 
+      mainImage: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'المادة', value: 'ستانلس ستيل جراحي' }, { name: 'العدد', value: '12 أداة' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 6, 
+      name: 'جهاز قياس السكر', 
+      description: 'جهاز قياس السكر في الدم سهل الاستخدام ودقيق', 
+      price: 180, 
+      stock: 35, 
+      categoryId: 2, 
+      productType: 'جهاز تحليل', 
+      mainImage: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'الدقة', value: '±10 mg/dL' }, { name: 'الذاكرة', value: '300 قراءة' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 7, 
+      name: 'كمامات طبية N95', 
+      description: 'كمامات طبية عالية الحماية N95 معتمدة', 
+      price: 65, 
+      stock: 150, 
+      categoryId: 3, 
+      productType: 'معدات حماية', 
+      mainImage: 'https://images.unsplash.com/photo-1584362917165-526a968579e8?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1584362917165-526a968579e8?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'المعيار', value: 'N95' }, { name: 'العدد', value: '20 كمامة/علبة' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    },
+    { 
+      id: 8, 
+      name: 'جهاز مراقبة نبضات القلب', 
+      description: 'جهاز مراقبة نبضات القلب المحمول للاستخدام الشخصي', 
+      price: 320, 
+      stock: 20, 
+      categoryId: 5, 
+      productType: 'جهاز مراقبة', 
+      mainImage: 'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=600&h=600&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3', 
+      detailedImages: [
+        'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=800&h=800&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
+      ], 
+      specifications: [{ name: 'البطارية', value: '48 ساعة' }, { name: 'الاتصال', value: 'بلوتوث' }], 
+      isActive: true, 
+      createdAt: '2025-05-30T00:00:00Z' 
+    }
   ],
 
   orders: [
-    { id: 1, customerName: 'أحمد محمد علي', customerEmail: 'ahmed@example.com', customerPhone: '0551234567', address: 'حي النور، شارع العشرين', city: 'الرياض', items: [{ productId: 1, productName: 'عباية تخرج كلاسيكية', price: 250, quantity: 1, totalPrice: 250 }], total: 296, status: 'pending', createdAt: '2025-05-30T00:00:00Z' },
-    { id: 2, customerName: 'فاطمة عبدالله', customerEmail: 'fatma@example.com', customerPhone: '0559876543', address: 'حي الملك فهد، شارع الخامس', city: 'جدة', items: [{ productId: 2, productName: 'كاب التخرج الأكاديمي', price: 80, quantity: 2, totalPrice: 160 }], total: 167.25, status: 'confirmed', createdAt: '2025-05-29T00:00:00Z' },
-    { id: 3, customerName: 'خالد السعيد', customerEmail: 'khalid@example.com', customerPhone: '0563456789', address: 'حي الأندلس، شارع التاسع', city: 'الدمام', items: [{ productId: 3, productName: 'وشاح التخرج الذهبي', price: 45, quantity: 5, totalPrice: 225 }], total: 240.50, status: 'shipped', createdAt: '2025-05-28T00:00:00Z' },
-    { id: 4, customerName: 'نورا أحمد', customerEmail: 'nora@example.com', customerPhone: '0571122334', address: 'حي السلام، شارع الثاني', city: 'مكة', items: [{ productId: 4, productName: 'مريول مدرسي للبنات', price: 120, quantity: 1, totalPrice: 120 }], total: 150, status: 'delivered', createdAt: '2025-05-27T00:00:00Z' },
-    { id: 5, customerName: 'محمد الغامدي', customerEmail: 'mohammed@example.com', customerPhone: '0551234567', address: 'حي الورود، شارع الستين', city: 'الرياض', items: [{ productId: 5, productName: 'جاكيت التخرج الرسمي', price: 180, quantity: 1, totalPrice: 180 }], total: 166.50, status: 'preparing', createdAt: '2025-05-26T00:00:00Z' }
+    { id: 1, customerName: 'أحمد محمد علي', customerEmail: 'ahmed@example.com', customerPhone: '0551234567', address: 'حي النور، شارع العشرين', city: 'الرياض', items: [{ productId: 1, productName: 'سماعة طبية رقمية', price: 450, quantity: 1, totalPrice: 450 }], total: 296, status: 'pending', createdAt: '2025-05-30T00:00:00Z' },
+    { id: 2, customerName: 'فاطمة عبدالله', customerEmail: 'fatma@example.com', customerPhone: '0559876543', address: 'حي الملك فهد، شارع الخامس', city: 'جدة', items: [{ productId: 2, productName: 'جهاز قياس ضغط الدم', price: 280, quantity: 2, totalPrice: 560 }], total: 167.25, status: 'confirmed', createdAt: '2025-05-29T00:00:00Z' },
+    { id: 3, customerName: 'خالد السعيد', customerEmail: 'khalid@example.com', customerPhone: '0563456789', address: 'حي الأندلس، شارع التاسع', city: 'الدمام', items: [{ productId: 3, productName: 'ترمومتر رقمي بالأشعة تحت الحمراء', price: 120, quantity: 5, totalPrice: 600 }], total: 240.50, status: 'shipped', createdAt: '2025-05-28T00:00:00Z' },
+    { id: 4, customerName: 'نورا أحمد', customerEmail: 'nora@example.com', customerPhone: '0571122334', address: 'حي السلام، شارع الثاني', city: 'مكة', items: [{ productId: 4, productName: 'قفازات طبية معقمة', price: 45, quantity: 1, totalPrice: 45 }], total: 150, status: 'delivered', createdAt: '2025-05-27T00:00:00Z' },
+    { id: 5, customerName: 'محمد الغامدي', customerEmail: 'mohammed@example.com', customerPhone: '0551234567', address: 'حي الورود، شارع الستين', city: 'الرياض', items: [{ productId: 5, productName: 'أدوات جراحية أساسية', price: 850, quantity: 1, totalPrice: 850 }], total: 166.50, status: 'preparing', createdAt: '2025-05-26T00:00:00Z' }
   ],
 
   coupons: [
