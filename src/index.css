@@ -28,9 +28,27 @@ body {
   min-height: 100vh;
 }
 
-/* تأكد من أن المحتوى يبدأ تماماً بعد النافبار */
+/* تأكد من أن المحتوى يبدأ تماماً بعد النافبار - responsive */
 .pt-32 {
-  padding-top: 8rem; /* 128px - لتعويض ارتفاع النافبار */
+  padding-top: 6rem; /* للموبايل */
+}
+
+@media (min-width: 640px) {
+  .pt-32 {
+    padding-top: 7rem; /* للتابلت */
+  }
+}
+
+@media (min-width: 768px) {
+  .pt-32 {
+    padding-top: 8rem; /* للديسكتوب */
+  }
+}
+
+@media (min-width: 1024px) {
+  .pt-32 {
+    padding-top: 9rem; /* للشاشات الكبيرة */
+  }
 }
 
 /* Navbar styles - إزالة أي فراغات */
@@ -68,10 +86,108 @@ body {
   overflow: hidden;
 }
 
-/* تحسينات للموبايل */
-@media (max-width: 768px) {
-  .pt-32 {
-    padding-top: 7rem; /* أصغر قليلاً للموبايل */
+/* تحسينات responsive للبطاقات */
+@media (max-width: 640px) {
+  /* أحجام أصغر للموبايل */
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+  
+  .text-xl {
+    font-size: 1.125rem !important;
+  }
+  
+  .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  /* padding أصغر للموبايل */
+  .p-6 {
+    padding: 0.75rem !important;
+  }
+  
+  .p-4 {
+    padding: 0.5rem !important;
+  }
+  
+  .p-8 {
+    padding: 1rem !important;
+  }
+  
+  /* margins أصغر */
+  .mb-8 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .mb-6 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* أيقونات أصغر */
+  .w-8, .h-8 {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+  
+  .w-6, .h-6 {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+  
+  .w-5, .h-5 {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+  }
+  
+  /* أزرار أصغر */
+  .py-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  .px-6 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* شبكة responsive */
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .grid-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .grid-cols-6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* تحسينات متوسطة للتابلت */
+@media (min-width: 641px) and (max-width: 768px) {
+  .grid-cols-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  
+  .grid-cols-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  
+  .grid-cols-6 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
 
@@ -159,6 +275,13 @@ body {
 }
 
 /* تحسينات الـ line clamp */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
@@ -231,6 +354,10 @@ body {
   transform: scale(1.1);
 }
 
+.hover\:-translate-y-1:hover {
+  transform: translateY(-0.25rem);
+}
+
 .hover\:-translate-y-2:hover {
   transform: translateY(-0.5rem);
 }
@@ -275,7 +402,13 @@ html {
 
 /* تحسينات للـ scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+}
+
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
 }
 
 ::-webkit-scrollbar-track {
@@ -319,12 +452,16 @@ input:focus {
 @media (min-width: 640px) {
   .container {
     max-width: 640px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }
 
 @media (min-width: 768px) {
   .container {
     max-width: 768px;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 }
 
@@ -354,9 +491,9 @@ input:focus {
     @apply text-gold-600 font-semibold;
   }
   
-  /* Responsive utilities */
+  /* Responsive utilities محسنة */
   .container-responsive {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+    @apply container mx-auto px-2 sm:px-4 md:px-6 lg:px-8;
   }
   
   .text-responsive-xs {
@@ -364,27 +501,27 @@ input:focus {
   }
   
   .text-responsive-sm {
-    @apply text-sm sm:text-base;
+    @apply text-xs sm:text-sm md:text-base;
   }
   
   .text-responsive-base {
-    @apply text-base sm:text-lg;
+    @apply text-sm sm:text-base md:text-lg;
   }
   
   .text-responsive-lg {
-    @apply text-lg sm:text-xl md:text-2xl;
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl;
   }
   
   .text-responsive-xl {
-    @apply text-xl sm:text-2xl md:text-3xl;
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl;
   }
   
   .text-responsive-2xl {
-    @apply text-2xl sm:text-3xl md:text-4xl;
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl;
   }
   
   .text-responsive-3xl {
-    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl;
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl;
   }
   
   .grid-responsive-1 {
@@ -396,59 +533,63 @@ input:focus {
   }
   
   .grid-responsive-3 {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+    @apply grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3;
   }
   
   .grid-responsive-4 {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4;
   }
   
   .grid-responsive-5 {
-    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5;
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5;
+  }
+  
+  .grid-responsive-6 {
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6;
   }
   
   .padding-responsive {
-    @apply p-4 sm:p-6 lg:p-8;
+    @apply p-2 sm:p-4 md:p-6 lg:p-8;
   }
   
   .margin-responsive {
-    @apply m-4 sm:m-6 lg:m-8;
+    @apply m-2 sm:m-4 md:m-6 lg:m-8;
   }
   
   /* Button responsive utilities */
   .btn-responsive {
-    @apply px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-lg sm:rounded-xl;
+    @apply px-2 py-1 sm:px-4 sm:py-2 md:px-6 md:py-3 text-xs sm:text-sm md:text-base rounded-lg sm:rounded-xl;
   }
   
   .btn-responsive-lg {
-    @apply px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg rounded-xl sm:rounded-2xl;
+    @apply px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 text-sm sm:text-base md:text-lg rounded-xl sm:rounded-2xl;
   }
   
   /* Card responsive utilities */
   .card-responsive {
-    @apply rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-6 lg:p-8;
+    @apply rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-4 md:p-6 lg:p-8;
   }
   
   .card-responsive-sm {
-    @apply rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6;
+    @apply rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 lg:p-6;
   }
   
   /* Gap responsive utilities */
   .gap-responsive {
-    @apply gap-4 sm:gap-6 lg:gap-8;
+    @apply gap-2 sm:gap-4 md:gap-6 lg:gap-8;
   }
   
   .gap-responsive-sm {
-    @apply gap-2 sm:gap-4 lg:gap-6;
+    @apply gap-1 sm:gap-2 md:gap-4 lg:gap-6;
   }
   
   /* Icon responsive utilities */
   .icon-responsive {
-    @apply w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6;
+    @apply w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6;
   }
   
   .icon-responsive-lg {
-    @apply w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10;
+    @apply w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10;
   }
   
   /* Image responsive utilities */
@@ -462,21 +603,21 @@ input:focus {
   
   /* Spacing responsive utilities */
   .space-y-responsive > * + * {
-    @apply mt-4 sm:mt-6 lg:mt-8;
+    @apply mt-2 sm:mt-4 md:mt-6 lg:mt-8;
   }
   
   .space-x-responsive > * + * {
-    @apply ml-4 sm:ml-6 lg:ml-8;
+    @apply ml-2 sm:ml-4 md:ml-6 lg:ml-8;
   }
   
   /* Border radius responsive */
   .rounded-responsive {
-    @apply rounded-lg sm:rounded-xl lg:rounded-2xl;
+    @apply rounded-lg sm:rounded-xl md:rounded-2xl;
   }
   
   /* Shadow responsive */
   .shadow-responsive {
-    @apply shadow-md sm:shadow-lg lg:shadow-xl;
+    @apply shadow-md sm:shadow-lg md:shadow-xl;
   }
 }
 
@@ -507,21 +648,6 @@ code {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* Line Clamp Utilities */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 /* RTL Specific Styles */
 [dir="rtl"] {
   text-align: right;
@@ -549,4 +675,61 @@ code {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.3s ease-out;
+}
+
+/* إضافات خاصة للموبايل */
+@media (max-width: 640px) {
+  /* تصغير النصوص الكبيرة */
+  h1 {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  h3 {
+    font-size: 1.125rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* تصغير الأزرار الكبيرة */
+  .btn-lg {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* تحسين المباعدة */
+  .space-y-8 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 0.75rem !important;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 0.5rem !important;
+  }
+}
+
+/* خاص بالبطاقات الصغيرة */
+.product-card-mobile {
+  @apply bg-white rounded-lg shadow-lg p-2 text-xs;
+}
+
+.category-card-mobile {
+  @apply bg-white rounded-lg shadow-lg p-2 text-xs;
+}
+
+@media (min-width: 640px) {
+  .product-card-mobile {
+    @apply p-4 text-sm;
+  }
+  
+  .category-card-mobile {
+    @apply p-4 text-sm;
+  }
 }
