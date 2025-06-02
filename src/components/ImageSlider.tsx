@@ -1,175 +1,232 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 // تأكد أن مسار ملف الـ CSS هذا صحيح، وأنه لا يحتوي على ستايلات تتعارض مع أسهم السلايدر
 // import '../styles/mobile-slider.css'; 
 
-interface ImageSliderProps {
-  images: string[];
-  currentIndex?: number;
+interface SlideData {
+  id: number;
+  image: string;
+  title: string;
+  subtitle: string;
+  buttonText?: string;
+  buttonLink?: string;
 }
 
-function ImageSlider({ images, currentIndex = 0 }: ImageSliderProps) {
-  const [activeIndex, setActiveIndex] = useState(currentIndex);
-  const [buttonLoaded, setButtonLoaded] = useState(false);
+interface ImageSliderProps {
+  slides: SlideData[];
+  autoPlay?: boolean;
+  autoPlayInterval?: number;
+  showDots?: boolean;
+  showArrows?: boolean;
+  height?: string;
+}
 
+const ImageSlider: React.FC<ImageSliderProps> = ({
+  slides,
+  autoPlay = true,
+  autoPlayInterval = 5000,
+  showDots = true,
+  showArrows = true,
+  height = 'h-[50vh] sm:h-[60vh] lg:h-[70vh]'
+}) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  }, [slides.length]);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  }, [slides.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const toggleAutoPlay = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  // Auto play functionality
   useEffect(() => {
-    setActiveIndex(currentIndex);
-  }, [currentIndex]);
+    if (isPlaying && slides.length > 1) {
+      const interval = setInterval(nextSlide, autoPlayInterval);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, nextSlide, autoPlayInterval, slides.length]);
 
+  // Preload images
   useEffect(() => {
-    const timer = setTimeout(() => setButtonLoaded(true), 200);
-    return () => clearTimeout(timer);
-  }, []);
+    const imagePromises = slides.map((slide) => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // Continue even if image fails to load
+        img.src = slide.image;
+      });
+    });
 
-  // خاصية اللمس للسحب على الموبايل
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    Promise.all(imagePromises).then(() => {
+      setIsLoading(false);
+    });
+  }, [slides]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        nextSlide();
+      } else if (e.key === 'ArrowRight') {
+        prevSlide();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        toggleAutoPlay();
+      }
+    };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [nextSlide, prevSlide]);
 
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const minSwipeDistance = 50;
-
-    if (distance > minSwipeDistance) {
-      setActiveIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }
-    if (distance < -minSwipeDistance) {
-      setActiveIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-    }
-  };
-
-  // في حالة عدم وجود صور
-  if (!images || images.length === 0) {
+  if (isLoading) {
     return (
-      <div className="relative w-full h-[300px] bg-gradient-to-br from-slate-50 via-gray-100 to-slate-50 flex items-center justify-center overflow-hidden rounded-2xl">
-        <p className="text-gray-600 text-lg font-light">لا توجد صور متاحة</p>
+      <div className={`${height} bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse flex items-center justify-center`}>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">جاري تحميل الصور...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    // الحاوية الرئيسية للسلايدر - بدون هوامش إضافية
-    <div 
-      className="image-slider-container relative w-full h-full overflow-hidden bg-white shadow-lg"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* عرض الصور */}
-      {images.map((image, index) => (
-        <div
-          key={index}
-          className={`absolute inset-0 transition-opacity duration-700 ease-out ${
-            index === activeIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-          }`}
-        >
-          <img
-            src={image}
-            alt={`صورة السلايدر ${index + 1}`}
-            className="w-full h-full object-contain"
-            loading={index === 0 ? 'eager' : 'lazy'}
-          />
-        </div>
-      ))}
-
-      {/* زر "استكشف منتجاتنا" مصغر ومنزل قليلاً */}
-      <div className="absolute inset-0 flex justify-center items-center pt-8 sm:pt-12 z-[80] pointer-events-none">
-        <Link
-          to="/products"
-          className={`pointer-events-auto group bg-gradient-to-r from-pink-500 to-rose-500 text-white 
-                     px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-lg
-                     transition-all duration-300 transform 
-                     ${buttonLoaded ? 'scale-100 opacity-95' : 'scale-75 opacity-0'}
-                     hover:scale-105 hover:shadow-xl hover:from-pink-600 hover:to-rose-600
-                     focus:outline-none focus:ring-4 focus:ring-pink-300
-                     text-xs sm:text-sm font-medium z-[80] relative`}
-          style={{ 
-            pointerEvents: 'auto',
-            touchAction: 'manipulation',
-            position: 'relative',
-            zIndex: 80
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🛍️ استكشف منتجاتنا clicked!');
-            window.location.href = '/products';
-          }}
-        >
-          <div className="flex items-center gap-1">
-            <span className="text-xs">✨</span>
-            <span>استكشف منتجاتنا</span>
-            <ChevronLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:-translate-x-0.5 transition-transform duration-300" />
+    <div className={`relative ${height} overflow-hidden group bg-gray-900`}>
+      {/* Background Slides */}
+      <div className="relative w-full h-full">
+        {slides.map((slide, index) => (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              index === currentSlide 
+                ? 'opacity-100 scale-100' 
+                : 'opacity-0 scale-105'
+            }`}
+          >
+            <img
+              src={slide.image}
+              alt={slide.title}
+              className="w-full h-full object-cover"
+              loading={index === 0 ? 'eager' : 'lazy'}
+            />
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
           </div>
-        </Link>
+        ))}
       </div>
-      
-      {/* أسهم التنقل الجانبية - لون موحد رمادي */}
-      {images.length > 1 && (
+
+      {/* Content Overlay */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center text-white max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`transform transition-all duration-1000 ${
+            currentSlide >= 0 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+          }`}>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight">
+              <span className="bg-gradient-to-r from-white via-red-100 to-white bg-clip-text text-transparent">
+                {slides[currentSlide]?.title}
+              </span>
+            </h1>
+            <p className="text-lg sm:text-xl md:text-2xl mb-8 text-gray-200 font-medium max-w-2xl mx-auto leading-relaxed">
+              {slides[currentSlide]?.subtitle}
+            </p>
+            {slides[currentSlide]?.buttonText && slides[currentSlide]?.buttonLink && (
+              <a
+                href={slides[currentSlide].buttonLink}
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-red-600 via-rose-500 to-red-700 hover:from-red-700 hover:via-rose-600 hover:to-red-800 text-white font-bold px-8 py-4 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 border border-white/20 backdrop-blur-sm"
+              >
+                <span>{slides[currentSlide].buttonText}</span>
+                <ChevronLeft className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Arrows */}
+      {showArrows && slides.length > 1 && (
         <>
-          {/* السهم الأيمن */}
           <button
-            onClick={() => setActiveIndex((prev) => (prev - 1 + images.length) % images.length)}
+            onClick={prevSlide}
+            className="absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 border border-white/30"
             aria-label="الصورة السابقة"
-            className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 z-[35] 
-                       bg-gray-800/70 text-white p-2 sm:p-2.5 rounded-full
-                       hover:bg-gray-800/90 transition-all duration-300 
-                       focus:outline-none focus:ring-2 focus:ring-white/50"
-            style={{ 
-              pointerEvents: 'auto',
-              touchAction: 'manipulation'
-            }}
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 rotate-180" />
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-          {/* السهم الأيسر */}
           <button
-            onClick={() => setActiveIndex((prev) => (prev + 1) % images.length)}
+            onClick={nextSlide}
+            className="absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 border border-white/30"
             aria-label="الصورة التالية"
-            className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 z-[35] 
-                       bg-gray-800/70 text-white p-2 sm:p-2.5 rounded-full
-                       hover:bg-gray-800/90 transition-all duration-300 
-                       focus:outline-none focus:ring-2 focus:ring-white/50"
-            style={{ 
-              pointerEvents: 'auto',
-              touchAction: 'manipulation'
-            }}
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </>
       )}
 
-      {/* مؤشرات الصور في الأسفل */}
-      {images.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
-          {images.map((_, index) => (
+      {/* Dots Indicator */}
+      {showDots && slides.length > 1 && (
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 sm:gap-3">
+          {slides.map((_, index) => (
             <button
               key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === activeIndex 
-                  ? 'bg-white shadow-lg' 
-                  : 'bg-white/50 hover:bg-white/70'
+              onClick={() => goToSlide(index)}
+              className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 border-2 border-white/50 ${
+                index === currentSlide
+                  ? 'bg-white scale-125 shadow-lg'
+                  : 'bg-white/30 hover:bg-white/50 hover:scale-110'
               }`}
-              aria-label={`الانتقال للصورة ${index + 1}`}
+              aria-label={`انتقل للصورة ${index + 1}`}
             />
           ))}
         </div>
       )}
+
+      {/* Auto Play Controls */}
+      {autoPlay && slides.length > 1 && (
+        <button
+          onClick={toggleAutoPlay}
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 sm:p-3 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 border border-white/30"
+          aria-label={isPlaying ? 'إيقاف التشغيل التلقائي' : 'تشغيل التشغيل التلقائي'}
+        >
+          {isPlaying ? (
+            <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
+          ) : (
+            <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+          )}
+        </button>
+      )}
+
+      {/* Progress Bar */}
+      {isPlaying && slides.length > 1 && (
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-white/20">
+          <div
+            className="h-full bg-gradient-to-r from-red-500 to-rose-600 transition-all duration-300"
+            style={{
+              width: `${((currentSlide + 1) / slides.length) * 100}%`
+            }}
+          />
+        </div>
+      )}
+
+      {/* Slide Counter */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 bg-black/50 backdrop-blur-sm text-white px-3 py-1 sm:px-4 sm:py-2 rounded-full text-sm font-medium border border-white/20">
+        {currentSlide + 1} / {slides.length}
+      </div>
     </div>
   );
-}
+};
 
 export default ImageSlider;

@@ -7,6 +7,345 @@
 @tailwind components;
 @tailwind utilities;
 
+/* إزالة أي margins افتراضية */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* تأكد من عدم وجود فراغات في البودي */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+  overflow-x: hidden;
+}
+
+/* إزالة أي فراغات من المكونات */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* تأكد من أن المحتوى يبدأ تماماً بعد النافبار */
+.pt-32 {
+  padding-top: 8rem; /* 128px - لتعويض ارتفاع النافبار */
+}
+
+/* Navbar styles - إزالة أي فراغات */
+.fixed {
+  position: fixed;
+}
+
+.top-0 {
+  top: 0;
+}
+
+.left-0 {
+  left: 0;
+}
+
+.right-0 {
+  right: 0;
+}
+
+.z-50 {
+  z-index: 50;
+}
+
+/* Slider styles - بدون فراغات */
+.w-full {
+  width: 100%;
+}
+
+/* تحسين عرض الصور في الـ slider */
+.object-cover {
+  object-fit: cover;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+/* تحسينات للموبايل */
+@media (max-width: 768px) {
+  .pt-32 {
+    padding-top: 7rem; /* أصغر قليلاً للموبايل */
+  }
+}
+
+/* تحسينات للأزرار */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.duration-500 {
+  transition-duration: 500ms;
+}
+
+.duration-700 {
+  transition-duration: 700ms;
+}
+
+.duration-1000 {
+  transition-duration: 1000ms;
+}
+
+/* تحسينات الظلال */
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* تحسينات للخطوط */
+.font-black {
+  font-weight: 900;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+/* تحسينات الـ backdrop blur */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-xl {
+  backdrop-filter: blur(24px);
+}
+
+/* تحسينات للـ gradients */
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-t {
+  background-image: linear-gradient(to top, var(--tw-gradient-stops));
+}
+
+/* تحسينات للنصوص */
+.text-transparent {
+  color: transparent;
+}
+
+.bg-clip-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* تحسينات الـ line clamp */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* تحسينات للـ animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* تحسينات للتفاعل */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.hover\:scale-110:hover {
+  transform: scale(1.1);
+}
+
+.hover\:-translate-y-2:hover {
+  transform: translateY(-0.5rem);
+}
+
+.hover\:-translate-y-3:hover {
+  transform: translateY(-0.75rem);
+}
+
+.hover\:-translate-y-4:hover {
+  transform: translateY(-1rem);
+}
+
+.hover\:translate-x-1:hover {
+  transform: translateX(0.25rem);
+}
+
+.group-hover\:scale-110:hover .group-hover\:scale-110 {
+  transform: scale(1.1);
+}
+
+.group-hover\:rotate-12:hover .group-hover\:rotate-12 {
+  transform: rotate(12deg);
+}
+
+/* إضافة smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* تحسينات للفوكس */
+.focus\:ring-4:focus {
+  box-shadow: 0 0 0 4px var(--tw-ring-color);
+}
+
+.focus\:ring-red-100:focus {
+  --tw-ring-color: rgb(254 226 226);
+}
+
+.focus\:border-red-500:focus {
+  border-color: rgb(239 68 68);
+}
+
+/* تحسينات للـ scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ef4444, #f87171);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #dc2626, #ef4444);
+}
+
+/* تحسينات للـ selection */
+::selection {
+  background-color: #fecaca;
+  color: #7f1d1d;
+}
+
+/* إزالة outline للـ buttons */
+button:focus {
+  outline: none;
+}
+
+/* تحسينات للـ inputs */
+input:focus {
+  outline: none;
+}
+
+/* تأكد من أن كل المحتوى محاذي بشكل صحيح */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1536px;
+  }
+}
+
 @layer components {
   .card {
     @apply bg-cream-50 rounded-xl shadow-lg border border-gray-200 overflow-hidden;

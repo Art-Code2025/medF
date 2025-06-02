@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 import { buildImageUrl, apiCall, API_ENDPOINTS } from '../config/api';
 import { addToCartUnified } from '../utils/cartUtils';
 import { isInWishlist, addToWishlist, removeFromWishlist } from '../utils/wishlistUtils';
+import ImageSlider from './ImageSlider';
+import WhatsAppButton from './WhatsAppButton';
 
 interface Product {
   id: number;
@@ -79,11 +81,40 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Slider data
+  const sliderData = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2053&auto=format&fit=crop',
+      title: 'العينة الطبية',
+      subtitle: 'أحدث المعدات الطبية عالية الجودة لضمان أفضل رعاية صحية',
+      buttonText: 'استكشف المنتجات',
+      buttonLink: '/products'
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?q=80&w=2000&auto=format&fit=crop',
+      title: 'معدات طبية متطورة',
+      subtitle: 'تقنيات حديثة ومبتكرة للمؤسسات الطبية والمستشفيات',
+      buttonText: 'تصفح الآن',
+      buttonLink: '/products'
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=2000&auto=format&fit=crop',
+      title: 'رعاية صحية شاملة',
+      subtitle: 'كل ما تحتاجه من معدات طبية تحت سقف واحد',
+      buttonText: 'ابدأ التسوق',
+      buttonLink: '/products'
+    }
+  ];
+
   const featuredProducts = products.slice(0, 8);
+  const newProducts = products.slice(0, 6); // منتجات وصلت حديثاً
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center pt-32">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div className="w-20 h-20 border-4 border-gradient-to-r from-red-500 to-rose-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
@@ -96,75 +127,21 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pt-32">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       
-      {/* Hero Section - Ultra Luxury */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-red-900 to-slate-800"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItMnptLTEtMXYyaDJWMzN6bS0yIDJ2Mmgzdi0yem0tMSAxdjJoMnYtMnptLTEgMXYyaDN2LTJ6bS0xIDJ2Mmgydi0yem0wLTJ2Mmgydi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-10"></div>
-        
-        <div className="relative h-[32rem] flex items-center justify-center">
-          <div className="max-w-7xl mx-auto px-4 text-center">
-            <div className="mb-8">
-              <div className="inline-flex items-center gap-4 mb-6">
-                <div className="relative">
-                  <div className="w-20 h-20 bg-gradient-to-r from-red-600 via-rose-500 to-red-700 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20 backdrop-blur-sm">
-                    <div className="text-white font-black text-sm text-center">
-                      <div>OTE</div>
-                      <div className="text-xs opacity-90">STORE</div>
-                    </div>
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center animate-pulse">
-                    <Crown className="w-3 h-3 text-white" />
-                  </div>
-                </div>
-                <div className="text-right text-white">
-                  <h1 className="text-5xl font-black mb-2 bg-gradient-to-r from-white via-red-100 to-white bg-clip-text text-transparent">
-                    العينــة الطبيــة
-                  </h1>
-                  <p className="text-xl font-medium text-red-100">لوازم مستشفيات وأدوات طبية فاخرة</p>
-                </div>
-              </div>
-              
-              <h2 className="text-6xl font-black mb-8 bg-gradient-to-r from-white via-amber-200 to-white bg-clip-text text-transparent leading-tight">
-                نجتهد لتخفف معاناتهم
-              </h2>
-              
-              <p className="text-xl text-red-100 mb-10 max-w-3xl mx-auto leading-relaxed">
-                اكتشف مجموعتنا الحصرية من المعدات الطبية عالية الجودة والمصممة بأحدث التقنيات لضمان أفضل رعاية صحية
-              </p>
-              
-              <div className="flex items-center justify-center gap-6">
-                <Link
-                  to="/products"
-                  className="group relative px-8 py-4 bg-gradient-to-r from-red-600 via-rose-500 to-red-700 text-white font-bold rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 border border-white/20 backdrop-blur-sm"
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    استكشف المجموعة
-                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </Link>
-                
-                <Link
-                  to="/sign-in"
-                  className="px-8 py-4 bg-white/10 text-white font-semibold rounded-full border-2 border-white/30 backdrop-blur-sm hover:bg-white/20 transition-all duration-300"
-                >
-                  انضم إلينا
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Image Slider - بدون فراغات */}
+      <div className="w-full">
+        <ImageSlider 
+          slides={sliderData}
+          autoPlay={true}
+          autoPlayInterval={6000}
+          height="h-[60vh] sm:h-[70vh] lg:h-[80vh]"
+        />
       </div>
 
       {/* Premium Installment Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 py-8 shadow-2xl">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iYSIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBwYXR0ZXJuVHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIyMCIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIwLjA1Ii8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2EpIi8+PC9zdmc+')] opacity-30"></div>
-        
         <div className="relative max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="text-8xl font-black text-white/20 select-none">0%</div>
@@ -196,7 +173,123 @@ const HomePage: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-16">
         
-        {/* Categories Section - Luxury Style */}
+        {/* منتجات وصلت حديثاً */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-black text-gray-900 mb-4 relative inline-block">
+              <span className="flex items-center gap-3">
+                <Sparkles className="w-8 h-8 text-amber-500" />
+                منتجات وصلت حديثاً
+                <Sparkles className="w-8 h-8 text-amber-500" />
+              </span>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-red-500 to-rose-600 rounded-full"></div>
+            </h2>
+            <p className="text-xl text-gray-600 font-medium">أحدث المنتجات الطبية الفاخرة في مجموعتنا</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {newProducts.map((product, index) => (
+              <div
+                key={product.id}
+                className="group relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-gray-100 overflow-hidden"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* New Badge */}
+                <div className="absolute top-4 right-4 z-20">
+                  <div className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-black rounded-full shadow-xl flex items-center gap-1">
+                    <Zap className="w-3 h-3" />
+                    جديد
+                  </div>
+                </div>
+
+                <div className="relative aspect-square overflow-hidden">
+                  <Link to={`/product/${product.id}`}>
+                    <img
+                      src={buildImageUrl(product.mainImage)}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  </Link>
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent group-hover:from-black/30 transition-all duration-300"></div>
+                  
+                  <div className="absolute bottom-4 left-4 flex gap-3 opacity-0 group-hover:opacity-100 transform translate-y-6 group-hover:translate-y-0 transition-all duration-300">
+                    <button
+                      onClick={() => handleWishlistToggle(product)}
+                      className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl hover:bg-red-50 transition-all duration-300 border border-white/50 group/btn"
+                    >
+                      <Heart className={`w-6 h-6 group-hover/btn:scale-110 transition-transform ${isInWishlist(product.id) ? 'text-red-600 fill-current' : 'text-gray-600'}`} />
+                    </button>
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl hover:bg-blue-50 transition-all duration-300 border border-white/50 group/btn"
+                    >
+                      <Eye className="w-6 h-6 text-gray-600 group-hover/btn:scale-110 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div className="text-xs font-black text-green-600 mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <Gem className="w-3 h-3" />
+                    {categories.find(c => c.id === product.categoryId)?.name || 'منتج طبي جديد'}
+                  </div>
+                  
+                  <Link to={`/product/${product.id}`}>
+                    <h3 className="font-black text-gray-900 mb-3 line-clamp-2 hover:text-red-600 transition-colors text-xl leading-tight">
+                      {product.name}
+                    </h3>
+                  </Link>
+
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < 4 ? 'text-amber-400 fill-current' : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-500 font-medium">(4.8)</span>
+                    <span className="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded-full">جديد</span>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-3xl font-black bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                        {product.price.toFixed(2)}
+                      </span>
+                      <span className="text-sm font-bold text-gray-600">ر.س</span>
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="text-sm text-gray-500 line-through font-medium">
+                          {product.originalPrice.toFixed(2)} ر.س
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    disabled={product.stock === 0}
+                    className={`w-full py-4 px-6 rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-xl ${
+                      product.stock === 0
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 text-white hover:from-green-700 hover:via-emerald-600 hover:to-green-800 hover:shadow-2xl transform hover:scale-105'
+                    }`}
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    {product.stock === 0 ? 'نفد المخزون' : 'إضافة للسلة'}
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Categories Section */}
         <div className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-black text-gray-900 mb-4 relative inline-block">
@@ -247,7 +340,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured Products Section - Premium Design */}
+        {/* Featured Products Section */}
         <div className="mb-20">
           <div className="flex items-center justify-between mb-12">
             <div>
@@ -273,7 +366,6 @@ const HomePage: React.FC = () => {
                 className="group relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-gray-100 overflow-hidden"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                {/* Premium Badge */}
                 <div className="absolute top-4 right-4 z-20">
                   <div className="flex flex-col gap-2">
                     {product.originalPrice && product.originalPrice > product.price && (
@@ -288,7 +380,6 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden">
                   <Link to={`/product/${product.id}`}>
                     <img
@@ -300,7 +391,6 @@ const HomePage: React.FC = () => {
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent group-hover:from-black/30 transition-all duration-300"></div>
                   
-                  {/* Quick Actions */}
                   <div className="absolute bottom-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                     <button
                       onClick={() => handleWishlistToggle(product)}
@@ -317,7 +407,6 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Product Info */}
                 <div className="p-6">
                   <div className="text-xs font-semibold text-red-600 mb-2 uppercase tracking-wider">
                     {categories.find(c => c.id === product.categoryId)?.name || 'منتج طبي'}
@@ -329,7 +418,6 @@ const HomePage: React.FC = () => {
                     </h3>
                   </Link>
 
-                  {/* Rating */}
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star
@@ -342,7 +430,6 @@ const HomePage: React.FC = () => {
                     <span className="text-sm text-gray-500 mr-2">(4.0)</span>
                   </div>
 
-                  {/* Price */}
                   <div className="mb-6">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-2xl font-black text-red-600">
@@ -357,7 +444,6 @@ const HomePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Add to Cart Button */}
                   <button
                     onClick={() => handleAddToCart(product)}
                     disabled={product.stock === 0}
@@ -371,7 +457,6 @@ const HomePage: React.FC = () => {
                     {product.stock === 0 ? 'نفد المخزون' : 'إضافة للسلة'}
                   </button>
 
-                  {/* Stock Status */}
                   {product.stock > 0 && (
                     <div className="mt-3 text-center">
                       <span className={`text-xs font-semibold ${
@@ -390,7 +475,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Services Section - Premium Icons */}
+        {/* Services Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
           <div className="text-center group">
             <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl transform group-hover:scale-110 transition-all duration-300">
@@ -427,11 +512,8 @@ const HomePage: React.FC = () => {
 
         {/* Premium CTA Banners */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-          
-          {/* Bathroom Chair */}
           <div className="relative overflow-hidden bg-gradient-to-br from-teal-500 via-cyan-600 to-blue-700 rounded-3xl shadow-2xl group">
             <div className="absolute inset-0 bg-black/20"></div>
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSI0Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
             
             <div className="relative p-8 h-64 flex flex-col justify-between">
               <div>
@@ -458,10 +540,8 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Electric Chair */}
           <div className="relative overflow-hidden bg-gradient-to-br from-purple-500 via-pink-600 to-rose-700 rounded-3xl shadow-2xl group">
             <div className="absolute inset-0 bg-black/20"></div>
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzR2Mi0yem0tMS0xdjJoMnYtMXptLTIgMnYyaDN2LTJ6bS0xIDF2Mmgydi0yem0tMSAxdjJoM3YtMnptLTEgMnYyaDJ2LTJ6bTAtMnYyaDJ2LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
             
             <div className="relative p-8 h-64 flex flex-col justify-between">
               <div>
@@ -490,70 +570,86 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Premium Footer */}
-      <footer className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-gray-900 to-slate-800">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDYwIDAgTCAwIDAgMCA2MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utb3BhY2l0eT0iMC4wMyIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 py-16">
-          
-          {/* Social Media Icons */}
-          <div className="flex justify-center gap-6 mb-12">
-            <a href="#" className="group w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center hover:shadow-2xl transform hover:scale-110 transition-all duration-300 border border-blue-500/30">
-              <Instagram className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
-            </a>
-            <a href="#" className="group w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center hover:shadow-2xl transform hover:scale-110 transition-all duration-300 border border-blue-400/30">
-              <Facebook className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
-            </a>
-            <a href="#" className="group w-14 h-14 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center hover:shadow-2xl transform hover:scale-110 transition-all duration-300 border border-emerald-400/30">
-              <Phone className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
-            </a>
-          </div>
+      {/* Premium Footer - Mobile Optimized */}
+      <footer className="relative bg-gradient-to-br from-white via-gray-50 to-gray-100 py-6 sm:py-8 lg:py-10 border-t border-gray-200/60 overflow-visible">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100/30 via-transparent to-gray-200/30" />
+        <div className="absolute top-0 left-0 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gray-200/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gray-300/15 rounded-full blur-3xl" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-center mb-12">
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
             
-            {/* خدمة العملاء */}
-            <div>
-              <h3 className="font-black text-2xl text-white mb-6 flex items-center justify-center gap-2">
-                <Crown className="w-6 h-6 text-amber-400" />
-                خدمة العملاء المميزة
-              </h3>
-              <ul className="space-y-3 text-gray-300">
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">تواصل معنا</li>
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">الإرجاع والاستبدال</li>
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">الشروط والأحكام</li>
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">الدعم الفني</li>
-              </ul>
-            </div>
-
-            {/* عن الموقع */}
-            <div>
-              <h3 className="font-black text-2xl text-white mb-6 flex items-center justify-center gap-2">
-                <Gem className="w-6 h-6 text-amber-400" />
+            <div className="col-span-1 text-center mb-4 sm:mb-0 min-h-[100px] brand-section flex flex-col items-center">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-black bg-gradient-to-r from-gray-700 to-gray-800 bg-clip-text text-transparent mb-2">
                 العينة الطبية
               </h3>
-              <ul className="space-y-3 text-gray-300">
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">من نحن</li>
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">سياسة الخصوصية</li>
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">شروط الاستخدام</li>
-                <li className="hover:text-white transition-colors cursor-pointer font-medium">آلية الشكاوى</li>
-              </ul>
+
+              <div className="flex flex-row justify-center gap-x-3 gap-y-2 mt-3 social-media-icons sm:flex-row sm:justify-start">
+                <a
+                  href="https://www.instagram.com/ghem.store10?igsh=cXU5cTJqc2V2Nmg="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Visit our Instagram page"
+                  className="bg-white/90 backdrop-blur-xl border border-gray-200/60 p-2 rounded-full hover:bg-pink-100 transition-all shadow-sm z-50"
+                >
+                  <Instagram size={20} color="#ec4899" />
+                </a>
+
+                <a
+                  href="https://wa.me/966551064118"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Contact us on WhatsApp"
+                  className="bg-green-50 backdrop-blur-xl border border-green-200/60 p-2 rounded-full hover:bg-green-100 transition-all shadow-sm z-50"
+                >
+                  <Phone size={20} color="#22c55e" />
+                </a>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">روابط سريعة</h4>
+              <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                <Link to="/" className="text-xs sm:text-sm text-gray-700 hover:text-gray-800 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg hover:bg-gray-50/80 transition-all duration-300">الرئيسية</Link>
+                <Link to="/products" className="text-xs sm:text-sm text-gray-700 hover:text-gray-800 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg hover:bg-gray-50/80 transition-all duration-300">المنتجات</Link>
+                <Link to="/about" className="text-xs sm:text-sm text-gray-700 hover:text-gray-800 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg hover:bg-gray-50/80 transition-all duration-300">من نحن</Link>
+                <Link to="/contact" className="text-xs sm:text-sm text-gray-700 hover:text-gray-800 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg hover:bg-gray-50/80 transition-all duration-300">اتصل بنا</Link>
+                <Link to="/privacy-policy" className="text-xs sm:text-sm text-gray-700 hover:text-gray-800 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg hover:bg-gray-50/80 transition-all duration-300">سياسة الخصوصية</Link>
+                <Link to="/return-policy" className="text-xs sm:text-sm text-gray-700 hover:text-gray-800 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg hover:bg-gray-50/80 transition-all duration-300">سياسة الاسترجاع</Link>
+              </div>
+            </div>
+
+            <div className="text-center md:text-left">
+              <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">تواصل معنا</h4>
+              <div className="space-y-1 sm:space-y-2">
+                <div className="text-xs sm:text-sm text-gray-700 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg flex items-center justify-center md:justify-start gap-1">
+                  <span>📞</span>
+                  <span className="truncate">+966551064118</span>
+                </div>
+                <div className="text-xs sm:text-sm text-gray-700 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg flex items-center justify-center md:justify-start gap-1">
+                  <span>✉️</span>
+                  <span className="truncate">support@alamena.store</span>
+                </div>
+                <div className="text-xs sm:text-sm text-gray-700 bg-white/80 backdrop-blur-xl border border-gray-200/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg flex items-center justify-center md:justify-start gap-1">
+                  <span>📍</span>
+                  <span className="truncate">السعودية</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Premium Copyright */}
-          <div className="pt-8 border-t border-white/10 text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-rose-600 rounded-full flex items-center justify-center">
-                <Crown className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-2xl font-black text-white">العينة الطبية</span>
+          <div className="border-t border-gray-200/60 pt-3 sm:pt-4 text-center">
+            <div className="bg-gradient-to-r from-white/80 via-gray-50/90 to-white/80 backdrop-blur-xl border border-gray-200/50 rounded-lg sm:rounded-xl p-3 sm:p-4 max-w-full mx-auto shadow-lg">
+              <p className="text-xs sm:text-sm text-gray-700 font-medium">
+                © 2025 العينة الطبية - جميع الحقوق محفوظة
+              </p>
             </div>
-            <p className="text-gray-400 font-medium">
-              © 2024 العينة الطبية - جميع الحقوق محفوظة | تصميم فاخر للمعدات الطبية
-            </p>
           </div>
         </div>
       </footer>
+
+      {/* WhatsApp Button */}
+      <WhatsAppButton />
     </div>
   );
 };
