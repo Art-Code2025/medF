@@ -97,34 +97,32 @@ const ShoppingCart: React.FC = () => {
       const userData = localStorage.getItem('user');
       console.log('👤 [Cart] User data from localStorage:', userData);
       
-      if (!userData) {
-        console.log('❌ [Cart] No user data found in localStorage');
-        setCartItems([]);
-        setIsInitialLoading(false);
-        return;
-      }
-
-      let user;
-      try {
-        user = JSON.parse(userData);
-        console.log('👤 [Cart] Parsed user:', user);
-      } catch (parseError) {
-        console.error('❌ [Cart] Error parsing user data:', parseError);
-        setCartItems([]);
-        setIsInitialLoading(false);
-        return;
-      }
-
-      if (!user || !user.id) {
-        console.log('❌ [Cart] Invalid user object or missing ID');
-        setCartItems([]);
-        setIsInitialLoading(false);
-        return;
-      }
-
-      console.log('🛒 [Cart] Fetching cart for user:', user.id);
+      let userId = 'guest'; // Default for guests
+      let endpoint = '/api/cart?userId=guest'; // Guest cart endpoint
       
-      const data = await apiCall(API_ENDPOINTS.USER_CART(user.id));
+      // If user is logged in, use their specific cart
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          console.log('👤 [Cart] Parsed user:', user);
+          
+          if (user && user.id) {
+            userId = user.id.toString();
+            endpoint = `/api/user/${userId}/cart`;
+            console.log('🛒 [Cart] Fetching cart for logged in user:', userId);
+          } else {
+            console.log('⚠️ [Cart] Invalid user object, using guest mode');
+          }
+        } catch (parseError) {
+          console.error('❌ [Cart] Error parsing user data, using guest mode:', parseError);
+        }
+      } else {
+        console.log('👤 [Cart] No user data found, using guest mode');
+      }
+
+      console.log('🛒 [Cart] Fetching cart from endpoint:', endpoint);
+      
+      const data = await apiCall(endpoint);
       console.log('📦 [Cart] Raw API response:', data);
       
       if (Array.isArray(data)) {
@@ -182,11 +180,22 @@ const ShoppingCart: React.FC = () => {
     if (newQuantity < 1) return;
       
     const userData = localStorage.getItem('user');
-    if (!userData) return;
+    let userId = 'guest';
+    let endpoint = `/api/cart/${itemId}`;
+    
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user && user.id) {
+          userId = user.id.toString();
+          endpoint = `/api/user/${userId}/cart/${itemId}`;
+        }
+      } catch (parseError) {
+        console.error('Error parsing user data:', parseError);
+      }
+    }
 
     try {
-      const user = JSON.parse(userData);
-      
       // الحصول على البيانات الحالية للمنتج
       const currentItem = cartItems.find(item => item.id === itemId);
       if (!currentItem) return;
@@ -200,10 +209,19 @@ const ShoppingCart: React.FC = () => {
 
       console.log('🔢 [Cart] Updating quantity with preserved data:', { itemId, newQuantity, updateData });
 
-      await apiCall(API_ENDPOINTS.USER_CART(user.id) + `/${itemId}`, {
-        method: 'PUT',
-        body: JSON.stringify(updateData)
-      });
+      if (userId === 'guest') {
+        // For guests, update via general cart API
+        await apiCall(endpoint, {
+          method: 'PUT',
+          body: JSON.stringify({ quantity: newQuantity })
+        });
+      } else {
+        // For logged in users, use user-specific API
+        await apiCall(endpoint, {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        });
+      }
       
       setCartItems(prev => prev.map(item => 
         item.id === itemId ? { ...item, quantity: newQuantity } : item
@@ -219,11 +237,23 @@ const ShoppingCart: React.FC = () => {
   // حذف منتج من السلة
   const removeItem = async (itemId: number) => {
     const userData = localStorage.getItem('user');
-    if (!userData) return;
+    let userId = 'guest';
+    let endpoint = `/api/cart/${itemId}`;
+    
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user && user.id) {
+          userId = user.id.toString();
+          endpoint = `/api/user/${userId}/cart/${itemId}`;
+        }
+      } catch (parseError) {
+        console.error('Error parsing user data:', parseError);
+      }
+    }
 
     try {
-      const user = JSON.parse(userData);
-      await apiCall(API_ENDPOINTS.USER_CART(user.id) + `/${itemId}`, {
+      await apiCall(endpoint, {
         method: 'DELETE'
       });
       
@@ -334,10 +364,22 @@ const ShoppingCart: React.FC = () => {
       setCartItems([]);
 
       const userData = localStorage.getItem('user');
-      if (!userData) return;
+      let userId = 'guest';
+      let endpoint = '/api/cart?userId=guest';
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            userId = user.id.toString();
+            endpoint = `/api/user/${userId}/cart`;
+          }
+        } catch (parseError) {
+          console.error('Error parsing user data:', parseError);
+        }
+      }
 
-      const user = JSON.parse(userData);
-      await apiCall(API_ENDPOINTS.USER_CART(user.id), {
+      await apiCall(endpoint, {
         method: 'DELETE'
       });
 
@@ -370,12 +412,23 @@ const ShoppingCart: React.FC = () => {
   const saveOptionsToBackend = async (itemId: number, field: string, value: any) => {
     try {
       const userData = localStorage.getItem('user');
-      if (!userData) {
-        toast.error('يجب تسجيل الدخول أولاً');
-        return false;
+      let userId = 'guest';
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            userId = user.id.toString();
+          }
+        } catch (parseError) {
+          console.error('Error parsing user data:', parseError);
+        }
       }
 
-      const user = JSON.parse(userData);
+      if (userId === 'guest') {
+        toast.info('تحديث السلة متاح للمستخدمين المسجلين فقط. سيتم حفظ التغييرات عند تسجيل الدخول.');
+        return false;
+      }
       
       // الحصول على البيانات الحالية للمنتج
       const currentItem = cartItems.find(item => item.id === itemId);
@@ -416,10 +469,10 @@ const ShoppingCart: React.FC = () => {
           currentAttachments: currentItem.attachments
         },
         updateData,
-        url: `user/${user.id}/cart/${itemId}`
+        url: `user/${userId}/cart/${itemId}`
       });
 
-      const response = await fetch(buildApiUrl(`user/${user.id}/cart/${itemId}`), {
+      const response = await fetch(buildApiUrl(`user/${userId}/cart/${itemId}`), {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json'

@@ -71,8 +71,9 @@ const CustomerSignIn: React.FC = () => {
           })
         });
 
-        if (response.success) {
-          localStorage.setItem('customerUser', JSON.stringify(response.customer));
+        if (response.user) {
+          localStorage.setItem('customerUser', JSON.stringify(response.user));
+          localStorage.setItem('user', JSON.stringify(response.user)); // For compatibility
           toast.success('تم تسجيل الدخول بنجاح');
           navigate('/');
         } else {
@@ -97,7 +98,7 @@ const CustomerSignIn: React.FC = () => {
           })
         });
 
-        if (response.success) {
+        if (response.user) {
           toast.success('تم إنشاء الحساب بنجاح. يمكنك الآن تسجيل الدخول');
           setIsLogin(true);
           setFormData({ name: '', email: '', password: '', confirmPassword: '' });

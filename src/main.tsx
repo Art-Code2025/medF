@@ -15,9 +15,11 @@ import Dashboard from './components/Dashboard';
 import ProductForm from './components/ProductForm';
 import CategoryAdd from './CategoryAdd';
 import CategoryEdit from './CategoryEdit';
-import Cart from './components/Cart';
+import ShoppingCart from './components/ShoppingCart';
+import CartDiagnostics from './components/CartDiagnostics';
 import Wishlist from './components/Wishlist';
 import Checkout from './components/Checkout';
+import ThankYou from './components/ThankYou';
 
 // ProtectedRoute Component
 interface ProtectedRouteProps {
@@ -60,9 +62,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/products" element={<AllProducts />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/sign-in" element={<CustomerSignIn />} />
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/cart" element={<ShoppingCart />} />
+          <Route path="/cart/diagnostics" element={<CartDiagnostics />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/thank-you" element={<ThankYou />} />
           
           {/* Admin Routes */}
           <Route path="/login" element={<Login />} />

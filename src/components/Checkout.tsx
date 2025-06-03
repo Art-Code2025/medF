@@ -120,15 +120,25 @@ const Checkout: React.FC = () => {
     try {
       setLoading(true);
       const userData = localStorage.getItem('user');
-      if (!userData) {
-        setCartItems([]);
-        return;
-      }
-
-      const user = JSON.parse(userData);
-      console.log('🛒 [Checkout] Fetching cart for user:', user.id);
+      let endpoint = '/api/cart?userId=guest';
       
-      const data = await apiCall(API_ENDPOINTS.USER_CART(user.id));
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            endpoint = `/api/user/${user.id}/cart`;
+            console.log('🛒 [Checkout] Fetching cart for logged in user:', user.id);
+          } else {
+            console.log('🛒 [Checkout] Fetching cart for guest user');
+          }
+        } catch (parseError) {
+          console.error('Error parsing user data, using guest mode:', parseError);
+        }
+      } else {
+        console.log('🛒 [Checkout] No user data, fetching cart for guest');
+      }
+      
+      const data = await apiCall(endpoint);
       console.log('📦 [Checkout] Raw cart data:', data);
       
       if (Array.isArray(data)) {
@@ -357,17 +367,25 @@ const Checkout: React.FC = () => {
     setPlacing(true);
     try {
       const userData = localStorage.getItem('user');
-      if (!userData) {
-        toast.error('يجب تسجيل الدخول أولاً');
-        navigate('/');
-        return;
-      }
-
-      const user = JSON.parse(userData);
-      if (!user || !user.id) {
-        toast.error('يجب تسجيل الدخول أولاً');
-        navigate('/');
-        return;
+      let userId = 'guest';
+      let isGuestUser = true;
+      
+      // Check if user is logged in
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            userId = user.id.toString();
+            isGuestUser = false;
+            console.log('🛒 [Checkout] Processing order for logged in user:', userId);
+          } else {
+            console.log('🛒 [Checkout] Invalid user data, processing as guest');
+          }
+        } catch (parseError) {
+          console.error('❌ [Checkout] Error parsing user data, processing as guest:', parseError);
+        }
+      } else {
+        console.log('🛒 [Checkout] No user data found, processing as guest checkout');
       }
 
       // معالجة الدفع أولاً إذا كان مطلوباً
@@ -415,7 +433,8 @@ const Checkout: React.FC = () => {
           code: appliedCoupon.coupon?.code || '',
           discount: getDiscountAmount()
         } : null,
-        userId: user.id,
+        userId: userId, // Will be 'guest' for guest users or actual user ID for logged in users
+        isGuestOrder: isGuestUser, // Flag to indicate if this is a guest order
         // إضافة معرف الدفع إذا كان متوفراً
         ...(paymentResult.paymentId && { 
           paymentId: paymentResult.paymentId,
@@ -473,7 +492,8 @@ const Checkout: React.FC = () => {
         paymentMethod: paymentMethods.find(pm => pm.id === selectedPaymentMethod)?.name || 'الدفع عند الاستلام',
         notes: customerInfo.notes || '',
         orderDate: new Date().toISOString(),
-        status: 'pending'
+        status: 'pending',
+        isGuestOrder: isGuestUser
       };
 
       // حفظ البيانات في localStorage أولاً
@@ -491,9 +511,17 @@ const Checkout: React.FC = () => {
       // التوجيه المباشر بدون setTimeout
       try {
         // مسح السلة أولاً
-        await apiCall(API_ENDPOINTS.USER_CART(user.id), {
-          method: 'DELETE'
-        });
+        if (isGuestUser) {
+          // For guest users, clear guest cart
+          await apiCall('/api/cart?userId=guest', {
+            method: 'DELETE'
+          });
+        } else {
+          // For logged in users, clear user-specific cart
+          await apiCall(API_ENDPOINTS.USER_CART(userId), {
+            method: 'DELETE'
+          });
+        }
         window.dispatchEvent(new Event('cartUpdated'));
         console.log('🧹 Cart cleared successfully');
         
