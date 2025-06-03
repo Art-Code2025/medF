@@ -54,6 +54,61 @@ const CustomerSignIn: React.FC = () => {
     return true;
   };
 
+  const migrateGuestCart = async (userId: string) => {
+    try {
+      console.log('🔄 [Auth] Starting cart migration for user:', userId);
+      
+      const response = await apiCall(API_ENDPOINTS.MIGRATE_CART, {
+        method: 'POST',
+        body: JSON.stringify({ userId: userId })
+      });
+      
+      if (response.totalProcessed > 0) {
+        toast.success(`🛒 تم نقل ${response.totalProcessed} منتج من سلة التسوق!`, {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        console.log('✅ [Auth] Cart migration completed:', response);
+      } else {
+        console.log('ℹ️ [Auth] No items to migrate');
+      }
+      
+      // Trigger cart update events
+      window.dispatchEvent(new Event('cartUpdated'));
+      localStorage.setItem('cartUpdated', Date.now().toString());
+      
+    } catch (error) {
+      console.error('❌ [Auth] Cart migration failed:', error);
+      // Don't show error to user as this is not critical
+    }
+  };
+
+  const handleSuccessfulAuth = async (user: any, isNewUser: boolean = false) => {
+    // Store user data
+    localStorage.setItem('customerUser', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    // Migrate guest cart if user has items
+    await migrateGuestCart(user.id.toString());
+    
+    // Show success message
+    if (isNewUser) {
+      toast.success('🎉 تم إنشاء حسابك بنجاح! مرحباً بك في مواسم الطب');
+    } else {
+      toast.success('✅ مرحباً بك مرة أخرى!');
+    }
+    
+    // Check if user should be redirected to checkout
+    const redirectPath = localStorage.getItem('redirectAfterLogin');
+    if (redirectPath) {
+      localStorage.removeItem('redirectAfterLogin');
+      console.log('🔄 [Auth] Redirecting to:', redirectPath);
+      navigate(redirectPath);
+    } else {
+      navigate('/');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -72,10 +127,7 @@ const CustomerSignIn: React.FC = () => {
         });
 
         if (response.user) {
-          localStorage.setItem('customerUser', JSON.stringify(response.user));
-          localStorage.setItem('user', JSON.stringify(response.user)); // For compatibility
-          toast.success('تم تسجيل الدخول بنجاح');
-          navigate('/');
+          await handleSuccessfulAuth(response.user, false);
         } else {
           // Handle specific error cases with user-friendly Arabic messages
           if (response.status === 401) {
@@ -99,9 +151,7 @@ const CustomerSignIn: React.FC = () => {
         });
 
         if (response.user) {
-          toast.success('تم إنشاء الحساب بنجاح. يمكنك الآن تسجيل الدخول');
-          setIsLogin(true);
-          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+          await handleSuccessfulAuth(response.user, true);
         } else {
           if (response.status === 409) {
             toast.error('البريد الإلكتروني مستخدم بالفعل');

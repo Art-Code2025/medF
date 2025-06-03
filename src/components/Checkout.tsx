@@ -1,8 +1,110 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { ShoppingCart, User, CreditCard, CheckCircle, ArrowLeft, ArrowRight, Package, Truck, Shield, Star, Heart, Gift, MapPin, Phone, Mail, Sparkles, Clock, Award, AlertCircle, Minus, Plus, X, Tag, Percent } from 'lucide-react';
+import { 
+  ShoppingCart, 
+  MapPin, 
+  CreditCard, 
+  CheckCircle, 
+  ArrowLeft, 
+  ArrowRight,
+  Package, 
+  User, 
+  Mail, 
+  Phone, 
+  Gift,
+  Shield,
+  Stethoscope,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Truck,
+  Heart,
+  Plus,
+  Minus,
+  X,
+  Star,
+  Clock,
+  Award,
+  AlertCircle,
+  Tag,
+  Percent
+} from 'lucide-react';
 import { apiCall, API_ENDPOINTS, buildImageUrl } from '../config/api';
+
+// Add this component right after the imports and before other interfaces
+const AuthPrompt: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
+  return (
+    <div className="min-h-screen bg-gray-50 pt-32" dir="rtl">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg p-8 text-center">
+          
+          {/* Icon */}
+          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-10 h-10 text-white" />
+          </div>
+          
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            يجب تسجيل الدخول لإتمام الطلب
+          </h2>
+          
+          {/* Description */}
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            للأمان وحفظ تفاصيل طلبك، يرجى تسجيل الدخول أو إنشاء حساب جديد.
+            <br />
+            لا تقلق، ستجد سلة التسوق الخاصة بك كما هي! 🛒
+          </p>
+          
+          {/* Benefits */}
+          <div className="grid md:grid-cols-2 gap-4 mb-8">
+            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+              <Package className="w-5 h-5 text-blue-600" />
+              <span className="text-blue-800 font-medium">تتبع طلباتك</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+              <Gift className="w-5 h-5 text-green-600" />
+              <span className="text-green-800 font-medium">عروض حصرية</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+              <User className="w-5 h-5 text-purple-600" />
+              <span className="text-purple-800 font-medium">حفظ البيانات</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+              <Stethoscope className="w-5 h-5 text-orange-600" />
+              <span className="text-orange-800 font-medium">خدمات طبية</span>
+            </div>
+          </div>
+          
+          {/* Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={onSignIn}
+              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold"
+            >
+              تسجيل الدخول / إنشاء حساب
+            </button>
+            
+            <Link
+              to="/cart"
+              className="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium text-center block"
+            >
+              العودة للسلة
+            </Link>
+          </div>
+          
+          {/* Security Note */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
+              <Shield className="w-4 h-4" />
+              معلوماتك محمية بأعلى معايير الأمان
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface Product {
   id: number;
@@ -76,7 +178,50 @@ const Checkout: React.FC = () => {
   const [couponCode, setCouponCode] = useState<string>('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponValidating, setCouponValidating] = useState<boolean>(false);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false);
   const navigate = useNavigate();
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkUserAuth = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            setIsUserLoggedIn(true);
+            console.log('✅ [Checkout] User is logged in:', user.id);
+            return;
+          }
+        } catch (error) {
+          console.error('❌ [Checkout] Error parsing user data:', error);
+        }
+      }
+      setIsUserLoggedIn(false);
+      console.log('❌ [Checkout] User is not logged in');
+    };
+
+    checkUserAuth();
+    
+    // Listen for storage changes (when user logs in from another tab)
+    const handleStorageChange = () => {
+      checkUserAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleSignIn = () => {
+    // Save current location to return after sign in
+    localStorage.setItem('redirectAfterLogin', '/checkout');
+    navigate('/sign-in');
+  };
+
+  // Show auth prompt if user is not logged in
+  if (!isUserLoggedIn) {
+    return <AuthPrompt onSignIn={handleSignIn} />;
+  }
 
   const [orderData, setOrderData] = useState<OrderData>({
     customerName: '',

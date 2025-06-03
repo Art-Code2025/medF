@@ -193,6 +193,7 @@ export const API_ENDPOINTS = {
   USER_CART: (userId: string | number) => `user/${userId}/cart`,
   CART_UPDATE_OPTIONS: (userId: string | number) => `user/${userId}/cart/update-options`,
   CART_PRODUCT: (userId: string | number, productId: string | number) => `user/${userId}/cart/product/${productId}`,
+  MIGRATE_CART: 'migrate-cart',
   
   // Wishlist
   USER_WISHLIST: (userId: string | number) => `user/${userId}/wishlist`,

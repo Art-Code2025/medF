@@ -1,78 +1,235 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Package, CreditCard, Truck } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Package, CreditCard, Truck, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { buildImageUrl } from '../config/api';
+import { buildImageUrl, apiCall } from '../config/api';
 
 interface CartItem {
   id: number;
-  name: string;
-  price: number;
+  productId: number;
   quantity: number;
-  image: string;
-  stock?: number;
+  selectedOptions?: Record<string, string>;
+  optionsPricing?: Record<string, number>;
+  attachments?: {
+    images?: string[];
+    text?: string;
+  };
+  product: {
+    id: number;
+    name: string;
+    description?: string;
+    price: number;
+    originalPrice?: number;
+    mainImage: string;
+    detailedImages?: string[];
+    stock: number;
+    productType?: string;
+    dynamicOptions?: any[];
+    specifications?: { name: string; value: string }[];
+    sizeGuideImage?: string;
+  };
 }
 
 const Cart: React.FC = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    loadCartItems();
-  }, []);
-
-  const loadCartItems = () => {
+  // تحميل السلة من الخادم
+  const fetchCart = useCallback(async () => {
     try {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        setCartItems(parsedCart);
+      setLoading(true);
+      setError(null);
+      
+      const userData = localStorage.getItem('user');
+      let endpoint = '/api/cart?userId=guest'; // Default for guests
+      
+      // If user is logged in, use their specific cart
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            endpoint = `/api/user/${user.id}/cart`;
+            console.log('🛒 [Cart] Fetching cart for logged in user:', user.id);
+          } else {
+            console.log('🛒 [Cart] Invalid user object, using guest mode');
+          }
+        } catch (parseError) {
+          console.error('❌ [Cart] Error parsing user data, using guest mode:', parseError);
+        }
+      } else {
+        console.log('🛒 [Cart] No user data found, using guest mode');
+      }
+
+      console.log('🛒 [Cart] Fetching cart from endpoint:', endpoint);
+      
+      const data = await apiCall(endpoint);
+      console.log('📦 [Cart] Raw API response:', data);
+      
+      if (Array.isArray(data)) {
+        console.log('✅ [Cart] Cart items loaded:', data.length);
+        setCartItems(data);
+      } else {
+        console.log('⚠️ [Cart] Unexpected data format:', data);
+        setCartItems([]);
       }
     } catch (error) {
-      console.error('Error loading cart:', error);
-      toast.error('حدث خطأ في تحميل السلة');
+      console.error('❌ [Cart] Error fetching cart:', error);
+      toast.error('فشل في تحميل السلة');
+      setCartItems([]);
+      setError(`فشل في تحميل السلة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateCartInStorage = (items: CartItem[]) => {
-    localStorage.setItem('cart', JSON.stringify(items));
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
-  };
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(id);
-      return;
+  // تحديث كمية المنتج
+  const updateQuantity = async (itemId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+      
+    const userData = localStorage.getItem('user');
+    let userId = 'guest';
+    let endpoint = `/api/cart/${itemId}`;
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user && user.id) {
+          userId = user.id.toString();
+          endpoint = `/api/user/${userId}/cart/${itemId}`;
+        }
+      } catch (parseError) {
+        console.error('Error parsing user data:', parseError);
+      }
     }
 
-    const updatedItems = cartItems.map(item =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    );
-    
-    setCartItems(updatedItems);
-    updateCartInStorage(updatedItems);
-    toast.success('تم تحديث الكمية');
+    try {
+      const currentItem = cartItems.find(item => item.id === itemId);
+      if (!currentItem) return;
+
+      const updateData = {
+        quantity: newQuantity,
+        selectedOptions: currentItem.selectedOptions || {},
+        attachments: currentItem.attachments || {}
+      };
+
+      if (userId === 'guest') {
+        await apiCall(endpoint, {
+          method: 'PUT',
+          body: JSON.stringify({ quantity: newQuantity })
+        });
+      } else {
+        await apiCall(endpoint, {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        });
+      }
+      
+      setCartItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      ));
+      
+      toast.success('تم تحديث الكمية');
+    } catch (error) {
+      console.error('❌ [Cart] Error updating quantity:', error);
+      toast.error('فشل في تحديث الكمية');
+    }
   };
 
-  const removeItem = (id: number) => {
-    const updatedItems = cartItems.filter(item => item.id !== id);
-    setCartItems(updatedItems);
-    updateCartInStorage(updatedItems);
-    toast.success('تم حذف المنتج من السلة');
+  // حذف منتج من السلة
+  const removeItem = async (itemId: number) => {
+    const userData = localStorage.getItem('user');
+    let userId = 'guest';
+    let endpoint = `/api/cart/${itemId}`;
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user && user.id) {
+          userId = user.id.toString();
+          endpoint = `/api/user/${userId}/cart/${itemId}`;
+        }
+      } catch (parseError) {
+        console.error('Error parsing user data:', parseError);
+      }
+    }
+
+    try {
+      await apiCall(endpoint, {
+        method: 'DELETE'
+      });
+      
+      setCartItems(prev => prev.filter(item => item.id !== itemId));
+      toast.success('تم حذف المنتج من السلة');
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast.error('فشل في حذف المنتج');
+    }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    updateCartInStorage([]);
-    toast.success('تم إفراغ السلة');
+  // إفراغ السلة
+  const clearCart = async () => {
+    if (!window.confirm('هل أنت متأكد من إفراغ السلة؟')) return;
+
+    try {
+      setCartItems([]);
+
+      const userData = localStorage.getItem('user');
+      let userId = 'guest';
+      let endpoint = '/api/cart?userId=guest';
+
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.id) {
+            userId = user.id.toString();
+            endpoint = `/api/user/${userId}/cart`;
+          }
+        } catch (parseError) {
+          console.error('Error parsing user data:', parseError);
+        }
+      }
+
+      await apiCall(endpoint, {
+        method: 'DELETE'
+      });
+
+      toast.success('تم إفراغ السلة');
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      toast.error('خطأ في إفراغ السلة');
+      fetchCart();
+    }
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalPrice = cartItems.reduce((sum, item) => {
+    const basePrice = item.product?.price || 0;
+    const optionsPrice = item.optionsPricing ? 
+      Object.values(item.optionsPricing).reduce((optSum, price) => optSum + (price || 0), 0) : 0;
+    return sum + ((basePrice + optionsPrice) * item.quantity);
+  }, 0);
+
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const shippingCost = totalPrice > 100 ? 0 : 15;
+  const shippingCost = totalPrice >= 100 ? 0 : 15;
   const finalTotal = totalPrice + shippingCost;
+
+  const getOptionDisplayName = (optionName: string): string => {
+    const names: Record<string, string> = {
+      nameOnSash: 'الاسم على الوشاح',
+      embroideryColor: 'لون التطريز',
+      capFabric: 'قماش الكاب',
+      size: 'المقاس',
+      color: 'اللون',
+      capColor: 'لون الكاب',
+      dandoshColor: 'لون الدندوش'
+    };
+    return names[optionName] || optionName;
+  };
 
   if (loading) {
     return (
@@ -80,6 +237,24 @@ const Cart: React.FC = () => {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">جاري تحميل السلة...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-32">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-red-800 mb-2">خطأ في تحميل السلة</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchCart}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+          >
+            إعادة المحاولة
+          </button>
         </div>
       </div>
     );
@@ -108,7 +283,7 @@ const Cart: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-32">
+    <div className="min-h-screen bg-gray-50 pt-32" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Header */}
@@ -128,7 +303,7 @@ const Cart: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">سلة التسوق</h1>
-              <p className="text-gray-600 mt-1">{totalItems} عنصر في السلة</p>
+              <p className="text-gray-600 mt-1">{totalItems} منتج في السلة</p>
             </div>
             
             {cartItems.length > 0 && (
@@ -151,13 +326,13 @@ const Cart: React.FC = () => {
                 key={item.id}
                 className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   
                   {/* Product Image */}
                   <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     <img
-                      src={buildImageUrl(item.image)}
-                      alt={item.name}
+                      src={buildImageUrl(item.product?.mainImage || '')}
+                      alt={item.product?.name || 'منتج'}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -165,59 +340,81 @@ const Cart: React.FC = () => {
                   {/* Product Details */}
                   <div className="flex-1 min-w-0">
                     <Link
-                      to={`/product/${item.id}`}
+                      to={`/product/${item.productId}`}
                       className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 line-clamp-2"
                     >
-                      {item.name}
+                      {item.product?.name || 'منتج غير معروف'}
                     </Link>
                     
-                    <div className="mt-2 flex items-center gap-4">
-                      <span className="text-xl font-bold text-gray-900">
-                        {item.price.toFixed(2)} ر.س
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        للقطعة الواحدة
-                      </span>
-                    </div>
-                  </div>
+                    {/* Selected Options */}
+                    {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+                        <p className="text-xs font-bold text-blue-700 mb-1">المواصفات:</p>
+                        <div className="grid grid-cols-2 gap-1">
+                          {Object.entries(item.selectedOptions).map(([optionName, value]) => (
+                            <div key={optionName} className="text-xs">
+                              <span className="text-gray-600">{getOptionDisplayName(optionName)}:</span>
+                              <span className="font-semibold text-gray-800 mr-1">{value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                  {/* Quantity Controls */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="p-2 hover:bg-gray-100 transition-colors duration-200"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="px-4 py-2 text-center min-w-[60px] border-x border-gray-300 font-medium">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="p-2 hover:bg-gray-100 transition-colors duration-200"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {/* Attachments */}
+                    {item.attachments && (item.attachments.text || (item.attachments.images && item.attachments.images.length > 0)) && (
+                      <div className="mt-2 p-2 bg-purple-50 rounded-lg">
+                        <p className="text-xs font-bold text-purple-700 mb-1">مرفقات:</p>
+                        {item.attachments.text && (
+                          <p className="text-xs text-gray-700">📝 {item.attachments.text.substring(0, 50)}...</p>
+                        )}
+                        {item.attachments.images && item.attachments.images.length > 0 && (
+                          <p className="text-xs text-purple-600">🖼️ {item.attachments.images.length} صورة</p>
+                        )}
+                      </div>
+                    )}
                     
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-xl font-bold text-gray-900">
+                          {((item.product?.price || 0) * item.quantity).toFixed(2)} ر.س
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {(item.product?.price || 0).toFixed(2)} ر.س × {item.quantity}
+                        </span>
+                      </div>
 
-                {/* Item Total */}
-                <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <span className="text-sm text-gray-600">
-                    {item.quantity} × {item.price.toFixed(2)} ر.س
-                  </span>
-                  <span className="text-lg font-bold text-gray-900">
-                    {(item.price * item.quantity).toFixed(2)} ر.س
-                  </span>
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center border border-gray-300 rounded-lg">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="p-2 hover:bg-gray-100 transition-colors duration-200"
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="px-4 py-2 text-center min-w-[60px] border-x border-gray-300 font-medium">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="p-2 hover:bg-gray-100 transition-colors duration-200"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="حذف المنتج"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -225,73 +422,68 @@ const Cart: React.FC = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-36">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">ملخص الطلب</h2>
+            <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                ملخص الطلب
+              </h2>
               
               <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">المجموع الفرعي ({totalItems} عنصر)</span>
-                  <span className="font-medium text-gray-900">{totalPrice.toFixed(2)} ر.س</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">المجموع الفرعي:</span>
+                  <span className="font-medium">{totalPrice.toFixed(2)} ر.س</span>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">الشحن</span>
-                  <span className="font-medium text-gray-900">
-                    {shippingCost === 0 ? 'مجاني' : `${shippingCost.toFixed(2)} ر.س`}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">رسوم التوصيل:</span>
+                  <span className="font-medium">
+                    {shippingCost === 0 ? (
+                      <span className="text-green-600">مجاني</span>
+                    ) : (
+                      `${shippingCost} ر.س`
+                    )}
                   </span>
                 </div>
-                
+
                 {shippingCost === 0 && (
-                  <div className="flex items-center gap-2 text-green-600 text-sm">
-                    <Truck className="w-4 h-4" />
-                    <span>شحن مجاني للطلبات أكثر من 100 ر.س</span>
+                  <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                    🎉 تهانينا! حصلت على التوصيل المجاني
                   </div>
                 )}
                 
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex items-center justify-between text-lg font-bold">
-                    <span className="text-gray-900">المجموع الكلي</span>
-                    <span className="text-gray-900">{finalTotal.toFixed(2)} ر.س</span>
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    شامل ضريبة القيمة المضافة
-                  </div>
+                <hr className="border-gray-200" />
+                
+                <div className="flex justify-between text-lg font-bold">
+                  <span>المجموع الكلي:</span>
+                  <span className="text-blue-600">{finalTotal.toFixed(2)} ر.س</span>
                 </div>
               </div>
 
-              {/* Checkout Button */}
-              <Link
-                to="/checkout"
-                className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold text-center flex items-center justify-center gap-2"
-              >
-                <CreditCard className="w-5 h-5" />
-                متابعة الدفع
-              </Link>
+              <div className="space-y-3">
+                <Link
+                  to="/checkout"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-center block"
+                >
+                  متابعة للدفع
+                </Link>
+                
+                <Link
+                  to="/products"
+                  className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium text-center block"
+                >
+                  متابعة التسوق
+                </Link>
+              </div>
 
-              {/* Continue Shopping */}
-              <Link
-                to="/products"
-                className="w-full mt-3 border border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium text-center block"
-              >
-                متابعة التسوق
-              </Link>
-
-              {/* Security Features */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">مميزات الشراء</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Package className="w-4 h-4 text-green-600" />
-                    <span>تغليف آمن ومحمي</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Truck className="w-4 h-4 text-green-600" />
-                    <span>توصيل سريع وموثوق</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <CreditCard className="w-4 h-4 text-green-600" />
-                    <span>دفع آمن ومشفر</span>
-                  </div>
+              {/* Shipping & Security Info */}
+              <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Truck className="w-4 h-4" />
+                  <span>التوصيل خلال 1-3 أيام عمل</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <CreditCard className="w-4 h-4" />
+                  <span>دفع آمن ومحمي</span>
                 </div>
               </div>
             </div>
