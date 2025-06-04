@@ -42,9 +42,19 @@ const ProductForm: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [mainImageFile, setMainImageFile] = useState<File | null>(null);
-  const [detailedImageFiles, setDetailedImageFiles] = useState<File[]>([]);
+  const [mainImagePreview, setMainImagePreview] = useState<string>('');
+  const [detailedImagesPreviews, setDetailedImagesPreviews] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // دالة لتحويل ملف إلى base64
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -99,40 +109,35 @@ const ProductForm: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', product.name);
-      formDataToSend.append('description', product.description);
-      formDataToSend.append('price', product.price.toString());
-      if (product.originalPrice) {
-        formDataToSend.append('originalPrice', product.originalPrice.toString());
-      }
-      formDataToSend.append('stock', product.stock.toString());
-      if (product.categoryId) {
-        formDataToSend.append('categoryId', product.categoryId.toString());
-      }
-
-      if (mainImageFile) {
-        formDataToSend.append('mainImage', mainImageFile);
-      }
-
-      if (detailedImageFiles && detailedImageFiles.length > 0) {
-        detailedImageFiles.forEach((file) => {
-          formDataToSend.append('detailedImages', file);
-        });
-      }
+      const productData = {
+        name: product.name,
+        description: product.description,
+        price: product.price.toString(),
+        originalPrice: product.originalPrice?.toString() || '',
+        stock: product.stock.toString(),
+        categoryId: product.categoryId?.toString() || '',
+        mainImage: mainImagePreview || product.mainImage,
+        detailedImages: detailedImagesPreviews.length > 0 ? detailedImagesPreviews : product.detailedImages
+      };
 
       let response;
       if (id) {
         // تعديل منتج موجود
         response = await fetch(buildApiUrl(API_ENDPOINTS.PRODUCT_BY_ID(id)), {
           method: 'PUT',
-          body: formDataToSend,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productData),
         });
       } else {
         // إضافة منتج جديد
         response = await fetch(buildApiUrl(API_ENDPOINTS.PRODUCTS), {
           method: 'POST',
-          body: formDataToSend,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productData),
         });
       }
 
@@ -160,16 +165,67 @@ const ProductForm: React.FC = () => {
     }
   };
 
-  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setMainImageFile(file);
+      try {
+        // التحقق من نوع الملف
+        if (!file.type.startsWith('image/')) {
+          toast.error('يرجى اختيار ملف صورة صحيح');
+          return;
+        }
+        
+        // التحقق من حجم الملف (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('حجم الصورة كبير جداً. الحد الأقصى 5MB');
+          return;
+        }
+
+        const base64 = await convertFileToBase64(file);
+        setMainImagePreview(base64);
+        toast.success('تم تحميل الصورة بنجاح');
+      } catch (error) {
+        console.error('Error converting image:', error);
+        toast.error('خطأ في تحميل الصورة');
+      }
     }
   };
 
-  const handleDetailedImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDetailedImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setDetailedImageFiles(files);
+    if (files.length === 0) return;
+
+    try {
+      // التحقق من عدد الملفات
+      if (files.length > 5) {
+        toast.error('يمكنك رفع حد أقصى 5 صور');
+        return;
+      }
+
+      const base64Images: string[] = [];
+      for (const file of files) {
+        // التحقق من نوع الملف
+        if (!file.type.startsWith('image/')) {
+          toast.error(`الملف ${file.name} ليس صورة صحيحة`);
+          continue;
+        }
+        
+        // التحقق من حجم الملف
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`الصورة ${file.name} كبيرة جداً. الحد الأقصى 5MB`);
+          continue;
+        }
+
+        const base64 = await convertFileToBase64(file);
+        base64Images.push(base64);
+      }
+
+      setDetailedImagesPreviews(base64Images);
+      toast.success(`تم تحميل ${base64Images.length} صورة بنجاح`);
+    } catch (error) {
+      console.error('Error converting images:', error);
+      toast.error('خطأ في تحميل الصور');
+    }
   };
 
   if (loading) {
@@ -352,7 +408,7 @@ const ProductForm: React.FC = () => {
                 </h3>
                 
                 <div className="space-y-4">
-                  {product.mainImage && !mainImageFile && (
+                  {product.mainImage && !mainImagePreview && (
                     <div className="relative">
                       <img
                         src={buildImageUrl(product.mainImage)}
@@ -377,7 +433,7 @@ const ProductForm: React.FC = () => {
                       <div className="flex flex-col items-center">
                         <Upload className="w-8 h-8 text-medical-gray mb-2" />
                         <p className="text-sm font-medium text-medical-charcoal">
-                          {mainImageFile ? mainImageFile.name : 'اختر صورة رئيسية'}
+                          {mainImagePreview ? 'تم تحميل الصورة' : 'اختر صورة رئيسية'}
                         </p>
                         <p className="text-xs text-medical-gray mt-1">
                           PNG, JPG, JPEG (حد أقصى 5MB)
@@ -398,7 +454,7 @@ const ProductForm: React.FC = () => {
                 </h3>
                 
                 <div className="space-y-4">
-                  {product.detailedImages && product.detailedImages.length > 0 && detailedImageFiles.length === 0 && (
+                  {product.detailedImages && product.detailedImages.length > 0 && detailedImagesPreviews.length === 0 && (
                     <div className="grid grid-cols-2 gap-3">
                       {product.detailedImages.map((image, index) => (
                         <div key={index} className="relative">
@@ -428,8 +484,8 @@ const ProductForm: React.FC = () => {
                       <div className="flex flex-col items-center">
                         <Upload className="w-8 h-8 text-medical-gray mb-2" />
                         <p className="text-sm font-medium text-medical-charcoal">
-                          {detailedImageFiles.length > 0 
-                            ? `تم اختيار ${detailedImageFiles.length} صور` 
+                          {detailedImagesPreviews.length > 0 
+                            ? `تم اختيار ${detailedImagesPreviews.length} صور` 
                             : 'اختر صور تفصيلية'
                           }
                         </p>

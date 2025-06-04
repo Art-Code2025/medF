@@ -53,11 +53,12 @@ export const buildImageUrl = (imagePath: string): string => {
     return imagePath;
   }
   
-  // إذا كان base64 data URL
+  // إذا كان base64 data URL - الطريقة الجديدة المفضلة
   if (imagePath.startsWith('data:image/')) {
     return imagePath;
   }
   
+  // إذا كان مسار ملف قديم، حاول تحويله إلى URL للملف الستاتيك
   const baseUrl = getApiBaseUrl();
   let finalUrl = '';
   
@@ -95,13 +96,8 @@ export const buildImageUrl = (imagePath: string): string => {
 
 // دالة مساعدة للحصول على صورة احتياطية حسب النوع
 export const getFallbackImage = (type: 'product' | 'category' | 'general' = 'general'): string => {
-  const fallbackImages = {
-    product: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3',
-    category: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=300&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3',
-    general: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3'
-  };
-  
-  return fallbackImages[type];
+  // إزالة الصور الافتراضية المزعجة وإرجاع placeholder بسيط
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMDAgMTAwQzE4My40MzEgMTAwIDE3MCAzMTMuNDMxIDE3MCAzMzBWMzQwQzE3MCAzNTYuNTY5IDE4My40MzEgMzcwIDIwMCAzNzBIMjEwQzIyNi41NjkgMzcwIDI0MCAzNTYuNTY5IDI0MCAzNDBWMzMwQzI0MCAzMTMuNDMxIDIyNi41NjkgMzAwIDIxMCAzMDBIMjAwQzE4My40MzEgMzAwIDE3MCAyODYuNTY5IDE3MCAyNzBWMjAwQzE3MCAzODMuNDMxIDE4My40MzEgMTAwIDIwMCAxMDBaIiBmaWxsPSIjRDFENU...';
 };
 
 // دالة محسنة مع retry logic وfallback للبيانات الوهمية
