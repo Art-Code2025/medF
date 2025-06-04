@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
     } catch (error) {
       console.error('❌ [Navbar] Error fetching cart:', error);
     }
-  };
+  }
 
   // تحديث المفضلة من الـ API
   const fetchWishlist = async () => {
@@ -100,7 +100,7 @@ const Navbar: React.FC = () => {
     } catch (error) {
       console.error('❌ [Navbar] Error fetching wishlist:', error);
     }
-  };
+  }
 
   useEffect(() => {
     // تحديث فوري من localStorage عند البداية
@@ -218,7 +218,7 @@ const Navbar: React.FC = () => {
     setIsUserMenuOpen(false);
     toast.success('تم تسجيل الخروج بنجاح');
     navigate('/');
-  };
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,7 +226,7 @@ const Navbar: React.FC = () => {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
     }
-  };
+  }
 
   if (!shouldShowNavbar) {
     return null;
@@ -528,9 +528,10 @@ const Navbar: React.FC = () => {
               </div>
             </div>
           )}
+          </div>
         </header>
       </div>
     );
-  };
+};
 
 export default Navbar;
