@@ -196,18 +196,18 @@ const ShoppingCart: React.FC = () => {
         setCartItems(data);
         
         // إرسال toast للمساعدة في التشخيص
-        if (data.length > 0) {
-          toast.success(`✅ تم تحميل ${data.length} منتج من السلة`, {
-            position: "bottom-right",
-            autoClose: 2000,
-            hideProgressBar: true,
-            style: {
-              background: '#10B981',
-              color: 'white',
-              fontSize: '14px'
-            }
-          });
-        }
+        // if (data.length > 0) {
+        //   toast.success(`✅ تم تحميل ${data.length} منتج من السلة`, {
+        //     position: "bottom-right",
+        //     autoClose: 2000,
+        //     hideProgressBar: true,
+        //     style: {
+        //       background: '#10B981',
+        //       color: 'white',
+        //       fontSize: '14px'
+        //     }
+        //   });
+        // }
       } else {
         console.log('⚠️ [Cart] Unexpected data format:', data);
         setCartItems([]);
@@ -282,20 +282,23 @@ const ShoppingCart: React.FC = () => {
 
       console.log('🔢 [Cart] Updating quantity with preserved data:', { itemId, newQuantity, updateData });
 
-      if (userId === 'guest') {
-        // For guests, update via general cart API
-        await apiCall(endpoint, {
-          method: 'PUT',
-          body: JSON.stringify({ quantity: newQuantity })
-        });
-      } else {
-        // For logged in users, use user-specific API
-        await apiCall(endpoint, {
-          method: 'PUT',
-          body: JSON.stringify(updateData)
-        });
+      // استخدام fetch مباشرة
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const fullUrl = `${baseUrl}${endpoint}`;
+      
+      const response = await fetch(fullUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userId === 'guest' ? { quantity: newQuantity } : updateData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
+      // تحديث الحالة المحلية
       setCartItems(prev => prev.map(item => 
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       ));
@@ -306,7 +309,14 @@ const ShoppingCart: React.FC = () => {
       console.log('✅ [Cart] Quantity updated successfully while preserving options');
     } catch (error) {
       console.error('❌ [Cart] Error updating quantity:', error);
-      toast.error('فشل في تحديث الكمية');
+      toast.error(`فشل في تحديث الكمية: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, {
+        position: "top-center",
+        autoClose: 3000,
+        style: {
+          background: '#DC2626',
+          color: 'white'
+        }
+      });
     }
   };
 
@@ -729,166 +739,11 @@ const ShoppingCart: React.FC = () => {
               </span>
             </div>
             <button
-              onClick={async () => {
-                console.log('🔄 [Cart] Manual refresh triggered');
-                toast.info('🔄 جاري تحديث السلة...', {
-                  position: "top-center",
-                  autoClose: 1000,
-                  hideProgressBar: true
-                });
-                
-                await fetchCart();
-                
-                toast.success('✅ تم تحديث السلة!', {
-                  position: "top-center",
-                  autoClose: 1500,
-                  hideProgressBar: true,
-                  style: {
-                    background: '#10B981',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }
-                });
-              }}
-              className="bg-gradient-to-r from-gray-700 to-gray-800 text-white px-6 py-3 rounded-full hover:from-gray-800 hover:to-gray-900 transition-all shadow-lg transform hover:scale-105 border border-gray-600"
-            >
-              🔄 تحديث فوري
-            </button>
-            <button
-              onClick={async () => {
-                console.log('🧪 [TEST] Testing save to backend...');
-                
-                if (cartItems.length === 0) {
-                  toast.error('السلة فارغة!');
-                  return;
-                }
-                
-                const firstItem = cartItems[0];
-                console.log('🧪 [TEST] BEFORE - Current item state:', {
-                  id: firstItem.id,
-                  selectedOptions: firstItem.selectedOptions,
-                  attachments: firstItem.attachments
-                });
-                
-                const testOptions = {
-                  ...firstItem.selectedOptions,
-                  testField: 'test-value-' + Date.now(),
-                  size: '44' // تجربة مقاس جديد
-                };
-                
-                console.log('🧪 [TEST] Testing with item:', firstItem.id, 'new options:', testOptions);
-                
-                // تحديث الحالة المحلية أولاً
-                setCartItems(prev => prev.map(item => 
-                  item.id === firstItem.id ? { 
-                    ...item, 
-                    selectedOptions: testOptions 
-                  } : item
-                ));
-                
-                // ثم الحفظ في البكند
-                const success = await saveOptionsToBackend(firstItem.id, 'selectedOptions', testOptions);
-                
-                if (success) {
-                  toast.success('🧪 ✅ اختبار الحفظ نجح! البيانات محفوظة في البكند', {
-                    position: "top-center",
-                    autoClose: 3000,
-                    style: {
-                      background: '#10B981',
-                      fontWeight: 'bold'
-                    }
-                  });
-                  
-                  console.log('🧪 [TEST] SUCCESS - Item updated locally:', {
-                    id: firstItem.id,
-                    newSelectedOptions: testOptions
-                  });
-                } else {
-                  toast.error('🧪 ❌ اختبار الحفظ فشل!', {
-                    position: "top-center",
-                    autoClose: 3000,
-                    style: {
-                      background: '#DC2626',
-                      fontWeight: 'bold'
-                    }
-                  });
-                }
-              }}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-full hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg transform hover:scale-105 border border-purple-500"
-            >
-              🧪 اختبار
-            </button>
-            <button
-              onClick={async () => {
-                if (!window.confirm('🚨 هل تريد إعادة تعيين السلة كلياً؟ (هذا سيحذف كل شيء)')) return;
-                
-                toast.info('🔄 جاري إعادة تعيين السلة...', {
-                  position: "top-center",
-                  autoClose: 2000
-                });
-                
-                try {
-                  // Hard refresh كامل
-                  await cartSyncManager.hardRefresh();
-                  
-                  // إعادة تحميل البيانات
-                  await fetchCart();
-                  
-                  toast.success('✅ تم إعادة تعيين السلة بنجاح!', {
-                    position: "top-center",
-                    autoClose: 3000,
-                    style: {
-                      background: '#10B981',
-                      color: 'white',
-                      fontWeight: 'bold'
-                    }
-                  });
-                  
-                  // إعادة تحميل الصفحة للتأكد
-                  setTimeout(() => window.location.reload(), 1000);
-                } catch (error) {
-                  console.error('❌ [Cart] Hard reset failed:', error);
-                  toast.error('فشل في إعادة التعيين', {
-                    position: "top-center",
-                    style: {
-                      background: '#DC2626',
-                      color: 'white'
-                    }
-                  });
-                }
-              }}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-full hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg transform hover:scale-105 border border-blue-500"
-            >
-              🔄 إعادة تعيين شامل
-            </button>
-            <button
               onClick={clearCart}
               className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-full hover:from-red-700 hover:to-red-800 transition-all shadow-lg transform hover:scale-105 border border-red-500"
             >
               🗑️ إفراغ السلة
             </button>
-            {cartItems.filter(item => !item.product).length > 0 && (
-              <button
-                onClick={async () => {
-                  const brokenItems = cartItems.filter(item => !item.product);
-                  if (!window.confirm(`هل تريد حذف ${brokenItems.length} منتج ناقص البيانات؟`)) return;
-                  
-                  try {
-                    // حذف المنتجات الناقصة واحد واحد
-                    for (const item of brokenItems) {
-                      await removeItem(item.id);
-                    }
-                    toast.success(`تم حذف ${brokenItems.length} منتج ناقص البيانات`);
-                  } catch (error) {
-                    console.error('Error removing broken items:', error);
-                    toast.error('خطأ في حذف المنتجات الناقصة');
-                  }
-                }}
-                className="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-6 py-3 rounded-full hover:from-orange-700 hover:to-orange-800 transition-all shadow-lg transform hover:scale-105 border border-orange-500"
-              >
-                🧹 حذف المنتجات الناقصة ({cartItems.filter(item => !item.product).length})
-              </button>
-            )}
           </div>
 
           {/* Status Indicator */}
@@ -986,17 +841,17 @@ const ShoppingCart: React.FC = () => {
                 
                 {/* المنتجات الصحيحة */}
                 {cartItems.filter(item => item.product).map((item, index) => (
-                  <div key={item.id} data-item-id={item.id} className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-500">
+                  <div key={item.id} data-item-id={item.id} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-500">
                     {/* Product Header */}
-                    <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white p-6">
+                    <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-600 text-white p-6">
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white bg-opacity-10 backdrop-blur-sm rounded-full flex items-center justify-center border border-gray-600">
+                          <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white border-opacity-30">
                             <span className="text-white font-bold text-lg">{index + 1}</span>
                           </div>
                           <div>
                             <h3 className="text-xl font-bold">{item.product?.name || 'منتج غير معروف'}</h3>
-                            <p className="text-gray-300">
+                            <p className="text-red-100">
                               {item.product?.description?.substring(0, 50)}...
                             </p>
                           </div>
@@ -1004,7 +859,7 @@ const ShoppingCart: React.FC = () => {
                         <div className="flex gap-3">
                           <button
                             onClick={() => removeItem(item.id)}
-                            className="w-12 h-12 bg-red-600 bg-opacity-80 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg transform hover:scale-110 border border-red-500"
+                            className="w-12 h-12 bg-red-800 bg-opacity-60 backdrop-blur-sm text-white rounded-xl flex items-center justify-center hover:bg-opacity-80 transition-all shadow-lg transform hover:scale-110 border border-red-400"
                             title="حذف المنتج"
                           >
                             <X className="w-6 h-6" />
@@ -1020,7 +875,7 @@ const ShoppingCart: React.FC = () => {
                           <div className="space-y-6">
                             {/* Main Product Image */}
                             <div className="relative group">
-                              <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden shadow-lg">
+                              <div className="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden shadow-lg border border-gray-200">
                                 {item.product?.mainImage ? (
                                   <img 
                                     src={buildImageUrl(item.product.mainImage)}
@@ -1036,12 +891,12 @@ const ShoppingCart: React.FC = () => {
                             </div>
 
                             {/* Price and Quantity */}
-                            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border-2 border-gray-700 shadow-lg">
+                            <div className="bg-gradient-to-br from-red-600 to-rose-600 p-6 rounded-xl border-2 border-red-500 shadow-lg">
                               <div className="text-center mb-4">
                                 <div className="text-3xl font-bold text-white">
                                   {((item.product?.price || 0) * item.quantity).toFixed(2)} ر.س
                                 </div>
-                                <div className="text-gray-300 mt-1">
+                                <div className="text-red-100 mt-1">
                                   {item.product?.price?.toFixed(2)} ر.س × {item.quantity}
                                 </div>
                               </div>
@@ -1049,19 +904,19 @@ const ShoppingCart: React.FC = () => {
                               <div className="flex items-center justify-center gap-4">
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full flex items-center justify-center hover:from-red-700 hover:to-red-800 transition-all shadow-lg transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed border border-red-500"
+                                  className="w-12 h-12 bg-gradient-to-r from-white to-gray-50 text-red-600 rounded-xl flex items-center justify-center hover:from-gray-50 hover:to-gray-100 transition-all shadow-lg transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
                                   disabled={item.quantity <= 1}
                                 >
                                   <Minus className="w-6 h-6" />
                                 </button>
                                 <div className="w-20 text-center">
-                                  <div className="text-2xl font-bold bg-gray-800 text-white py-3 rounded-xl border-2 border-gray-600 shadow-md">
+                                  <div className="text-2xl font-bold bg-white text-red-600 py-3 rounded-xl border-2 border-red-300 shadow-md">
                                     {item.quantity}
                                   </div>
                                 </div>
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-full flex items-center justify-center hover:from-green-700 hover:to-green-800 transition-all shadow-lg transform hover:scale-110 border border-green-500"
+                                  className="w-12 h-12 bg-gradient-to-r from-white to-gray-50 text-red-600 rounded-xl flex items-center justify-center hover:from-gray-50 hover:to-gray-100 transition-all shadow-lg transform hover:scale-110 border border-gray-200"
                                 >
                                   <Plus className="w-6 h-6" />
                                 </button>
@@ -1075,18 +930,18 @@ const ShoppingCart: React.FC = () => {
                           <div className="space-y-6">
                             {/* Product Options */}
                             {item.product.dynamicOptions && item.product.dynamicOptions.length > 0 && (
-                              <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border-2 border-gray-700 shadow-lg">
-                                <h5 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                                  <Package className="w-7 h-7 text-blue-400" />
+                              <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border-2 border-gray-200 shadow-lg">
+                                <h5 className="text-2xl font-bold text-red-700 mb-6 flex items-center gap-3">
+                                  <Package className="w-7 h-7 text-red-600" />
                                   خيارات المنتج
                                 </h5>
                                 
                                 <div className="space-y-6">
                                   {item.product.dynamicOptions.map((option) => (
                                     <div key={option.optionName} className="space-y-3">
-                                      <label className="block text-lg font-semibold text-white">
+                                      <label className="block text-lg font-semibold text-gray-800">
                                         {getOptionDisplayName(option.optionName)}
-                                        {option.required && <span className="text-red-400 mr-2">*</span>}
+                                        {option.required && <span className="text-red-500 mr-2">*</span>}
                                       </label>
                                       
                                       {option.optionType === 'select' && option.options ? (
@@ -1142,8 +997,8 @@ const ShoppingCart: React.FC = () => {
                                               });
                                             }
                                           }}
-                                          className={`w-full px-4 py-3 border rounded-xl bg-gray-700 text-white border-gray-600 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 ${
-                                            formErrors[option.optionName] ? 'border-red-500' : 'border-gray-600'
+                                          className={`w-full px-4 py-3 border rounded-xl bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 ${
+                                            formErrors[option.optionName] ? 'border-red-500' : 'border-gray-300'
                                           }`}
                                           required={option.required}
                                         >
@@ -1157,7 +1012,7 @@ const ShoppingCart: React.FC = () => {
                                       ) : option.optionType === 'radio' && option.options ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                           {option.options.map((opt) => (
-                                            <label key={opt.value} className="flex items-center p-4 border-2 border-gray-600 bg-gray-700 rounded-xl hover:bg-gray-600 hover:border-gray-500 cursor-pointer transition-all shadow-sm">
+                                            <label key={opt.value} className="flex items-center p-4 border-2 border-gray-300 bg-white rounded-xl hover:bg-gray-50 hover:border-red-300 cursor-pointer transition-all shadow-sm">
                                               <input
                                                 type="radio"
                                                 name={`${item.id}-${option.optionName}`}
@@ -1213,9 +1068,9 @@ const ShoppingCart: React.FC = () => {
                                                     });
                                                   }
                                                 }}
-                                                className="ml-3 text-blue-400 scale-125"
+                                                className="ml-3 text-red-600 scale-125"
                                               />
-                                              <span className="font-medium text-white">{opt.value}</span>
+                                              <span className="font-medium text-gray-700">{opt.value}</span>
                                             </label>
                                           ))}
                                         </div>
@@ -1274,8 +1129,8 @@ const ShoppingCart: React.FC = () => {
                                             }
                                           }}
                                           placeholder={option.placeholder}
-                                          className={`w-full px-4 py-3 border rounded-xl bg-gray-700 text-white border-gray-600 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 ${
-                                            formErrors[option.optionName] ? 'border-red-500' : 'border-gray-600'
+                                          className={`w-full px-4 py-3 border rounded-xl bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 ${
+                                            formErrors[option.optionName] ? 'border-red-500' : 'border-gray-300'
                                           }`}
                                           required={option.required}
                                         />
@@ -1372,15 +1227,15 @@ const ShoppingCart: React.FC = () => {
                             )}
 
                             {/* Attachments */}
-                            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border-2 border-gray-700 shadow-lg">
-                              <h5 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                <Sparkles className="w-6 h-6 text-purple-400" />
+                            <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border-2 border-gray-200 shadow-lg">
+                              <h5 className="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+                                <Sparkles className="w-6 h-6 text-red-600" />
                                 ملاحظات وصور إضافية
                               </h5>
                               
                               <div className="space-y-4">
                                 <div>
-                                  <label className="block text-lg font-bold text-white mb-3">
+                                  <label className="block text-lg font-bold text-gray-800 mb-3">
                                     ملاحظات خاصة
                                   </label>
                                   <textarea
@@ -1429,17 +1284,17 @@ const ShoppingCart: React.FC = () => {
                                       }, 1000);
                                     }}
                                     placeholder="أضف أي ملاحظات أو تعليمات خاصة..."
-                                    className="w-full px-4 py-4 border-2 border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 shadow-md transition-all placeholder-gray-400"
+                                    className="w-full px-4 py-4 border-2 border-gray-300 bg-white text-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-md transition-all placeholder-gray-400"
                                     rows={4}
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="block text-lg font-bold text-white mb-3">
+                                  <label className="block text-lg font-bold text-gray-800 mb-3">
                                     صور إضافية
                                   </label>
                                   <div className="flex items-center gap-3 mb-4">
-                                    <label className="cursor-pointer bg-gradient-to-r from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all shadow-lg transform hover:scale-105 border border-purple-500">
+                                    <label className="cursor-pointer bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all shadow-lg transform hover:scale-105 border border-red-500">
                                       <Upload className="w-5 h-5" />
                                       <span className="font-medium">رفع صور</span>
                                       <input
@@ -1451,7 +1306,7 @@ const ShoppingCart: React.FC = () => {
                                       />
                                     </label>
                                     {uploadingImages && (
-                                      <div className="text-purple-400 font-medium">جاري الرفع...</div>
+                                      <div className="text-red-600 font-medium">جاري الرفع...</div>
                                     )}
                                   </div>
                                   
@@ -1496,31 +1351,31 @@ const ShoppingCart: React.FC = () => {
 
             {/* Order Summary - Takes 1 column */}
             <div className="xl:col-span-1">
-              <div className="bg-gray-800 rounded-3xl shadow-xl overflow-hidden sticky top-8 border border-gray-700">
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-8 border border-gray-200">
                 {/* Summary Header */}
-                <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-6 border-b border-gray-700">
+                <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-600 text-white p-6 border-b border-red-500">
                   <h3 className="text-2xl font-bold text-center">ملخص الطلب</h3>
-                  <p className="text-center text-gray-300 mt-2">مراجعة نهائية</p>
+                  <p className="text-center text-red-100 mt-2">مراجعة نهائية</p>
                 </div>
                 
                 <div className="p-6">
                   <div className="space-y-6 mb-8">
                     <div className="flex justify-between items-center text-lg">
-                      <span className="text-gray-300">المجموع الفرعي:</span>
-                      <span className="font-bold text-white">{totalPrice.toFixed(2)} ر.س</span>
+                      <span className="text-gray-600">المجموع الفرعي:</span>
+                      <span className="font-bold text-red-600">{totalPrice.toFixed(2)} ر.س</span>
                     </div>
                     <div className="flex justify-between items-center text-lg">
-                      <span className="text-gray-300">رسوم التوصيل:</span>
-                      <span className="text-green-400 font-bold">مجاني</span>
+                      <span className="text-gray-600">رسوم التوصيل:</span>
+                      <span className="text-green-600 font-bold">مجاني</span>
                     </div>
                     <div className="flex justify-between items-center text-lg">
-                      <span className="text-gray-300">الضريبة:</span>
-                      <span className="text-gray-300">محتسبة</span>
+                      <span className="text-gray-600">الضريبة:</span>
+                      <span className="text-gray-600">محتسبة</span>
                     </div>
-                    <hr className="border-gray-600" />
+                    <hr className="border-gray-300" />
                     <div className="flex justify-between items-center text-2xl font-bold">
-                      <span className="text-white">المجموع الكلي:</span>
-                      <span className="text-green-400">
+                      <span className="text-gray-800">المجموع الكلي:</span>
+                      <span className="text-red-600">
                         {totalPrice.toFixed(2)} ر.س
                       </span>
                     </div>
@@ -1528,17 +1383,17 @@ const ShoppingCart: React.FC = () => {
 
                   {/* Promo Code */}
                   <div className="mb-8">
-                    <label className="block text-lg font-bold text-white mb-3">كود الخصم</label>
+                    <label className="block text-lg font-bold text-gray-800 mb-3">كود الخصم</label>
                     <div className="space-y-3">
                       <input
                         type="text"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                         placeholder="أدخل كود الخصم"
-                        className="w-full px-4 py-3 border-2 border-gray-600 bg-gray-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 shadow-md transition-all placeholder-gray-400"
+                        className="w-full px-4 py-3 border-2 border-gray-300 bg-white text-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-md transition-all placeholder-gray-400"
                       />
                       <button 
-                        className="w-full bg-gradient-to-r from-gray-700 to-gray-800 text-white py-3 rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all font-bold shadow-lg transform hover:scale-105 border border-gray-600"
+                        className="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all font-bold shadow-lg transform hover:scale-105 border border-gray-500"
                         onClick={() => {
                           if (promoCode.trim()) {
                             toast.info('جاري التحقق من كود الخصم...');
@@ -1637,7 +1492,7 @@ const ShoppingCart: React.FC = () => {
                     </Link>
                     <Link
                       to="/"
-                      className="w-full border-2 border-gray-600 bg-gray-700 text-white py-3 rounded-xl hover:bg-gray-600 hover:border-gray-500 font-bold text-center block transition-all transform hover:scale-105"
+                      className="w-full border-2 border-gray-300 bg-white text-gray-700 py-3 rounded-xl hover:bg-gray-50 hover:border-gray-400 font-bold text-center block transition-all transform hover:scale-105"
                     >
                       ← متابعة التسوق
                     </Link>
@@ -1687,68 +1542,6 @@ const ShoppingCart: React.FC = () => {
           </div>
         </div>
       )}
-
-      <button
-        onClick={async () => {
-          console.log('🧪 [TEST] Manual API test starting...');
-          
-          toast.info('🧪 اختبار اتصال البكند...', {
-            position: "top-center",
-            autoClose: 2000
-          });
-          
-          try {
-            // اختبار مباشر للـ API
-            const url = 'http://localhost:3001/api/cart?userId=guest';
-            console.log('🌐 [TEST] Testing URL:', url);
-            
-            const response = await fetch(url);
-            console.log('📡 [TEST] Response:', response.status, response.statusText);
-            
-            if (response.ok) {
-              const data = await response.json();
-              console.log('🎯 [TEST] Data received:', data);
-              
-              if (Array.isArray(data) && data.length > 0) {
-                toast.success(`🎉 نجح! وجدت ${data.length} منتج في السلة`, {
-                  position: "top-center",
-                  autoClose: 3000,
-                  style: {
-                    background: '#10B981',
-                    fontWeight: 'bold'
-                  }
-                });
-                
-                // تحديث البيانات يدوياً
-                setCartItems(data);
-                setLoading(false);
-                setIsInitialLoading(false);
-                setError(null);
-              } else {
-                toast.warning('⚠️ السلة فارغة في البكند فعلاً', {
-                  position: "top-center",
-                  autoClose: 3000
-                });
-              }
-            } else {
-              throw new Error(`HTTP ${response.status}`);
-            }
-          } catch (error) {
-            console.error('❌ [TEST] Test failed:', error);
-            toast.error(`❌ فشل الاختبار: ${error}`, {
-              position: "top-center",
-              autoClose: 3000,
-              style: {
-                background: '#DC2626',
-                fontWeight: 'bold'
-              }
-            });
-          }
-        }}
-        className="bg-gradient-to-r from-yellow-600 to-orange-700 text-white px-6 py-3 rounded-full hover:from-yellow-700 hover:to-orange-800 transition-all shadow-lg transform hover:scale-105 border border-yellow-500"
-      >
-        🧪 اختبار مباشر
-      </button>
     </div>
   );
 };
