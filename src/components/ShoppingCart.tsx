@@ -128,6 +128,16 @@ const ShoppingCart: React.FC = () => {
       
       if (Array.isArray(data)) {
         console.log('✅ [Cart] Cart items loaded:', data.length);
+        const totalCount = data.reduce((sum, item) => sum + item.quantity, 0);
+        const totalValue = data.reduce((sum, item) => 
+          sum + (item.product?.price || 0) * item.quantity, 0
+        );
+        
+        console.log('✅ [Cart] Cart items loaded:', data.length, 'Total count:', totalCount, 'Total value:', totalValue);
+        
+        // تحديث cartSyncManager فوراً
+        cartSyncManager.updateCart(totalCount, totalValue);
+        
         data.forEach((item, index) => {
           console.log(`📦 [Cart] Item ${index + 1}:`, {
             id: item.id,
@@ -174,6 +184,17 @@ const ShoppingCart: React.FC = () => {
   useEffect(() => {
     console.log('🔄 [Cart] useEffect triggered, calling fetchCart...');
     fetchCart();
+    
+    // Auto-refresh كل 3 ثواني
+    const autoRefreshInterval = setInterval(() => {
+      console.log('🔄 [Cart] Auto-refresh triggered');
+      fetchCart();
+    }, 3000);
+    
+    // التنظيف عند إلغاء التحميل
+    return () => {
+      clearInterval(autoRefreshInterval);
+    };
   }, [fetchCart]);
 
   // تحديث كمية المنتج
@@ -624,25 +645,28 @@ const ShoppingCart: React.FC = () => {
             <button
               onClick={async () => {
                 console.log('🔄 [Cart] Manual refresh triggered');
-                toast.info('🔄 جاري إعادة تحميل السلة...', {
+                toast.info('🔄 جاري تحديث السلة...', {
                   position: "top-center",
-                  autoClose: 1500,
+                  autoClose: 1000,
                   hideProgressBar: true
                 });
+                
                 await fetchCart();
-                toast.success('✅ تم تحديث السلة بنجاح!', {
+                
+                toast.success('✅ تم تحديث السلة!', {
                   position: "top-center",
-                  autoClose: 2000,
+                  autoClose: 1500,
                   hideProgressBar: true,
                   style: {
                     background: '#10B981',
-                    color: 'white'
+                    color: 'white',
+                    fontWeight: 'bold'
                   }
                 });
               }}
               className="bg-gradient-to-r from-gray-700 to-gray-800 text-white px-6 py-3 rounded-full hover:from-gray-800 hover:to-gray-900 transition-all shadow-lg transform hover:scale-105 border border-gray-600"
             >
-              🔄 تحديث
+              🔄 تحديث فوري
             </button>
             <button
               onClick={async () => {
