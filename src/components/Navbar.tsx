@@ -395,44 +395,46 @@ const Navbar: React.FC = () => {
 
               {/* Action Buttons - Left */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-                {/* Cart - تصميم بسيط ومُحسن */}
+                {/* Emergency Reset Button */}
+                <button
+                  onClick={async () => {
+                    console.log('🔄 [Navbar] EMERGENCY RESET triggered');
+                    await cartSyncManager.hardRefresh();
+                    window.location.reload();
+                  }}
+                  className="hidden md:flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs text-gray-600 hover:text-gray-800 transition-all"
+                  title="إعادة تعيين السلة"
+                >
+                  🔄
+                </button>
+                
+                {/* Cart - تصميم محسن وأنيق */}
                 <Link to="/cart" className="group relative">
-                  <div className="flex items-center gap-2 p-2 sm:p-3 bg-gradient-to-r from-red-50 to-rose-50 rounded-lg sm:rounded-xl border border-red-200 hover:border-red-300 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:shadow-lg border border-gray-200 hover:border-red-300 transition-all duration-300 hover:scale-105">
                     
                     {/* Cart Icon */}
                     <div className="relative">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-red-600 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
-                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                        <ShoppingCart className="w-4 h-4 text-white" />
                       </div>
                       
                       {/* Cart Count Badge */}
                       {totalCartItems > 0 && (
-                        <div className="absolute -top-2 -right-2 min-w-[20px] h-5 sm:min-w-[24px] sm:h-6 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-lg animate-pulse px-1"
-                          data-cart-count>
+                        <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                           {totalCartItems > 99 ? '99+' : totalCartItems}
                         </div>
                       )}
                     </div>
                     
                     {/* Cart Info */}
-                    <div className="text-right min-w-0">
-                      <div className="text-xs sm:text-sm text-gray-600 font-medium">
-                        🛒 السلة
-                      </div>
-                      <div className="text-sm sm:text-base font-bold text-red-600">
-                        {totalCartItems > 0 ? (
-                          <span>{totalCartItems > 99 ? '99+' : totalCartItems} منتج</span>
-                        ) : (
-                          <span className="text-gray-400">فارغة</span>
-                        )}
-                      </div>
-                      {totalCartValue > 0 && (
-                        <div className="text-xs text-green-600 font-semibold">
-                          {totalCartValue > 9999 
-                            ? `${(totalCartValue/1000).toFixed(1)}K` 
-                            : totalCartValue.toFixed(0)
-                          } ر.س
+                    <div className="hidden sm:block">
+                      {totalCartItems > 0 ? (
+                        <div className="text-sm">
+                          <div className="font-bold text-gray-800">{totalCartItems} منتج</div>
+                          <div className="text-xs text-gray-600">{cartValue.toFixed(0)} ر.س</div>
                         </div>
+                      ) : (
+                        <div className="text-sm text-gray-600 font-medium">السلة</div>
                       )}
                     </div>
                   </div>

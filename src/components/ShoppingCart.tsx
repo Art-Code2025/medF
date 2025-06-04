@@ -709,6 +709,49 @@ const ShoppingCart: React.FC = () => {
               🧪 اختبار
             </button>
             <button
+              onClick={async () => {
+                if (!window.confirm('🚨 هل تريد إعادة تعيين السلة كلياً؟ (هذا سيحذف كل شيء)')) return;
+                
+                toast.info('🔄 جاري إعادة تعيين السلة...', {
+                  position: "top-center",
+                  autoClose: 2000
+                });
+                
+                try {
+                  // Hard refresh كامل
+                  await cartSyncManager.hardRefresh();
+                  
+                  // إعادة تحميل البيانات
+                  await fetchCart();
+                  
+                  toast.success('✅ تم إعادة تعيين السلة بنجاح!', {
+                    position: "top-center",
+                    autoClose: 3000,
+                    style: {
+                      background: '#10B981',
+                      color: 'white',
+                      fontWeight: 'bold'
+                    }
+                  });
+                  
+                  // إعادة تحميل الصفحة للتأكد
+                  setTimeout(() => window.location.reload(), 1000);
+                } catch (error) {
+                  console.error('❌ [Cart] Hard reset failed:', error);
+                  toast.error('فشل في إعادة التعيين', {
+                    position: "top-center",
+                    style: {
+                      background: '#DC2626',
+                      color: 'white'
+                    }
+                  });
+                }
+              }}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-full hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg transform hover:scale-105 border border-blue-500"
+            >
+              🔄 إعادة تعيين شامل
+            </button>
+            <button
               onClick={clearCart}
               className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-full hover:from-red-700 hover:to-red-800 transition-all shadow-lg transform hover:scale-105 border border-red-500"
             >

@@ -263,6 +263,25 @@ export class CartSyncManager {
     
     console.log(`🕐 [CartSync] Periodic sync started (every ${intervalMs}ms)`);
   }
+
+  // Hard refresh - مسح كل البيانات المحلية وإعادة التحميل
+  async hardRefresh(): Promise<void> {
+    console.log('🔄 [CartSync] HARD REFRESH - Clearing all local data...');
+    
+    // مسح جميع البيانات المحلية
+    localStorage.removeItem('lastCartCount');
+    localStorage.removeItem('lastCartValue');
+    localStorage.removeItem('cartItems');
+    localStorage.removeItem('cart');
+    
+    // مزامنة فورية مع السيرفر
+    await this.syncWithServer();
+    
+    // تحديث جميع المستمعين
+    this.notifyListeners();
+    
+    console.log('✅ [CartSync] Hard refresh completed');
+  }
 }
 
 // تصدير instance مفرد
