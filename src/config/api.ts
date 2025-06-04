@@ -104,16 +104,25 @@ export const getFallbackImage = (type: 'product' | 'category' | 'general' = 'gen
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = buildApiUrl(endpoint);
   
+  // إعدادات محسنة للموبايل
+  const mobileOptimizedOptions = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache',
+      ...options.headers,
+    },
+    // timeout أطول للموبايل
+    signal: AbortSignal.timeout(30000), // 30 seconds timeout
+    // إضافة keepalive للاتصالات المستمرة
+    keepalive: true,
+  };
+  
+  // محاولة أولى
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      // إضافة timeout
-      signal: AbortSignal.timeout(15000), // 15 seconds timeout
-    });
+    console.log(`🌐 [API] Making request to: ${url}`);
+    const response = await fetch(url, mobileOptimizedOptions);
     
     // إذا لم تكن الاستجابة ناجحة
     if (!response.ok) {
@@ -123,6 +132,8 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       } catch {
         errorData = { message: response.statusText };
       }
+      
+      console.error(`❌ [API] Error ${response.status}:`, errorData);
       
       // إنشاء خطأ مفصل مع معلومات إضافية
       const error = new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
@@ -134,8 +145,44 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       throw error;
     }
     
-    return await response.json();
-  } catch (error) {
+    const data = await response.json();
+    console.log(`✅ [API] Success:`, endpoint);
+    return data;
+  } catch (error: any) {
+    console.error('❌ [API] First attempt failed:', error);
+    
+    // محاولة ثانية مع إعدادات مختلفة للموبايل
+    if (!error.message?.includes('AbortError') && !error.message?.includes('TimeoutError')) {
+      try {
+        console.log(`🔄 [API] Retrying with mobile-friendly settings...`);
+        
+        // إعدادات للمحاولة الثانية - أكثر تساهلاً
+        const retryOptions = {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            ...options.headers,
+          },
+          signal: AbortSignal.timeout(45000), // 45 seconds
+          mode: 'cors' as RequestMode,
+          credentials: 'omit' as RequestCredentials,
+        };
+        
+        const retryResponse = await fetch(url, retryOptions);
+        
+        if (!retryResponse.ok) {
+          throw new Error(`Retry failed: ${retryResponse.status}`);
+        }
+        
+        const retryData = await retryResponse.json();
+        console.log(`✅ [API] Retry successful:`, endpoint);
+        return retryData;
+      } catch (retryError) {
+        console.error('❌ [API] Retry also failed:', retryError);
+      }
+    }
+    
     console.error('API Error:', error);
     console.error('Failed URL:', url);
     
@@ -149,9 +196,11 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
         errorMessage.includes('net::ERR_FAILED') || 
         errorMessage.includes('fetch') ||
         errorMessage.includes('NetworkError') ||
-        errorMessage.includes('Failed to fetch')) {
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('CORS') ||
+        errorMessage.includes('blocked')) {
       
-      console.warn('🔄 Backend غير متاح، جاري استخدام البيانات التجريبية...');
+      console.warn('🔄 Backend غير متاح أو مشكلة شبكة، جاري استخدام البيانات التجريبية...');
       
       // في حالة أخطاء المصادقة أو الحساب، لا نستخدم البيانات الوهمية
       if (endpoint.includes('auth/') || endpoint.includes('login') || endpoint.includes('register')) {
@@ -165,27 +214,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       return await mockApiCall(endpoint);
     }
     
-    // إضافة معلومات إضافية للخطأ إذا لم تكن موجودة
-    if (error instanceof Error && !(error as any).status) {
-      if (errorMessage.includes('400')) {
-        (error as any).status = 400;
-      } else if (errorMessage.includes('401')) {
-        (error as any).status = 401;
-      } else if (errorMessage.includes('403')) {
-        (error as any).status = 403;
-      } else if (errorMessage.includes('404')) {
-        (error as any).status = 404;
-      } else if (errorMessage.includes('409')) {
-        (error as any).status = 409;
-      } else if (errorMessage.includes('422')) {
-        (error as any).status = 422;
-      } else if (errorMessage.includes('429')) {
-        (error as any).status = 429;
-      } else if (errorMessage.includes('500')) {
-        (error as any).status = 500;
-      }
-    }
-    
+    // إعادة إلقاء الخطأ للأخطاء الأخرى
     throw error;
   }
 };
@@ -245,4 +274,115 @@ export const API_ENDPOINTS = {
   // Services (if needed)
   SERVICES: 'services',
   SERVICE_BY_ID: (id: string | number) => `services/${id}`,
+};
+
+// دالة خاصة محسنة لإضافة المنتجات إلى السلة (للموبايل)
+export const addToCartOptimized = async (
+  userId: string | number, 
+  productData: any, 
+  maxRetries: number = 3
+): Promise<any> => {
+  const endpoint = userId === 'guest' ? 'cart?userId=guest' : `user/${userId}/cart`;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🛒 [Cart] Attempt ${attempt}/${maxRetries} - Adding to cart:`, {
+        userId,
+        productId: productData.productId,
+        endpoint
+      });
+      
+      // إعدادات خاصة لإضافة المنتجات
+      const addToCartOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-store',
+          'Pragma': 'no-cache',
+        },
+        body: JSON.stringify(productData),
+        // timeout متدرج
+        signal: AbortSignal.timeout(attempt * 15000), // 15s, 30s, 45s
+        mode: 'cors' as RequestMode,
+        credentials: 'omit' as RequestCredentials,
+      };
+      
+      const result = await apiCall(endpoint, addToCartOptions);
+      console.log(`✅ [Cart] Successfully added to cart on attempt ${attempt}`);
+      return result;
+      
+    } catch (error: any) {
+      console.error(`❌ [Cart] Attempt ${attempt} failed:`, error);
+      
+      if (attempt === maxRetries) {
+        // آخر محاولة - اعرض رسالة مفيدة
+        const errorMessage = error.message || 'Unknown error';
+        
+        if (errorMessage.includes('timeout') || errorMessage.includes('AbortError')) {
+          throw new Error('انتهت مهلة الاتصال. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.');
+        } else if (errorMessage.includes('CORS') || errorMessage.includes('blocked')) {
+          throw new Error('مشكلة في الأمان. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+        } else if (errorMessage.includes('Failed to fetch')) {
+          throw new Error('فشل في الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.');
+        } else {
+          throw new Error(`فشل في إضافة المنتج إلى السلة: ${errorMessage}`);
+        }
+      }
+      
+      // انتظار قبل المحاولة التالية
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+    }
+  }
+};
+
+// دالة مساعدة للتحقق من حالة الشبكة
+export const checkNetworkStatus = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(buildApiUrl('health'), {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+      mode: 'cors',
+      credentials: 'omit',
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
+// دالة للتحقق من إمكانية الوصول للـ API
+export const testApiConnection = async (): Promise<{
+  isConnected: boolean;
+  latency: number;
+  endpoint: string;
+}> => {
+  const startTime = performance.now();
+  const endpoint = buildApiUrl('health');
+  
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      signal: AbortSignal.timeout(10000),
+      mode: 'cors',
+      credentials: 'omit',
+    });
+    
+    const latency = performance.now() - startTime;
+    
+    return {
+      isConnected: response.ok,
+      latency: Math.round(latency),
+      endpoint
+    };
+  } catch (error) {
+    const latency = performance.now() - startTime;
+    console.error('API connection test failed:', error);
+    
+    return {
+      isConnected: false,
+      latency: Math.round(latency),
+      endpoint
+    };
+  }
 }; 

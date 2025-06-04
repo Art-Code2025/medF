@@ -504,6 +504,17 @@ const Navbar: React.FC = () => {
                     </Link>
                   )}
                 </div>
+
+                {/* Dev Links - Show only in development */}
+                {import.meta.env.DEV && (
+                  <Link
+                    to="/mobile-diagnostics"
+                    className="p-2 text-blue-600 hover:text-blue-700 transition-colors rounded-lg hover:bg-blue-50"
+                    title="تشخيص الموبايل"
+                  >
+                    📱
+                  </Link>
+                )}
               </div>
             </div>
           </div>

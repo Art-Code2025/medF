@@ -1,8 +1,8 @@
 import { toast } from 'react-toastify';
-import { apiCall, API_ENDPOINTS, buildApiUrl } from '../config/api';
+import { apiCall, API_ENDPOINTS, buildApiUrl, addToCartOptimized } from '../config/api';
 import { cartSyncManager } from './cartSync';
 
-// دالة موحدة لإضافة منتج إلى السلة (تدعم الضيوف والمستخدمين المسجلين)
+// دالة موحدة لإضافة منتج إلى السلة (تدعم الضيوف والمستخدمين المسجلين) - محسنة للموبايل
 export const addToCartUnified = async (
   productId: number, 
   productName: string, 
@@ -49,229 +49,56 @@ export const addToCartUnified = async (
     }
 
     // فقط أضف attachments إذا كانت موجودة
-    if (attachments && (attachments.images?.length > 0 || attachments.text?.trim())) {
+    if (attachments && (attachments.text || attachments.images?.length > 0)) {
       requestBody.attachments = attachments;
       console.log('📎 [CartUtils] Including attachments in request:', attachments);
     }
 
-    console.log('📤 [CartUtils] Final request body:', requestBody);
+    console.log('📦 [CartUtils] Final request body:', requestBody);
 
-    // استخدم endpoint مختلف حسب نوع المستخدم
-    let endpoint: string;
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    
-    if (userId === 'guest') {
-      // للضيوف: استخدم API العامة
-      endpoint = 'cart';
-      requestBody.userId = 'guest';
-      requestBody.productName = productName;
-      requestBody.price = 0; // سيتم تحديده من قاعدة البيانات
+    // استخدام الدالة المحسنة للموبايل
+    const result = await addToCartOptimized(userId, requestBody, 3);
+
+    if (result) {
+      console.log('✅ [CartUtils] Successfully added to cart:', result);
+      
+      // تحديث فوري لـ cartSyncManager
+      await cartSyncManager.syncWithServer();
+      
+      // إرسال أحداث التحديث
+      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new Event('productAddedToCart'));
+      window.dispatchEvent(new Event('forceCartUpdate'));
+      
+      return true;
     } else {
-      // للمستخدمين المسجلين: استخدم API المخصصة
-      endpoint = `user/${userId}/cart`;
+      console.error('❌ [CartUtils] addToCartOptimized returned null/false');
+      return false;
     }
-
-    const fullUrl = `${baseUrl}/api/${endpoint}`;
-    console.log('🌐 [CartUtils] Making request to:', fullUrl);
-
-    const response = await fetch(fullUrl, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    console.log('📡 [CartUtils] Response status:', response.status);
-    console.log('📡 [CartUtils] Response headers:', response.headers);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ [CartUtils] API Error Response:', errorText);
-      
-      let errorMessage = 'فشل في إضافة المنتج إلى سلة التسوق';
-      
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        // إذا فشل parsing، استخدم الرسالة الافتراضية
-        if (response.status === 404) {
-          errorMessage = 'المنتج غير موجود';
-        } else if (response.status === 500) {
-          errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
-        } else if (response.status === 0 || !response.status) {
-          errorMessage = 'لا يمكن الاتصال بالخادم، تحقق من الإنترنت';
-        }
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    const responseData = await response.json();
-    console.log('✅ [CartUtils] Success response:', responseData);
-
-    // تحديث فوري وقوي للكونتر
-    console.log('✅ Product added to cart successfully, triggering IMMEDIATE counter update...');
+  } catch (error: any) {
+    console.error('❌ [CartUtils] Error in addToCartUnified:', error);
     
-    // 1. تحديث فوري في localStorage
-    const currentCartCount = localStorage.getItem('lastCartCount');
-    const newCartCount = currentCartCount ? parseInt(currentCartCount) + quantity : quantity;
-    localStorage.setItem('lastCartCount', newCartCount.toString());
+    // رسائل خطأ مخصصة حسب نوع الخطأ
+    let errorMessage = 'حدث خطأ في إضافة المنتج للسلة';
     
-    // Use cart sync manager for immediate update
-    cartSyncManager.updateCartCount(newCartCount);
-    
-    // حفظ قيمة السلة أيضاً (تقدير مبدئي)
-    const currentCartValue = localStorage.getItem('lastCartValue');
-    const estimatedPrice = 0; // سيتم تحديثها من الـ API
-    const newCartValue = currentCartValue ? parseFloat(currentCartValue) + (estimatedPrice * quantity) : estimatedPrice * quantity;
-    localStorage.setItem('lastCartValue', newCartValue.toString());
-    
-    console.log('🔄 Updated cart count in localStorage:', newCartCount);
-    console.log('💰 Updated cart value in localStorage:', newCartValue);
-    
-    // 2. تحديث فوري للكونتر في الـ DOM مباشرة
-    const updateCartCountInDOM = () => {
-      // تحديث العداد في النافيجيشن بار
-      const cartCountElements = document.querySelectorAll('[data-cart-count]');
-      cartCountElements.forEach(element => {
-        element.textContent = newCartCount.toString();
-        console.log('🔄 [CartUtils] Updated cart counter in Navbar:', newCartCount);
-      });
-      
-      // تحديث أي عناصر أخرى قد تحتوي على عدد السلة
-      const cartBadges = document.querySelectorAll('.cart-counter-badge, .cart-badge, [class*="cart-count"]');
-      cartBadges.forEach(element => {
-        element.textContent = newCartCount.toString();
-        console.log('🔄 [CartUtils] Updated cart badge:', newCartCount);
-      });
-    };
-    
-    updateCartCountInDOM();
-    
-    // 3. إرسال أحداث متعددة وقوية مع تحسينات
-    const updateEvents = [
-      'cartUpdated',
-      'productAddedToCart', 
-      'cartCountChanged',
-      'forceCartUpdate',
-      'cartItemUpdated'
-    ];
-    
-    updateEvents.forEach(eventName => {
-      window.dispatchEvent(new CustomEvent(eventName, {
-        detail: { 
-          productId, 
-          productName, 
-          quantity, 
-          newCount: newCartCount,
-          timestamp: Date.now(),
-          action: 'add'
-        }
-      }));
-    });
-    
-    // 4. تحديث localStorage مع timestamps متعددة
-    const now = Date.now();
-    localStorage.setItem('cartUpdated', now.toString());
-    localStorage.setItem('lastCartUpdate', new Date().toISOString());
-    localStorage.setItem('forceCartRefresh', now.toString());
-    
-    // 5. إرسال storage events متعددة
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'lastCartCount',
-      newValue: newCartCount.toString(),
-      oldValue: currentCartCount
-    }));
-    
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'cartUpdated',
-      newValue: now.toString(),
-      oldValue: null
-    }));
-    
-    // 6. أحداث مؤجلة متعددة للضمان مع تحديث DOM فوري
-    [0, 50, 100, 200, 500].forEach(delay => {
-      setTimeout(() => {
-        // تحديث DOM مرة أخرى للتأكد
-        updateCartCountInDOM();
-        
-        // إرسال أحداث مؤجلة
-        window.dispatchEvent(new CustomEvent('cartUpdated', {
-          detail: { newCount: newCartCount, delay, action: 'add' }
-        }));
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'lastCartCount',
-          newValue: newCartCount.toString(),
-          oldValue: currentCartCount
-        }));
-        
-        console.log(`🔄 [CartUtils] Delayed cart update event sent after ${delay}ms`);
-      }, delay);
-    });
-
-    // 7. جلب السلة المحدثة لحساب القيمة الصحيحة
-    setTimeout(async () => {
-      try {
-        // Use cart sync manager to fetch updated values
-        const { count, value } = await cartSyncManager.syncWithServer();
-        console.log('💰 [CartUtils] Updated cart from sync manager:', { count, value });
-        
-        // إرسال حدث تحديث القيمة
-        window.dispatchEvent(new CustomEvent('cartValueUpdated', {
-          detail: { newValue: value, newCount: count }
-        }));
-      } catch (error) {
-        console.error('❌ [CartUtils] Error syncing with cart manager:', error);
-      }
-    }, 1000);
-
-    // رسالة نجاح بسيطة وفعالة
-    toast.success(`🛒 تم إضافة "${productName}" إلى السلة بنجاح!`, {
-      position: "top-center",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      style: {
-        background: '#10B981',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: '16px',
-        borderRadius: '12px',
-        zIndex: 999999
-      }
-    });
-    
-    console.log('🎉 [CartUtils] Cart success message displayed for:', productName);
-
-    return true;
-  } catch (error) {
-    console.error('❌ [CartUtils] Error adding to cart:', error);
-    
-    let errorMessage = 'خطأ غير معروف';
-    
-    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      errorMessage = 'لا يمكن الاتصال بالخادم، تحقق من الإنترنت';
-    } else if (error instanceof Error) {
+    if (error.message) {
       errorMessage = error.message;
+    } else if (error.toString().includes('timeout')) {
+      errorMessage = 'انتهت مهلة الاتصال. يرجى التحقق من اتصال الإنترنت.';
+    } else if (error.toString().includes('network')) {
+      errorMessage = 'مشكلة في الاتصال بالخادم. يرجى المحاولة مرة أخرى.';
     }
     
-    toast.error(`❌ فشل في إضافة "${productName}" إلى السلة: ${errorMessage}`, {
-      autoClose: 5000,
+    toast.error(errorMessage, {
+      position: "top-center",
+      autoClose: 4000,
       style: {
-        background: '#EF4444',
+        background: '#DC2626',
         color: 'white',
-        fontWeight: 'bold',
-        fontSize: '14px',
-        borderRadius: '12px',
-        boxShadow: '0 10px 25px rgba(239, 68, 68, 0.3)'
+        fontWeight: 'bold'
       }
     });
+    
     return false;
   }
 };

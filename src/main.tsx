@@ -17,6 +17,7 @@ import CategoryAdd from './CategoryAdd';
 import CategoryEdit from './CategoryEdit';
 import ShoppingCart from './components/ShoppingCart';
 import CartDiagnostics from './components/CartDiagnostics';
+import MobileDiagnostics from './components/MobileDiagnostics';
 import Wishlist from './components/Wishlist';
 import Checkout from './components/Checkout';
 import ThankYou from './components/ThankYou';
@@ -64,6 +65,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/sign-in" element={<CustomerSignIn />} />
           <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/cart/diagnostics" element={<CartDiagnostics />} />
+          <Route path="/mobile-diagnostics" element={<MobileDiagnostics />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/thank-you" element={<ThankYou />} />
