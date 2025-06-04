@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار السلة بعد الإصلاح</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 اختبار السلة بعد الإصلاح</h1>
+            <p>تشخيص شامل لوظائف السلة</p>
+        </div>
+
+        <div class="grid">
+            <div class="test-section">
+                <h3>🔍 اختبار الاتصال</h3>
+                <button onclick="testConnection()">اختبار البكند</button>
+                <button onclick="testFrontend()">اختبار الفرونت إند</button>
+                <div id="connection-status"></div>
+            </div>
+
+            <div class="test-section">
+                <h3>📦 اختبار السلة</h3>
+                <button onclick="testCartAPI()">اختبار API السلة</button>
+                <button onclick="addTestProduct()">إضافة منتج تجريبي</button>
+                <button onclick="clearTestCart()">إفراغ السلة</button>
+                <div id="cart-status"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 حالة السلة الحالية</h3>
+            <button onclick="refreshCartStatus()">تحديث الحالة</button>
+            <div id="current-cart-status">
+                <div class="info">اضغط "تحديث الحالة" لعرض بيانات السلة</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 تشخيص المشاكل</h3>
+            <button onclick="runFullDiagnostic()">تشخيص شامل</button>
+            <div id="diagnostic-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 سجل الأحداث</h3>
+            <button onclick="clearLog()">مسح السجل</button>
+            <pre id="event-log">جاري التحضير...</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        const FRONTEND_BASE = 'http://localhost:5173';
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ar-SA');
+            const logElement = document.getElementById('event-log');
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        async function testConnection() {
+            log('اختبار الاتصال بالبكند...');
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('connection-status', 
+                        `✅ البكند يعمل بطريقة صحيحة<br>
+                        📊 المنتجات: ${data.products}<br>
+                        🛒 عناصر السلة: ${data.cartItems}<br>
+                        👥 العملاء: ${data.customers}`, 'success');
+                    log('البكند متصل ويعمل بطريقة صحيحة', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showStatus('connection-status', `❌ فشل الاتصال بالبكند: ${error.message}`, 'error');
+                log(`فشل الاتصال بالبكند: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFrontend() {
+            log('اختبار الاتصال بالفرونت إند...');
+            try {
+                const response = await fetch(FRONTEND_BASE);
+                if (response.ok) {
+                    showStatus('connection-status', '✅ الفرونت إند يعمل بطريقة صحيحة', 'success');
+                    log('الفرونت إند متصل ويعمل', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showStatus('connection-status', `❌ فشل الاتصال بالفرونت إند: ${error.message}`, 'error');
+                log(`فشل الاتصال بالفرونت إند: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCartAPI() {
+            log('اختبار API السلة...');
+            try {
+                const response = await fetch(`${API_BASE}/api/cart?userId=guest`);
+                const cartData = await response.json();
+                
+                if (response.ok) {
+                    const itemCount = Array.isArray(cartData) ? cartData.length : 0;
+                    const totalQuantity = Array.isArray(cartData) ? 
+                        cartData.reduce((sum, item) => sum + item.quantity, 0) : 0;
+                    
+                    showStatus('cart-status', 
+                        `✅ API السلة يعمل بطريقة صحيحة<br>
+                        📦 عدد المنتجات: ${itemCount}<br>
+                        🔢 إجمالي الكمية: ${totalQuantity}`, 'success');
+                    log(`API السلة يعمل - ${itemCount} منتج، ${totalQuantity} قطعة`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showStatus('cart-status', `❌ فشل في اختبار API السلة: ${error.message}`, 'error');
+                log(`فشل في اختبار API السلة: ${error.message}`, 'error');
+            }
+        }
+
+        async function addTestProduct() {
+            log('إضافة منتج تجريبي للسلة...');
+            try {
+                const response = await fetch(`${API_BASE}/api/cart`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: 'guest',
+                        productId: 17, // كرسي أطفال
+                        quantity: 1
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus('cart-status', 
+                        `✅ تم إضافة المنتج بنجاح<br>
+                        📦 المنتج: ${result.productName}<br>
+                        💰 السعر: ${result.price} ر.س`, 'success');
+                    log(`تم إضافة ${result.productName} للسلة`, 'success');
+                    await refreshCartStatus();
+                } else {
+                    throw new Error(result.message || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showStatus('cart-status', `❌ فشل في إضافة المنتج: ${error.message}`, 'error');
+                log(`فشل في إضافة المنتج: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearTestCart() {
+            log('إفراغ السلة...');
+            try {
+                const response = await fetch(`${API_BASE}/api/cart?userId=guest`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showStatus('cart-status', '✅ تم إفراغ السلة بنجاح', 'success');
+                    log('تم إفراغ السلة بنجاح', 'success');
+                    await refreshCartStatus();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showStatus('cart-status', `❌ فشل في إفراغ السلة: ${error.message}`, 'error');
+                log(`فشل في إفراغ السلة: ${error.message}`, 'error');
+            }
+        }
+
+        async function refreshCartStatus() {
+            log('تحديث حالة السلة...');
+            try {
+                const response = await fetch(`${API_BASE}/api/cart?userId=guest`);
+                const cartData = await response.json();
+                
+                if (response.ok && Array.isArray(cartData)) {
+                    const itemCount = cartData.length;
+                    const totalQuantity = cartData.reduce((sum, item) => sum + item.quantity, 0);
+                    const totalValue = cartData.reduce((sum, item) => 
+                        sum + (item.product?.price || 0) * item.quantity, 0);
+                    
+                    let statusHTML = `
+                        <div class="info">
+                            <h4>📊 إحصائيات السلة</h4>
+                            <p><strong>عدد المنتجات:</strong> ${itemCount}</p>
+                            <p><strong>إجمالي الكمية:</strong> ${totalQuantity}</p>
+                            <p><strong>إجمالي القيمة:</strong> ${totalValue.toFixed(2)} ر.س</p>
+                        </div>
+                    `;
+                    
+                    if (itemCount > 0) {
+                        statusHTML += '<h4>📦 المنتجات في السلة:</h4>';
+                        cartData.forEach((item, index) => {
+                            statusHTML += `
+                                <div class="success" style="margin: 5px 0; padding: 10px;">
+                                    <strong>${index + 1}. ${item.product?.name || 'منتج غير معروف'}</strong><br>
+                                    الكمية: ${item.quantity} | السعر: ${item.product?.price || 0} ر.س
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    document.getElementById('current-cart-status').innerHTML = statusHTML;
+                    log(`تم تحديث حالة السلة - ${itemCount} منتج`, 'success');
+                } else {
+                    throw new Error('بيانات غير صحيحة من API');
+                }
+            } catch (error) {
+                showStatus('current-cart-status', `❌ فشل في تحديث حالة السلة: ${error.message}`, 'error');
+                log(`فشل في تحديث حالة السلة: ${error.message}`, 'error');
+            }
+        }
+
+        async function runFullDiagnostic() {
+            log('بدء التشخيص الشامل...');
+            const results = [];
+            
+            // اختبار البكند
+            try {
+                const healthResponse = await fetch(`${API_BASE}/api/health`);
+                if (healthResponse.ok) {
+                    results.push('✅ البكند: يعمل بطريقة صحيحة');
+                } else {
+                    results.push('❌ البكند: لا يستجيب');
+                }
+            } catch (error) {
+                results.push(`❌ البكند: خطأ في الاتصال - ${error.message}`);
+            }
+            
+            // اختبار المنتجات
+            try {
+                const productsResponse = await fetch(`${API_BASE}/api/products`);
+                if (productsResponse.ok) {
+                    const products = await productsResponse.json();
+                    results.push(`✅ المنتجات: ${products.length} منتج متاح`);
+                } else {
+                    results.push('❌ المنتجات: فشل في التحميل');
+                }
+            } catch (error) {
+                results.push(`❌ المنتجات: خطأ - ${error.message}`);
+            }
+            
+            // اختبار السلة
+            try {
+                const cartResponse = await fetch(`${API_BASE}/api/cart?userId=guest`);
+                if (cartResponse.ok) {
+                    const cart = await cartResponse.json();
+                    results.push(`✅ السلة: ${cart.length} منتج في السلة`);
+                } else {
+                    results.push('❌ السلة: فشل في التحميل');
+                }
+            } catch (error) {
+                results.push(`❌ السلة: خطأ - ${error.message}`);
+            }
+            
+            // اختبار إضافة منتج
+            try {
+                const addResponse = await fetch(`${API_BASE}/api/cart`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: 'guest',
+                        productId: 17,
+                        quantity: 1
+                    })
+                });
+                if (addResponse.ok) {
+                    results.push('✅ إضافة المنتجات: تعمل بطريقة صحيحة');
+                    
+                    // حذف المنتج المضاف للاختبار
+                    const cartAfterAdd = await fetch(`${API_BASE}/api/cart?userId=guest`);
+                    const cartData = await cartAfterAdd.json();
+                    if (cartData.length > 0) {
+                        const lastItem = cartData[cartData.length - 1];
+                        await fetch(`${API_BASE}/api/cart/${lastItem.id}`, { method: 'DELETE' });
+                    }
+                } else {
+                    results.push('❌ إضافة المنتجات: لا تعمل');
+                }
+            } catch (error) {
+                results.push(`❌ إضافة المنتجات: خطأ - ${error.message}`);
+            }
+            
+            const diagnosticHTML = `
+                <div class="info">
+                    <h4>🔍 نتائج التشخيص الشامل</h4>
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `;
+            
+            document.getElementById('diagnostic-results').innerHTML = diagnosticHTML;
+            log('انتهى التشخيص الشامل', 'success');
+        }
+
+        function clearLog() {
+            document.getElementById('event-log').textContent = 'تم مسح السجل...\n';
+            log('تم مسح السجل');
+        }
+
+        // تشغيل اختبار أولي عند تحميل الصفحة
+        window.onload = function() {
+            log('تم تحميل صفحة اختبار السلة');
+            log('جاهز لبدء الاختبارات');
+        };
+    </script>
+</body>
+</html> 

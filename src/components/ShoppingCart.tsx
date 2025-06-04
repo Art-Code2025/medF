@@ -123,25 +123,8 @@ const ShoppingCart: React.FC = () => {
 
       console.log('🛒 [Cart] Fetching cart from endpoint:', endpoint);
       
-      // استخدام fetch مباشرة بدلاً من apiCall
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const fullUrl = `${baseUrl}${endpoint}`;
-      console.log('🌐 [Cart] Full URL:', fullUrl);
-      
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      console.log('📡 [Cart] Response status:', response.status, response.statusText);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      // استخدام apiCall بدلاً من fetch مباشرة
+      const data = await apiCall(endpoint);
       console.log('📦 [Cart] Raw API response:', data);
       
       if (Array.isArray(data)) {
@@ -194,20 +177,6 @@ const ShoppingCart: React.FC = () => {
           }
         });
         setCartItems(data);
-        
-        // إرسال toast للمساعدة في التشخيص
-        // if (data.length > 0) {
-        //   toast.success(`✅ تم تحميل ${data.length} منتج من السلة`, {
-        //     position: "bottom-right",
-        //     autoClose: 2000,
-        //     hideProgressBar: true,
-        //     style: {
-        //       background: '#10B981',
-        //       color: 'white',
-        //       fontSize: '14px'
-        //     }
-        //   });
-        // }
       } else {
         console.log('⚠️ [Cart] Unexpected data format:', data);
         setCartItems([]);
@@ -285,21 +254,11 @@ const ShoppingCart: React.FC = () => {
 
       console.log('🔢 [Cart] Updating quantity with preserved data:', { itemId, newQuantity, updateData });
 
-      // استخدام fetch مباشرة
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const fullUrl = `${baseUrl}${endpoint}`;
-      
-      const response = await fetch(fullUrl, {
+      // استخدام apiCall بدلاً من fetch مباشرة
+      await apiCall(endpoint, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(userId === 'guest' ? { quantity: newQuantity } : updateData)
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
       
       // تحديث الحالة المحلية
       setCartItems(prev => prev.map(item => 
@@ -347,20 +306,10 @@ const ShoppingCart: React.FC = () => {
       // تحديث الحالة المحلية فوراً قبل الطلب
       setCartItems(prev => prev.filter(item => item.id !== itemId));
       
-      // استخدام fetch مباشرة
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const fullUrl = `${baseUrl}${endpoint}`;
-      
-      const response = await fetch(fullUrl, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+      // استخدام apiCall بدلاً من fetch مباشرة
+      await apiCall(endpoint, {
+        method: 'DELETE'
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
       
       // Update cart sync manager immediately
       await cartSyncManager.syncWithServer();
@@ -516,20 +465,10 @@ const ShoppingCart: React.FC = () => {
 
       console.log('🗑️ [Cart] Clearing cart:', { userId, endpoint });
 
-      // استخدام fetch مباشرة
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const fullUrl = `${baseUrl}${endpoint}`;
-      
-      const response = await fetch(fullUrl, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+      // استخدام apiCall بدلاً من fetch مباشرة
+      await apiCall(endpoint, {
+        method: 'DELETE'
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
 
       // Update cart sync manager immediately
       await cartSyncManager.syncWithServer();
@@ -637,27 +576,13 @@ const ShoppingCart: React.FC = () => {
         url: `user/${userId}/cart/${itemId}`
       });
 
-      const response = await fetch(buildApiUrl(`user/${userId}/cart/${itemId}`), {
+      // استخدام apiCall بدلاً من fetch مباشرة
+      const result = await apiCall(`user/${userId}/cart/${itemId}`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(updateData)
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [Cart] Backend PUT failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText
-        });
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
       console.log('✅ [Cart] Backend PUT successful:', result);
-
       return true;
     } catch (error) {
       console.error('❌ [Cart] Error saving to backend:', error);
