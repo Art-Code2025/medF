@@ -233,7 +233,7 @@ const Cart: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-32">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">جاري تحميل السلة...</p>
@@ -244,7 +244,7 @@ const Cart: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-32">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-red-800 mb-2">خطأ في تحميل السلة</h2>
@@ -262,17 +262,17 @@ const Cart: React.FC = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShoppingBag className="w-12 h-12 text-gray-400" />
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center py-12">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-10 h-10 text-gray-400" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">السلة فارغة</h3>
-            <p className="text-gray-600 mb-8">لم تقم بإضافة أي منتجات للسلة بعد</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">السلة فارغة</h3>
+            <p className="text-gray-600 mb-6">لم تقم بإضافة أي منتجات للسلة بعد</p>
             <Link
               to="/products"
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
             >
               تسوق الآن
             </Link>
@@ -283,12 +283,12 @@ const Cart: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-32" dir="rtl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 pt-20" dir="rtl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         
         {/* Header */}
-        <div className="mb-8">
-          <nav className="mb-4">
+        <div className="mb-4">
+          <nav className="mb-3">
             <ol className="flex items-center space-x-2 space-x-reverse text-sm">
               <li>
                 <Link to="/" className="text-blue-600 hover:text-blue-800">الرئيسية</Link>
@@ -302,8 +302,8 @@ const Cart: React.FC = () => {
           
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">سلة التسوق</h1>
-              <p className="text-gray-600 mt-1">{totalItems} منتج في السلة</p>
+              <h1 className="text-2xl font-bold text-gray-900">سلة التسوق</h1>
+              <p className="text-gray-600 text-sm">{totalItems} منتج في السلة</p>
             </div>
             
             {cartItems.length > 0 && (
@@ -317,19 +317,19 @@ const Cart: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-3">
             {cartItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200"
+                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3">
                   
                   {/* Product Image */}
-                  <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     <img
                       src={buildImageUrl(item.product?.mainImage || '')}
                       alt={item.product?.name || 'منتج'}
@@ -341,14 +341,14 @@ const Cart: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <Link
                       to={`/product/${item.productId}`}
-                      className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 line-clamp-2"
+                      className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 line-clamp-2"
                     >
                       {item.product?.name || 'منتج غير معروف'}
                     </Link>
                     
                     {/* Selected Options */}
                     {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                      <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+                      <div className="mt-2 p-2 bg-blue-50 rounded-md">
                         <p className="text-xs font-bold text-blue-700 mb-1">المواصفات:</p>
                         <div className="grid grid-cols-2 gap-1">
                           {Object.entries(item.selectedOptions).map(([optionName, value]) => (
@@ -361,56 +361,55 @@ const Cart: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Attachments */}
+                    {/* Attachments - صغير جداً */}
                     {item.attachments && (item.attachments.text || (item.attachments.images && item.attachments.images.length > 0)) && (
-                      <div className="mt-2 p-2 bg-purple-50 rounded-lg">
-                        <p className="text-xs font-bold text-purple-700 mb-1">مرفقات:</p>
+                      <div className="mt-1 p-1 bg-gray-50 rounded text-xs">
                         {item.attachments.text && (
-                          <p className="text-xs text-gray-700">📝 {item.attachments.text.substring(0, 50)}...</p>
+                          <span className="text-gray-600">📝 {item.attachments.text.substring(0, 30)}...</span>
                         )}
                         {item.attachments.images && item.attachments.images.length > 0 && (
-                          <p className="text-xs text-purple-600">🖼️ {item.attachments.images.length} صورة</p>
+                          <span className="text-gray-600 ml-2">🖼️ {item.attachments.images.length}</span>
                         )}
                       </div>
                     )}
                     
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-xl font-bold text-gray-900">
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-gray-900">
                           {((item.product?.price || 0) * item.quantity).toFixed(2)} ر.س
                         </span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-xs text-gray-500">
                           {(item.product?.price || 0).toFixed(2)} ر.س × {item.quantity}
                         </span>
                       </div>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <div className="flex items-center border border-gray-300 rounded-lg">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="p-2 hover:bg-gray-100 transition-colors duration-200"
+                            className="p-1.5 hover:bg-gray-100 transition-colors duration-200"
                             disabled={item.quantity <= 1}
                           >
-                            <Minus className="w-4 h-4" />
+                            <Minus className="w-3 h-3" />
                           </button>
-                          <span className="px-4 py-2 text-center min-w-[60px] border-x border-gray-300 font-medium">
+                          <span className="px-3 py-1.5 text-center min-w-[50px] border-x border-gray-300 font-medium text-sm">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-2 hover:bg-gray-100 transition-colors duration-200"
+                            className="p-1.5 hover:bg-gray-100 transition-colors duration-200"
                           >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3 h-3" />
                           </button>
                         </div>
 
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
                           title="حذف المنتج"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -422,21 +421,21 @@ const Cart: React.FC = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Package className="w-5 h-5" />
+            <div className="bg-white rounded-lg border border-gray-200 p-5 sticky top-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Package className="w-4 h-4" />
                 ملخص الطلب
               </h2>
               
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-5">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">المجموع الفرعي:</span>
-                  <span className="font-medium">{totalPrice.toFixed(2)} ر.س</span>
+                  <span className="text-gray-600 text-sm">المجموع الفرعي:</span>
+                  <span className="font-medium text-sm">{totalPrice.toFixed(2)} ر.س</span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">رسوم التوصيل:</span>
-                  <span className="font-medium">
+                  <span className="text-gray-600 text-sm">رسوم التوصيل:</span>
+                  <span className="font-medium text-sm">
                     {shippingCost === 0 ? (
                       <span className="text-green-600">مجاني</span>
                     ) : (
@@ -446,43 +445,43 @@ const Cart: React.FC = () => {
                 </div>
 
                 {shippingCost === 0 && (
-                  <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                    🎉 تهانينا! حصلت على التوصيل المجاني
+                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                    🎉 حصلت على التوصيل المجاني
                   </div>
                 )}
                 
                 <hr className="border-gray-200" />
                 
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-base font-bold">
                   <span>المجموع الكلي:</span>
                   <span className="text-blue-600">{finalTotal.toFixed(2)} ر.س</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Link
                   to="/checkout"
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-center block"
+                  className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-center block text-sm"
                 >
                   متابعة للدفع
                 </Link>
                 
                 <Link
                   to="/products"
-                  className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium text-center block"
+                  className="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium text-center block text-sm"
                 >
                   متابعة التسوق
                 </Link>
               </div>
 
               {/* Shipping & Security Info */}
-              <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Truck className="w-4 h-4" />
+              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <Truck className="w-3 h-3" />
                   <span>التوصيل خلال 1-3 أيام عمل</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <CreditCard className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <CreditCard className="w-3 h-3" />
                   <span>دفع آمن ومحمي</span>
                 </div>
               </div>
