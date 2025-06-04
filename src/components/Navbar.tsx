@@ -104,28 +104,36 @@ const Navbar: React.FC = () => {
   }
 
   useEffect(() => {
+    console.log('🎯 [Navbar] Starting initialization...');
+    
     // تحديث فوري من localStorage عند البداية
     const updateFromLocalStorage = () => {
       const savedCartCount = localStorage.getItem('lastCartCount');
       const savedCartValue = localStorage.getItem('lastCartValue');
       const savedWishlistCount = localStorage.getItem('lastWishlistCount');
       
-      if (savedCartCount) {
+      console.log('📊 [Navbar] Reading from localStorage:', {
+        cartCount: savedCartCount,
+        cartValue: savedCartValue,
+        wishlistCount: savedWishlistCount
+      });
+      
+      if (savedCartCount && savedCartCount !== '0') {
         const count = parseInt(savedCartCount);
         setCartItemsCount(count);
-        console.log('🔄 [Navbar] Initial cart count from localStorage:', count);
+        console.log('🛒 [Navbar] Set cart count from localStorage:', count);
       }
       
-      if (savedCartValue) {
+      if (savedCartValue && savedCartValue !== '0') {
         const value = parseFloat(savedCartValue);
         setCartValue(value);
-        console.log('💰 [Navbar] Initial cart value from localStorage:', value);
+        console.log('💰 [Navbar] Set cart value from localStorage:', value);
       }
       
-      if (savedWishlistCount) {
+      if (savedWishlistCount && savedWishlistCount !== '0') {
         const count = parseInt(savedWishlistCount);
         setWishlistItemsCount(count);
-        console.log('🔄 [Navbar] Initial wishlist count from localStorage:', count);
+        console.log('❤️ [Navbar] Set wishlist count from localStorage:', count);
       }
     };
 
@@ -138,54 +146,70 @@ const Navbar: React.FC = () => {
         const customer = JSON.parse(customerData);
         setIsCustomerLoggedIn(true);
         setCustomerName(customer.name || customer.email);
+        console.log('👤 [Navbar] User logged in:', customer.name || customer.email);
       } catch (error) {
+        console.error('❌ [Navbar] Error parsing user data:', error);
         localStorage.removeItem('customerUser');
         localStorage.removeItem('user');
       }
     }
 
     // جلب البيانات الحديثة من الـ API
+    console.log('🔄 [Navbar] Fetching fresh data from API...');
     fetchCart();
     fetchWishlist();
 
-    // التعامل مع تحديثات السلة - معالج محسن
-    const handleCartUpdate = () => {
-      console.log('🔄 Cart update event received in Navbar');
+    // التعامل مع تحديثات السلة - معالج محسن مع لوغ
+    const handleCartUpdate = (event?: Event) => {
+      console.log('🔥 [Navbar] Cart update event received:', (event as CustomEvent)?.detail || 'No details');
       
       // تحديث فوري من localStorage إذا متوفر
       const savedCartCount = localStorage.getItem('lastCartCount');
       const savedCartValue = localStorage.getItem('lastCartValue');
       
+      console.log('📦 [Navbar] Current localStorage values:', {
+        count: savedCartCount,
+        value: savedCartValue
+      });
+      
       if (savedCartCount) {
         const count = parseInt(savedCartCount);
-        console.log('🔄 Setting cart count immediately from localStorage:', count);
+        console.log('⚡ [Navbar] Setting cart count immediately:', count);
         setCartItemsCount(count);
       }
       
       if (savedCartValue) {
         const value = parseFloat(savedCartValue);
-        console.log('💰 Setting cart value immediately from localStorage:', value);
+        console.log('💵 [Navbar] Setting cart value immediately:', value);
         setCartValue(value);
       }
       
       // ثم جلب البيانات الحديثة من الـ API
-      setTimeout(() => fetchCart(), 50);
+      setTimeout(() => {
+        console.log('🔄 [Navbar] Fetching updated cart from API...');
+        fetchCart();
+      }, 100);
     };
 
-    // التعامل مع تحديثات المفضلة - معالج محسن
-    const handleWishlistUpdate = () => {
-      console.log('🔄 Wishlist update event received in Navbar');
+    // التعامل مع تحديثات المفضلة - معالج محسن مع لوغ
+    const handleWishlistUpdate = (event?: Event) => {
+      console.log('💖 [Navbar] Wishlist update event received:', (event as CustomEvent)?.detail || 'No details');
       
       // تحديث فوري من localStorage إذا متوفر
       const savedWishlistCount = localStorage.getItem('lastWishlistCount');
+      console.log('❤️ [Navbar] Current wishlist localStorage value:', savedWishlistCount);
+      
       if (savedWishlistCount) {
         const count = parseInt(savedWishlistCount);
-        console.log('🔄 Setting wishlist count immediately from localStorage:', count);
+        console.log('⚡ [Navbar] Setting wishlist count immediately:', count);
         setWishlistItemsCount(count);
       }
       
       // ثم جلب البيانات الحديثة من الـ API
-      setTimeout(() => fetchWishlist(), 50);
+      setTimeout(() => {
+        console.log('🔄 [Navbar] Fetching updated wishlist from API...');
+        fetchWishlist();
+      }, 100);
     };
 
     // استماع لأحداث متعددة لضمان التحديث
@@ -203,18 +227,33 @@ const Navbar: React.FC = () => {
       'productRemovedFromWishlist'
     ];
 
+    console.log('👂 [Navbar] Setting up event listeners...');
     cartEvents.forEach(event => {
       window.addEventListener(event, handleCartUpdate);
+      console.log(`✅ [Navbar] Listening to cart event: ${event}`);
     });
 
     wishlistEvents.forEach(event => {
       window.addEventListener(event, handleWishlistUpdate);
+      console.log(`✅ [Navbar] Listening to wishlist event: ${event}`);
     });
 
-    // استماع لتغييرات localStorage
-    window.addEventListener('storage', handleCartUpdate);
+    // استماع لتغييرات localStorage مع لوغ
+    const handleStorageChange = (e: StorageEvent) => {
+      console.log('🗄️ [Navbar] Storage event received:', e.key, e.newValue);
+      if (e.key === 'lastCartCount' || e.key === 'lastCartValue' || e.key === 'cartUpdated') {
+        handleCartUpdate();
+      }
+      if (e.key === 'lastWishlistCount' || e.key === 'wishlistUpdated') {
+        handleWishlistUpdate();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    console.log('✅ [Navbar] Storage event listener added');
 
     return () => {
+      console.log('🧹 [Navbar] Cleaning up event listeners...');
       cartEvents.forEach(event => {
         window.removeEventListener(event, handleCartUpdate);
       });
@@ -223,7 +262,8 @@ const Navbar: React.FC = () => {
         window.removeEventListener(event, handleWishlistUpdate);
       });
       
-      window.removeEventListener('storage', handleCartUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+      console.log('✅ [Navbar] Event listeners cleaned up');
     };
   }, []);
 
@@ -342,25 +382,32 @@ const Navbar: React.FC = () => {
 
               {/* Action Buttons - Left */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-                {/* Cart - Always visible */}
+                {/* Cart - Always visible with BIG numbers */}
                 <Link to="/cart" className="group relative">
-                  <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 md:p-3 bg-gradient-to-r from-red-50 to-rose-50 rounded-lg sm:rounded-xl border border-red-100 hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl sm:rounded-2xl border-2 border-red-200 hover:shadow-xl transition-all duration-300 hover:scale-105">
                     <div className="relative">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-r from-red-600 to-rose-600 rounded-lg flex items-center justify-center shadow-lg">
-                        <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                       </div>
                       {totalCartItems > 0 && (
                         <div 
-                          className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg animate-pulse"
+                          className="absolute -top-2 -right-2 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-sm sm:text-base md:text-lg font-black shadow-xl animate-bounce"
                           data-cart-count
                         >
                           {totalCartItems}
                         </div>
                       )}
                     </div>
-                    <div className="text-right hidden lg:block">
-                      <div className="text-xs text-gray-500 font-medium">السلة</div>
-                      <div className="font-black text-red-600 text-sm">{totalCartValue.toFixed(2)} ر.س</div>
+                    <div className="text-right flex flex-col items-end">
+                      <div className="text-xs sm:text-sm text-gray-600 font-bold">🛒 السلة</div>
+                      <div className="text-sm sm:text-base md:text-lg font-black text-red-600">
+                        {totalCartItems} منتج
+                      </div>
+                      {totalCartValue > 0 && (
+                        <div className="text-xs sm:text-sm font-black text-green-600">
+                          💰 {totalCartValue.toFixed(2)} ر.س
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>

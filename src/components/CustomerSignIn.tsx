@@ -226,14 +226,7 @@ const CustomerSignIn: React.FC = () => {
       
       const user = JSON.parse(userData);
       
-      // حفظ العدادات الحالية قبل النقل
-      const currentCartCount = localStorage.getItem('lastCartCount') || '0';
-      const currentCartValue = localStorage.getItem('lastCartValue') || '0';
-      
-      console.log('📊 [Migration] Current cart before migration:', {
-        count: currentCartCount,
-        value: currentCartValue
-      });
+      console.log('📊 [Migration] Migration for user:', user.id);
       
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/migrate-cart`, {
         method: 'POST',
@@ -248,49 +241,38 @@ const CustomerSignIn: React.FC = () => {
         const result = await response.json();
         console.log('✅ [Migration] Cart migrated successfully:', result);
         
-        // جلب السلة المحدثة بعد النقل مباشرة
-        setTimeout(async () => {
-          try {
-            const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${user.id}/cart`);
-            if (cartResponse.ok) {
-              const cartData = await cartResponse.json();
-              const totalCount = cartData.reduce((sum: number, item: any) => sum + item.quantity, 0);
-              const totalValue = cartData.reduce((sum: number, item: any) => sum + (item.price || 0) * item.quantity, 0);
-              
-              // حفظ البيانات الجديدة في localStorage
-              localStorage.setItem('lastCartCount', totalCount.toString());
-              localStorage.setItem('lastCartValue', totalValue.toString());
-              
-              console.log('💰 [Migration] Updated cart after migration:', {
-                count: totalCount,
-                value: totalValue
-              });
-              
-              // تحديث عدادات السلة في النافبار فوراً
-              window.dispatchEvent(new CustomEvent('cartUpdated', {
-                detail: { newCount: totalCount, newValue: totalValue }
-              }));
-              window.dispatchEvent(new CustomEvent('forceCartUpdate', {
-                detail: { newCount: totalCount, newValue: totalValue }
-              }));
-              
-              // عرض رسالة نجاح النقل
-              if (totalCount > 0) {
-                toast.success(`🛒 تم نقل ${totalCount} منتج إلى حسابك بقيمة ${totalValue.toFixed(2)} ر.س`, {
-                  position: "top-center",
-                  autoClose: 4000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                });
-              }
-            }
-          } catch (fetchError) {
-            console.error('❌ [Migration] Error fetching updated cart:', fetchError);
+        // جلب السلة الجديدة فوراً
+        const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${user.id}/cart`);
+        if (cartResponse.ok) {
+          const cartData = await cartResponse.json();
+          const totalCount = cartData.reduce((sum: number, item: any) => sum + item.quantity, 0);
+          const totalValue = cartData.reduce((sum: number, item: any) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
+          
+          // حفظ القيم الجديدة
+          localStorage.setItem('lastCartCount', totalCount.toString());
+          localStorage.setItem('lastCartValue', totalValue.toString());
+          
+          console.log('💰 [Migration] New cart totals:', {
+            count: totalCount,
+            value: totalValue
+          });
+          
+          // إرسال تحديثات فورية
+          window.dispatchEvent(new CustomEvent('cartUpdated', {
+            detail: { newCount: totalCount, newValue: totalValue }
+          }));
+          window.dispatchEvent(new CustomEvent('forceCartUpdate', {
+            detail: { newCount: totalCount, newValue: totalValue }
+          }));
+          
+          // رسالة نجاح
+          if (totalCount > 0) {
+            toast.success(`🛒 تم نقل ${totalCount} منتج بقيمة ${totalValue.toFixed(2)} ر.س`, {
+              position: "top-center",
+              autoClose: 3000,
+            });
           }
-        }, 500);
-        
+        }
       } else {
         console.error('❌ [Migration] Migration failed:', await response.text());
       }

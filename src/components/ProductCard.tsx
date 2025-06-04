@@ -265,33 +265,39 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             
             {!isOutOfStock && (
               <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
-                {/* Quantity Controls */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <button
-                    onClick={decreaseQuantity}
-                    disabled={quantity <= 1}
-                    className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 text-sm sm:text-base shadow-sm border border-gray-200"
-                  >
-                    -
-                  </button>
-                  <span className="w-10 sm:w-12 md:w-14 h-7 sm:h-8 md:h-9 flex items-center justify-center font-bold text-gray-800 text-base sm:text-lg md:text-xl bg-gradient-to-r from-red-50 to-rose-50 rounded-lg border-2 border-red-200 shadow-sm">{quantity}</span>
-                  <button
-                    onClick={increaseQuantity}
-                    disabled={quantity >= product.stock}
-                    className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 text-sm sm:text-base shadow-sm border border-gray-200"
-                  >
-                    +
-                  </button>
+                {/* Big Quantity Controls with Clear Label */}
+                <div className="bg-gradient-to-br from-gray-50 to-red-50 p-3 rounded-xl border border-gray-200">
+                  <div className="text-sm font-bold text-gray-700 mb-2 text-center">اختر الكمية</div>
+                  <div className="flex items-center gap-2 sm:gap-3 justify-center">
+                    <button
+                      onClick={decreaseQuantity}
+                      disabled={quantity <= 1}
+                      className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-white font-black transition-all duration-200 hover:scale-105 text-base sm:text-lg shadow-lg border-2 border-red-400/30"
+                    >
+                      -
+                    </button>
+                    <div className="w-14 sm:w-16 md:w-18 h-9 sm:h-10 md:h-11 flex items-center justify-center font-black text-gray-800 text-lg sm:text-xl md:text-2xl bg-white rounded-xl border-3 border-red-300 shadow-lg">
+                      {quantity}
+                    </div>
+                    <button
+                      onClick={increaseQuantity}
+                      disabled={quantity >= product.stock}
+                      className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-white font-black transition-all duration-200 hover:scale-105 text-base sm:text-lg shadow-lg border-2 border-red-400/30"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-600 text-center mt-1">المتوفر: {product.stock} قطعة</div>
                 </div>
                 
                 <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={addToCart}
                     disabled={false}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 disabled:opacity-50 text-white px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-3.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm md:text-base shadow-lg transition-all duration-300 flex items-center justify-center gap-2 border border-red-400/30 hover:scale-[1.02] hover:shadow-xl"
+                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-4 rounded-xl font-black text-sm sm:text-base md:text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 border-green-400/30 hover:scale-[1.02] hover:shadow-2xl"
                   >
-                    <span>إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
-                    {quantity > 1 && <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{quantity}</span>}
+                    <span>🛒 إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
+                    {quantity > 1 && <span className="bg-white/20 px-2 py-1 rounded-full text-xs font-bold">{quantity}</span>}
                   </button>
                 </div>
               </div>
@@ -331,8 +337,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
           جديد
         </div>
         
-        {/* Wishlist Button Only */}
-        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 sm:translate-x-2 group-hover:translate-x-0">
+        {/* Stock Badge */}
+        {product.stock > 0 && (
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm border border-green-400/30">
+            متوفر: {product.stock}
+          </div>
+        )}
+        
+        {/* Wishlist Button */}
+        <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 sm:translate-x-2 group-hover:translate-x-0">
           <button
             onClick={toggleWishlist}
             disabled={false}
@@ -389,36 +402,42 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
           <p className="text-xs sm:text-sm font-bold text-red-600 bg-red-50 px-2 sm:px-3 py-1 rounded-full">نفذت الكمية</p>
         )}
         
-        {/* Actions - Smaller on mobile */}
+        {/* Actions - Bigger and More Visible */}
         {!isOutOfStock && (
-          <div className="w-full space-y-2 sm:space-y-3 mt-3 sm:mt-4">
-            {/* Quantity Controls - Smaller on mobile */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3">
-              <button
-                onClick={decreaseQuantity}
-                disabled={quantity <= 1}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 sm:hover:scale-110 text-base shadow-sm border border-gray-200"
-              >
-                -
-              </button>
-              <span className="w-12 sm:w-14 h-8 sm:h-9 flex items-center justify-center font-bold text-gray-800 text-lg sm:text-xl bg-gradient-to-r from-red-50 to-rose-50 rounded-lg border-2 border-red-200 shadow-sm">{quantity}</span>
-              <button
-                onClick={increaseQuantity}
-                disabled={quantity >= product.stock}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 sm:hover:scale-110 text-base shadow-sm border border-gray-200"
-              >
-                +
-              </button>
+          <div className="w-full space-y-3 sm:space-y-4 mt-4 sm:mt-6 bg-gradient-to-br from-gray-50 to-red-50 p-3 sm:p-4 rounded-xl border border-gray-200">
+            {/* Big Quantity Section with Clear Label */}
+            <div className="text-center space-y-2">
+              <div className="text-sm font-bold text-gray-700">اختر الكمية</div>
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
+                <button
+                  onClick={decreaseQuantity}
+                  disabled={quantity <= 1}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-white font-black transition-all duration-200 hover:scale-110 text-lg shadow-lg border-2 border-red-400/30"
+                >
+                  -
+                </button>
+                <div className="w-16 sm:w-20 h-10 sm:h-12 flex items-center justify-center font-black text-gray-800 text-xl sm:text-2xl bg-white rounded-xl border-3 border-red-300 shadow-lg">
+                  {quantity}
+                </div>
+                <button
+                  onClick={increaseQuantity}
+                  disabled={quantity >= product.stock}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-white font-black transition-all duration-200 hover:scale-110 text-lg shadow-lg border-2 border-red-400/30"
+                >
+                  +
+                </button>
+              </div>
+              <div className="text-xs text-gray-600">المتوفر: {product.stock} قطعة</div>
             </div>
             
-            {/* Add to Cart Button - Smaller on mobile */}
+            {/* Big Add to Cart Button */}
             <button
               onClick={addToCart}
               disabled={false}
-              className="w-full bg-gradient-to-r from-red-500 to-rose-500 text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base shadow-lg hover:from-red-600 hover:to-rose-600 disabled:opacity-50 transition-all duration-300 backdrop-blur-sm border border-red-400/30 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-xl flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 sm:px-6 py-4 sm:py-5 rounded-xl font-black text-base sm:text-lg shadow-xl hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 transition-all duration-300 backdrop-blur-sm border-2 border-green-400/30 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
             >
-              <span>إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
-              {quantity > 1 && <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{quantity}</span>}
+              <span>🛒 إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
+              {quantity > 1 && <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{quantity}</span>}
             </button>
           </div>
         )}
