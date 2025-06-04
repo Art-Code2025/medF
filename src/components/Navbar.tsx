@@ -53,14 +53,15 @@ const Navbar: React.FC = () => {
         if (Array.isArray(cartData)) {
           setCartItems(cartData);
           const totalCount = cartData.reduce((sum, item) => sum + item.quantity, 0);
-          const totalValue = cartData.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+          const totalValue = cartData.reduce((sum, item) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
           
           setCartItemsCount(totalCount);
           setCartValue(totalValue);
           
-          // حفظ العدد في localStorage للاستخدام الفوري
+          // حفظ العدد والقيمة في localStorage للاستخدام الفوري
           localStorage.setItem('lastCartCount', totalCount.toString());
-          console.log('✅ [Navbar] Cart updated from API:', totalCount);
+          localStorage.setItem('lastCartValue', totalValue.toString());
+          console.log('✅ [Navbar] Cart updated from API:', { count: totalCount, value: totalValue });
         }
       }
     } catch (error) {
@@ -106,12 +107,19 @@ const Navbar: React.FC = () => {
     // تحديث فوري من localStorage عند البداية
     const updateFromLocalStorage = () => {
       const savedCartCount = localStorage.getItem('lastCartCount');
+      const savedCartValue = localStorage.getItem('lastCartValue');
       const savedWishlistCount = localStorage.getItem('lastWishlistCount');
       
       if (savedCartCount) {
         const count = parseInt(savedCartCount);
         setCartItemsCount(count);
         console.log('🔄 [Navbar] Initial cart count from localStorage:', count);
+      }
+      
+      if (savedCartValue) {
+        const value = parseFloat(savedCartValue);
+        setCartValue(value);
+        console.log('💰 [Navbar] Initial cart value from localStorage:', value);
       }
       
       if (savedWishlistCount) {
@@ -146,10 +154,18 @@ const Navbar: React.FC = () => {
       
       // تحديث فوري من localStorage إذا متوفر
       const savedCartCount = localStorage.getItem('lastCartCount');
+      const savedCartValue = localStorage.getItem('lastCartValue');
+      
       if (savedCartCount) {
         const count = parseInt(savedCartCount);
         console.log('🔄 Setting cart count immediately from localStorage:', count);
         setCartItemsCount(count);
+      }
+      
+      if (savedCartValue) {
+        const value = parseFloat(savedCartValue);
+        console.log('💰 Setting cart value immediately from localStorage:', value);
+        setCartValue(value);
       }
       
       // ثم جلب البيانات الحديثة من الـ API
@@ -177,7 +193,8 @@ const Navbar: React.FC = () => {
       'cartUpdated',
       'productAddedToCart', 
       'cartCountChanged',
-      'forceCartUpdate'
+      'forceCartUpdate',
+      'cartValueUpdated'
     ];
 
     const wishlistEvents = [
@@ -516,14 +533,21 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <span>🛒 سلة التسوق</span>
-                  {totalCartItems > 0 && (
-                    <span 
-                      className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-black"
-                      data-cart-count
-                    >
-                      {totalCartItems}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {totalCartItems > 0 && (
+                      <span 
+                        className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-black"
+                        data-cart-count
+                      >
+                        {totalCartItems}
+                      </span>
+                    )}
+                    {totalCartValue > 0 && (
+                      <span className="text-xs font-bold text-green-600">
+                        {totalCartValue.toFixed(2)} ر.س
+                      </span>
+                    )}
+                  </div>
                 </Link>
               </div>
             </div>

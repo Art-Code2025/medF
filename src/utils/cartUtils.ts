@@ -84,7 +84,15 @@ export const addToCartUnified = async (
     const currentCartCount = localStorage.getItem('lastCartCount');
     const newCartCount = currentCartCount ? parseInt(currentCartCount) + quantity : quantity;
     localStorage.setItem('lastCartCount', newCartCount.toString());
+    
+    // حفظ قيمة السلة أيضاً (تقدير مبدئي)
+    const currentCartValue = localStorage.getItem('lastCartValue');
+    const estimatedPrice = 0; // سيتم تحديثها من الـ API
+    const newCartValue = currentCartValue ? parseFloat(currentCartValue) + (estimatedPrice * quantity) : estimatedPrice * quantity;
+    localStorage.setItem('lastCartValue', newCartValue.toString());
+    
     console.log('🔄 Updated cart count in localStorage:', newCartCount);
+    console.log('💰 Updated cart value in localStorage:', newCartValue);
     
     // 2. تحديث فوري للكونتر في الـ DOM مباشرة
     const updateCartCountInDOM = () => {
@@ -161,6 +169,41 @@ export const addToCartUnified = async (
         console.log(`🔄 Delayed cart update event sent after ${delay}ms`);
       }, delay);
     });
+    
+    // 7. جلب السلة المحدثة لحساب القيمة الصحيحة
+    setTimeout(async () => {
+      try {
+        let cartEndpoint = '/api/cart?userId=guest';
+        
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            if (user?.id && user.id !== 'guest') {
+              cartEndpoint = `/api/user/${user.id}/cart`;
+            }
+          } catch (parseError) {
+            console.warn('Error parsing user data for value update:', parseError);
+          }
+        }
+        
+        const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${cartEndpoint}`);
+        if (cartResponse.ok) {
+          const cartData = await cartResponse.json();
+          if (Array.isArray(cartData)) {
+            const totalValue = cartData.reduce((sum, item) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
+            localStorage.setItem('lastCartValue', totalValue.toString());
+            console.log('💰 [CartUtils] Updated cart value from API:', totalValue);
+            
+            // إرسال حدث تحديث القيمة
+            window.dispatchEvent(new CustomEvent('cartValueUpdated', {
+              detail: { newValue: totalValue }
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('❌ [CartUtils] Error fetching updated cart value:', error);
+      }
+    }, 1000);
 
     // رسالة نجاح بسيطة وفعالة
     toast.success(`🛒 تم إضافة "${productName}" إلى السلة بنجاح!`, {
