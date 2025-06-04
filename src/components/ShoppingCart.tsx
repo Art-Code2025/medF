@@ -276,6 +276,12 @@ const ShoppingCart: React.FC = () => {
   // حساب المجموع الكلي
   const totalPrice = useMemo(() => {
     return cartItems.reduce((total, item) => {
+      // تأكد من وجود بيانات المنتج
+      if (!item.product || typeof item.product.price !== 'number') {
+        console.warn('⚠️ [Cart] Product data missing for item:', item.id, 'productId:', item.productId);
+        return total; // تجاهل المنتج إذا لم تكن بياناته متاحة
+      }
+      
       const basePrice = item.product.price;
       const optionsPrice = item.optionsPricing ? 
         Object.values(item.optionsPricing).reduce((sum, price) => sum + price, 0) : 0;
@@ -296,6 +302,12 @@ const ShoppingCart: React.FC = () => {
     }> = [];
 
     cartItems.forEach(item => {
+      // تأكد من وجود بيانات المنتج
+      if (!item.product) {
+        console.warn('⚠️ [Cart] Product data missing for validation, item:', item.id, 'productId:', item.productId);
+        return; // تجاهل المنتج إذا لم تكن بياناته متاحة
+      }
+      
       if (!item.product.dynamicOptions || item.product.dynamicOptions.length === 0) {
         return; // منتج بدون خيارات مطلوبة
       }
@@ -601,7 +613,12 @@ const ShoppingCart: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
             <div className="bg-gray-800 text-white px-6 py-3 rounded-full shadow-md border border-gray-600">
               <span className="text-lg font-bold">
-                {totalItemsCount} منتج في السلة
+                {cartItems.filter(item => item.product).length} منتج صحيح في السلة
+                {cartItems.filter(item => !item.product).length > 0 && (
+                  <span className="text-red-300 mr-2">
+                    + {cartItems.filter(item => !item.product).length} ناقص
+                  </span>
+                )}
               </span>
             </div>
             <button
@@ -697,6 +714,28 @@ const ShoppingCart: React.FC = () => {
             >
               🗑️ إفراغ السلة
             </button>
+            {cartItems.filter(item => !item.product).length > 0 && (
+              <button
+                onClick={async () => {
+                  const brokenItems = cartItems.filter(item => !item.product);
+                  if (!window.confirm(`هل تريد حذف ${brokenItems.length} منتج ناقص البيانات؟`)) return;
+                  
+                  try {
+                    // حذف المنتجات الناقصة واحد واحد
+                    for (const item of brokenItems) {
+                      await removeItem(item.id);
+                    }
+                    toast.success(`تم حذف ${brokenItems.length} منتج ناقص البيانات`);
+                  } catch (error) {
+                    console.error('Error removing broken items:', error);
+                    toast.error('خطأ في حذف المنتجات الناقصة');
+                  }
+                }}
+                className="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-6 py-3 rounded-full hover:from-orange-700 hover:to-orange-800 transition-all shadow-lg transform hover:scale-105 border border-orange-500"
+              >
+                🧹 حذف المنتجات الناقصة ({cartItems.filter(item => !item.product).length})
+              </button>
+            )}
           </div>
 
           {/* Status Indicator */}
@@ -761,7 +800,39 @@ const ShoppingCart: React.FC = () => {
             {/* Cart Items - Takes 3 columns */}
             <div className="xl:col-span-3">
               <div className="space-y-8">
-                {cartItems.map((item, index) => (
+                {/* منتجات مفقودة البيانات */}
+                {cartItems.filter(item => !item.product).length > 0 && (
+                  <div className="bg-gradient-to-r from-red-900 to-red-800 border-2 border-red-600 rounded-2xl p-6 shadow-lg">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                      <span className="text-2xl">⚠️</span>
+                      منتجات تحتاج إصلاح ({cartItems.filter(item => !item.product).length})
+                    </h3>
+                    <div className="space-y-3">
+                      {cartItems.filter(item => !item.product).map((item) => (
+                        <div key={item.id} className="bg-red-800 border border-red-600 rounded-xl p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-red-200 font-bold">منتج #{item.productId}</p>
+                              <p className="text-red-300 text-sm">الكمية: {item.quantity}</p>
+                            </div>
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-bold"
+                            >
+                              حذف
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-red-200 mt-4 text-center">
+                      هذه المنتجات بياناتها مفقودة من قاعدة البيانات، يرجى حذفها أو تحديث السلة
+                    </p>
+                  </div>
+                )}
+                
+                {/* المنتجات الصحيحة */}
+                {cartItems.filter(item => item.product).map((item, index) => (
                   <div key={item.id} data-item-id={item.id} className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-500">
                     {/* Product Header */}
                     <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white p-6">
