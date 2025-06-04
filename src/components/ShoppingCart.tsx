@@ -765,26 +765,28 @@ const ShoppingCart: React.FC = () => {
   console.log('✅ [Cart] Showing main cart content with', cartItems.length, 'items');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-gray-800 to-black rounded-full flex items-center justify-center shadow-lg border border-gray-600">
-              <CartIcon className="w-8 h-8 text-white" />
+        {/* Luxury Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="w-20 h-20 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-amber-300 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 transform -skew-x-12 animate-pulse"></div>
+              <CartIcon className="w-10 h-10 text-white relative z-10" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent drop-shadow-lg">
                 سلة التسوق
               </h1>
-              <p className="text-gray-600 mt-2">مراجعة وتعديل طلبك</p>
+              <p className="text-amber-200 mt-2 text-lg font-medium">تجربة تسوق فاخرة ومميزة</p>
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
-            <div className="bg-gray-800 text-white px-6 py-3 rounded-full shadow-md border border-gray-600">
-              <span className="text-lg font-bold">
-                {cartItems.filter(item => item.product).length} منتج صحيح في السلة
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
+            <div className="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 text-white px-8 py-4 rounded-full shadow-2xl border-2 border-amber-400 backdrop-blur-sm">
+              <span className="text-lg font-bold flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-200" />
+                {cartItems.filter(item => item.product).length} منتج مميز في السلة
                 {cartItems.filter(item => !item.product).length > 0 && (
                   <span className="text-red-300 mr-2">
                     + {cartItems.filter(item => !item.product).length} ناقص
@@ -794,52 +796,55 @@ const ShoppingCart: React.FC = () => {
             </div>
             <button
               onClick={clearCart}
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-full hover:from-red-700 hover:to-red-800 transition-all shadow-lg transform hover:scale-105 border border-red-500"
+              className="bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white px-8 py-4 rounded-full hover:from-red-700 hover:to-red-900 transition-all shadow-2xl transform hover:scale-105 border-2 border-red-400 relative overflow-hidden group"
             >
-              🗑️ إفراغ السلة
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-500"></div>
+              <span className="relative z-10 flex items-center gap-2 font-bold">
+                🗑️ إفراغ السلة
+              </span>
             </button>
           </div>
 
-          {/* Status Indicator */}
+          {/* Premium Status Indicator */}
           <div className="flex items-center justify-center gap-4">
             {!canProceedToCheckout && (
-              <div className="bg-gradient-to-r from-red-900 to-red-800 border-2 border-red-600 rounded-full px-6 py-3 shadow-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-red-300 text-xl">⚠️</span>
-                  <span className="font-bold text-red-200">
+              <div className="bg-gradient-to-r from-red-800 via-red-900 to-red-800 border-3 border-red-500 rounded-full px-8 py-4 shadow-2xl backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-red-300 text-2xl animate-pulse">⚠️</span>
+                  <span className="font-bold text-red-100 text-lg">
                     {incompleteItemsDetailed.length} منتج يحتاج إكمال التفاصيل
                   </span>
                 </div>
               </div>
             )}
             {canProceedToCheckout && (
-              <div className="bg-gradient-to-r from-green-900 to-green-800 border-2 border-green-600 rounded-full px-6 py-3 shadow-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-300 text-xl">✅</span>
-                  <span className="font-bold text-green-200">جاهز للمتابعة</span>
+              <div className="bg-gradient-to-r from-emerald-800 via-green-900 to-emerald-800 border-3 border-emerald-500 rounded-full px-8 py-4 shadow-2xl backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-300 text-2xl animate-bounce">✅</span>
+                  <span className="font-bold text-emerald-100 text-lg">جاهز للمتابعة</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* تفاصيل المنتجات الناقصة */}
+          {/* Luxury incomplete items warning */}
           {!canProceedToCheckout && incompleteItemsDetailed.length > 0 && (
-            <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-2xl p-6 mx-4 mb-6">
-              <h3 className="text-xl font-bold text-red-800 mb-4 flex items-center gap-3">
-                <span className="text-2xl">🚨</span>
+            <div className="bg-gradient-to-br from-red-50 via-pink-50 to-red-100 border-3 border-red-400 rounded-3xl p-8 mx-4 mb-8 shadow-2xl backdrop-blur-sm">
+              <h3 className="text-2xl font-bold text-red-800 mb-6 flex items-center justify-center gap-4">
+                <span className="text-3xl animate-pulse">🚨</span>
                 يجب إكمال هذه التفاصيل قبل المتابعة:
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {incompleteItemsDetailed.map(({ item, missingOptions }) => (
-                  <div key={item.id} className="bg-white border border-red-200 rounded-xl p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-red-600 font-bold text-lg">📦</span>
-                      <h4 className="font-bold text-red-800">{item.product?.name}</h4>
+                  <div key={item.id} className="bg-white/80 backdrop-blur-sm border-2 border-red-300 rounded-2xl p-6 shadow-xl">
+                    <div className="flex items-center gap-4 mb-3">
+                      <span className="text-red-600 font-bold text-xl">📦</span>
+                      <h4 className="font-bold text-red-800 text-lg">{item.product?.name}</h4>
                     </div>
-                    <p className="text-red-700 mb-2">الاختيارات المطلوبة الناقصة:</p>
-                    <ul className="list-disc list-inside space-y-1 text-red-600">
+                    <p className="text-red-700 mb-3 font-semibold">الاختيارات المطلوبة الناقصة:</p>
+                    <ul className="list-disc list-inside space-y-2 text-red-600">
                       {missingOptions.map((option, index) => (
-                        <li key={index} className="font-semibold">
+                        <li key={index} className="font-semibold text-base">
                           <span className="text-red-800">{option}</span>
                         </li>
                       ))}
@@ -847,8 +852,8 @@ const ShoppingCart: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-red-100 rounded-lg">
-                <p className="text-red-800 font-bold text-center">
+              <div className="mt-6 p-4 bg-red-200/80 backdrop-blur-sm rounded-2xl shadow-lg">
+                <p className="text-red-800 font-bold text-center text-lg">
                   ⚠️ لن تتمكن من إتمام الطلب حتى تحديد جميع الاختيارات المطلوبة
                 </p>
               </div>
@@ -856,30 +861,30 @@ const ShoppingCart: React.FC = () => {
           )}
         </div>
 
-        {/* Cart Content */}
+        {/* Premium Cart Content */}
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-            {/* Cart Items - Takes 3 columns */}
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-10">
+            {/* Luxury Cart Items - Takes 3 columns */}
             <div className="xl:col-span-3">
-              <div className="space-y-8">
+              <div className="space-y-10">
                 {/* منتجات مفقودة البيانات */}
                 {cartItems.filter(item => !item.product).length > 0 && (
-                  <div className="bg-gradient-to-r from-red-900 to-red-800 border-2 border-red-600 rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
-                      <span className="text-2xl">⚠️</span>
+                  <div className="bg-gradient-to-br from-red-900 via-red-800 to-red-900 border-3 border-red-600 rounded-3xl p-8 shadow-2xl backdrop-blur-sm">
+                    <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
+                      <span className="text-3xl animate-pulse">⚠️</span>
                       منتجات تحتاج إصلاح ({cartItems.filter(item => !item.product).length})
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {cartItems.filter(item => !item.product).map((item) => (
-                        <div key={item.id} className="bg-red-800 border border-red-600 rounded-xl p-4">
+                        <div key={item.id} className="bg-red-800/80 backdrop-blur-sm border-2 border-red-600 rounded-2xl p-6 shadow-xl">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-red-200 font-bold">منتج #{item.productId}</p>
-                              <p className="text-red-300 text-sm">الكمية: {item.quantity}</p>
+                              <p className="text-red-200 font-bold text-lg">منتج #{item.productId}</p>
+                              <p className="text-red-300">الكمية: {item.quantity}</p>
                             </div>
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-bold"
+                              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all font-bold shadow-lg transform hover:scale-105"
                             >
                               حذف
                             </button>
@@ -887,97 +892,129 @@ const ShoppingCart: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    <p className="text-red-200 mt-4 text-center">
+                    <p className="text-red-200 mt-6 text-center text-lg">
                       هذه المنتجات بياناتها مفقودة من قاعدة البيانات، يرجى حذفها أو تحديث السلة
                     </p>
                   </div>
                 )}
                 
-                {/* المنتجات الصحيحة */}
+                {/* Luxury Products Cards */}
                 {cartItems.filter(item => item.product).map((item, index) => (
-                  <div key={item.id} data-item-id={item.id} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-500">
-                    {/* Product Header */}
-                    <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-600 text-white p-6">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white border-opacity-30">
-                            <span className="text-white font-bold text-lg">{index + 1}</span>
+                  <div 
+                    key={item.id} 
+                    data-item-id={item.id} 
+                    className="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl overflow-hidden border-3 border-amber-200 hover:border-amber-300 hover:shadow-3xl transition-all duration-700 transform hover:scale-[1.02] relative group"
+                    style={{
+                      background: `
+                        linear-gradient(135deg, 
+                          rgba(255, 255, 255, 0.95) 0%, 
+                          rgba(249, 250, 251, 0.95) 50%, 
+                          rgba(255, 255, 255, 0.95) 100%
+                        ),
+                        radial-gradient(ellipse at top left, rgba(251, 191, 36, 0.1), transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(139, 69, 19, 0.05), transparent 50%)
+                      `,
+                      backdropFilter: 'blur(20px)',
+                      boxShadow: `
+                        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                        0 0 0 1px rgba(251, 191, 36, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.8)
+                      `
+                    }}
+                  >
+                    {/* Luxury Product Header */}
+                    <div className="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 text-white p-8 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform -skew-x-12 animate-pulse"></div>
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300"></div>
+                      
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
+                        <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-gradient-to-br from-white via-amber-50 to-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-3 border-white border-opacity-40 shadow-xl relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform -skew-x-12 animate-pulse"></div>
+                            <span className="text-amber-800 font-bold text-2xl relative z-10">{index + 1}</span>
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold">{item.product?.name || 'منتج غير معروف'}</h3>
-                            <p className="text-red-100">
-                              {item.product?.description?.substring(0, 50)}...
+                            <h3 className="text-2xl font-bold drop-shadow-lg">{item.product?.name || 'منتج غير معروف'}</h3>
+                            <p className="text-amber-100 text-lg mt-1">
+                              {item.product?.description?.substring(0, 60)}...
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-4">
                           <button
                             onClick={() => removeItem(item.id)}
-                            className="w-12 h-12 bg-red-800 bg-opacity-60 backdrop-blur-sm text-white rounded-xl flex items-center justify-center hover:bg-opacity-80 transition-all shadow-lg transform hover:scale-110 border border-red-400"
+                            className="w-14 h-14 bg-gradient-to-br from-red-600 to-red-700 bg-opacity-80 backdrop-blur-sm text-white rounded-2xl flex items-center justify-center hover:bg-opacity-100 transition-all shadow-xl transform hover:scale-110 border-2 border-red-400 relative overflow-hidden group"
                             title="حذف المنتج"
                           >
-                            <X className="w-6 h-6" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-500"></div>
+                            <X className="w-7 h-7 relative z-10" />
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-6 lg:p-8">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Product Image and Price */}
+                    <div className="p-8 lg:p-10">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        {/* Luxury Product Image and Price */}
                         <div className="lg:col-span-1">
-                          <div className="space-y-6">
-                            {/* Main Product Image */}
+                          <div className="space-y-8">
+                            {/* Premium Product Image */}
                             <div className="relative group">
-                              <div className="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                              <div className="w-full h-96 bg-gradient-to-br from-gray-50 via-white to-gray-100 rounded-2xl overflow-hidden shadow-2xl border-3 border-amber-200 relative">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent z-10"></div>
                                 {item.product?.mainImage ? (
                                   <img 
                                     src={buildImageUrl(item.product.mainImage)}
                                     alt={item.product?.name || 'منتج'}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 relative z-0"
                                     onError={(e) => {
                                       console.warn('🖼️ [Cart] Image load failed, using fallback:', item.product?.mainImage);
                                       e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3';
-                                      e.currentTarget.onerror = null; // منع تكرار الخطأ
+                                      e.currentTarget.onerror = null;
                                     }}
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-5xl">
-                                    📦
+                                  <div className="w-full h-full flex items-center justify-center text-amber-400 text-6xl">
+                                    <Package className="w-20 h-20" />
                                   </div>
                                 )}
+                                <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-20">
+                                  منتج #{index + 1}
+                                </div>
                               </div>
                             </div>
 
-                            {/* Price and Quantity */}
-                            <div className="bg-gradient-to-br from-red-600 to-rose-600 p-6 rounded-xl border-2 border-red-500 shadow-lg">
-                              <div className="text-center mb-4">
-                                <div className="text-3xl font-bold text-white">
+                            {/* Luxury Price and Quantity */}
+                            <div className="bg-gradient-to-br from-amber-600 via-yellow-600 to-amber-700 p-8 rounded-2xl border-3 border-amber-400 shadow-2xl relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform -skew-x-12 animate-pulse"></div>
+                              
+                              <div className="text-center mb-6 relative z-10">
+                                <div className="text-4xl font-bold text-white drop-shadow-lg">
                                   {((item.product?.price || 0) * item.quantity).toFixed(2)} ر.س
                                 </div>
-                                <div className="text-red-100 mt-1">
+                                <div className="text-amber-100 mt-2 text-lg">
                                   {item.product?.price?.toFixed(2)} ر.س × {item.quantity}
                                 </div>
                               </div>
                               
-                              <div className="flex items-center justify-center gap-4">
+                              <div className="flex items-center justify-center gap-6 relative z-10">
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="w-12 h-12 bg-gradient-to-r from-white to-gray-50 text-red-600 rounded-xl flex items-center justify-center hover:from-gray-50 hover:to-gray-100 transition-all shadow-lg transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                                  className="w-14 h-14 bg-gradient-to-br from-white to-amber-50 text-amber-700 rounded-2xl flex items-center justify-center hover:from-amber-50 hover:to-amber-100 transition-all shadow-xl transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed border-3 border-amber-300"
                                   disabled={item.quantity <= 1}
                                 >
-                                  <Minus className="w-6 h-6" />
+                                  <Minus className="w-7 h-7 font-bold" />
                                 </button>
-                                <div className="w-20 text-center">
-                                  <div className="text-2xl font-bold bg-white text-red-600 py-3 rounded-xl border-2 border-red-300 shadow-md">
+                                <div className="w-24 text-center">
+                                  <div className="text-3xl font-bold bg-gradient-to-br from-white to-amber-50 text-amber-800 py-4 rounded-2xl border-3 border-amber-300 shadow-xl">
                                     {item.quantity}
                                   </div>
                                 </div>
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="w-12 h-12 bg-gradient-to-r from-white to-gray-50 text-red-600 rounded-xl flex items-center justify-center hover:from-gray-50 hover:to-gray-100 transition-all shadow-lg transform hover:scale-110 border border-gray-200"
+                                  className="w-14 h-14 bg-gradient-to-br from-white to-amber-50 text-amber-700 rounded-2xl flex items-center justify-center hover:from-amber-50 hover:to-amber-100 transition-all shadow-xl transform hover:scale-110 border-3 border-amber-300"
                                 >
-                                  <Plus className="w-6 h-6" />
+                                  <Plus className="w-7 h-7 font-bold" />
                                 </button>
                               </div>
                             </div>
@@ -986,7 +1023,7 @@ const ShoppingCart: React.FC = () => {
 
                         {/* Product Options and Details */}
                         <div className="lg:col-span-2">
-                          <div className="space-y-6">
+                          <div className="space-y-8">
                             {/* Product Options */}
                             {item.product.dynamicOptions && item.product.dynamicOptions.length > 0 && (
                               <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border-2 border-gray-200 shadow-lg">
@@ -1237,22 +1274,26 @@ const ShoppingCart: React.FC = () => {
                               </div>
                             )}
 
-                            {/* Selected Options Summary */}
+                            {/* Luxury Selected Options Summary */}
                             {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                              <div className="bg-gradient-to-br from-blue-800 to-blue-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-blue-700 shadow-lg mb-4">
-                                <h5 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
-                                  <Check className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
+                              <div className="bg-gradient-to-br from-emerald-800 via-green-800 to-emerald-900 p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-3 border-emerald-600 shadow-2xl mb-6 backdrop-blur-sm relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-5 transform -skew-x-12 animate-pulse"></div>
+                                <h5 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-3 relative z-10">
+                                  <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl flex items-center justify-center">
+                                    <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                  </div>
                                   المواصفات المختارة
                                 </h5>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 relative z-10">
                                   {Object.entries(item.selectedOptions).map(([key, value]) => (
-                                    <div key={key} className="bg-blue-700 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-blue-600 shadow-sm">
-                                      <span className="text-xs sm:text-sm text-blue-200 font-medium block mb-1">{getOptionDisplayName(key)}:</span>
-                                      <span className="font-bold text-white text-sm sm:text-lg">{value}</span>
+                                    <div key={key} className="bg-gradient-to-br from-emerald-700 to-green-700 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-emerald-500 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform -skew-x-12"></div>
+                                      <span className="text-sm sm:text-base text-emerald-200 font-semibold block mb-2 relative z-10">{getOptionDisplayName(key)}:</span>
+                                      <span className="font-bold text-white text-lg sm:text-xl relative z-10">{value}</span>
                                       {/* عرض السعر الإضافي إذا كان موجود */}
                                       {item.optionsPricing && item.optionsPricing[key] && item.optionsPricing[key] > 0 && (
-                                        <span className="block text-xs text-green-300 mt-1">
-                                          +{item.optionsPricing[key]} ر.س
+                                        <span className="block text-sm text-emerald-300 mt-2 font-medium relative z-10">
+                                          +{item.optionsPricing[key]} ر.س إضافي
                                         </span>
                                       )}
                                     </div>
@@ -1260,9 +1301,9 @@ const ShoppingCart: React.FC = () => {
                                 </div>
                                 {/* إجمالي السعر مع الإضافات */}
                                 {item.optionsPricing && Object.values(item.optionsPricing).some(price => price > 0) && (
-                                  <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-green-700 rounded-lg sm:rounded-xl border border-green-600">
-                                    <span className="text-xs sm:text-sm text-green-200 font-medium">إجمالي الإضافات:</span>
-                                    <span className="font-bold text-white text-sm sm:text-lg mr-2">
+                                  <div className="mt-4 sm:mt-6 p-4 sm:p-6 bg-gradient-to-r from-amber-600 to-yellow-600 rounded-xl sm:rounded-2xl border-2 border-amber-400 shadow-xl relative z-10">
+                                    <span className="text-sm sm:text-base text-amber-100 font-semibold">إجمالي الإضافات:</span>
+                                    <span className="font-bold text-white text-xl sm:text-2xl mr-3">
                                       {Object.values(item.optionsPricing).reduce((sum, price) => sum + (price || 0), 0)} ر.س
                                     </span>
                                   </div>
@@ -1270,31 +1311,37 @@ const ShoppingCart: React.FC = () => {
                               </div>
                             )}
 
-                            {/* رسالة تحذيرية إذا لم يتم اختيار مواصفات مطلوبة */}
+                            {/* رسالة تحذيرية فاخرة إذا لم يتم اختيار مواصفات مطلوبة */}
                             {(!item.selectedOptions || Object.keys(item.selectedOptions).length === 0) && 
                              item.product.dynamicOptions && 
                              item.product.dynamicOptions.some(option => option.required) && (
-                              <div className="bg-gradient-to-br from-red-800 to-red-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-red-700 shadow-lg mb-4">
-                                <h5 className="text-lg sm:text-xl font-bold text-white mb-3 flex items-center gap-2">
-                                  <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />
+                              <div className="bg-gradient-to-br from-red-800 via-red-900 to-red-800 p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-3 border-red-600 shadow-2xl mb-6 backdrop-blur-sm relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-5 transform -skew-x-12 animate-pulse"></div>
+                                <h5 className="text-xl sm:text-2xl font-bold text-white mb-4 flex items-center gap-3 relative z-10">
+                                  <div className="w-8 h-8 bg-gradient-to-r from-red-400 to-pink-400 rounded-xl flex items-center justify-center animate-pulse">
+                                    <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                  </div>
                                   مواصفات مطلوبة
                                 </h5>
-                                <p className="text-red-200 text-sm sm:text-base">
+                                <p className="text-red-100 text-base sm:text-lg relative z-10">
                                   يجب تحديد المقاسات والمواصفات المطلوبة لهذا المنتج قبل المتابعة
                                 </p>
                               </div>
                             )}
 
-                            {/* Attachments */}
-                            <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border-2 border-gray-200 shadow-lg">
-                              <h5 className="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
-                                <Sparkles className="w-6 h-6 text-red-600" />
+                            {/* Luxury Attachments */}
+                            <div className="bg-gradient-to-br from-slate-50 via-gray-50 to-white p-8 rounded-2xl border-3 border-amber-300 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-r from-amber-100/20 via-yellow-100/20 to-amber-100/20"></div>
+                              <h5 className="text-2xl font-bold text-amber-800 mb-6 flex items-center gap-3 relative z-10">
+                                <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                  <Sparkles className="w-6 h-6 text-white" />
+                                </div>
                                 ملاحظات وصور إضافية
                               </h5>
                               
-                              <div className="space-y-4">
+                              <div className="space-y-8 relative z-10">
                                 <div>
-                                  <label className="block text-lg font-bold text-gray-800 mb-3">
+                                  <label className="block text-xl font-bold text-amber-900 mb-4">
                                     ملاحظات خاصة
                                   </label>
                                   <textarea
@@ -1334,28 +1381,32 @@ const ShoppingCart: React.FC = () => {
                                             autoClose: 1500,
                                             hideProgressBar: true,
                                             style: {
-                                              background: '#8B5CF6',
+                                              background: 'linear-gradient(135deg, #F59E0B, #D97706)',
                                               color: 'white',
-                                              fontSize: '14px'
+                                              fontSize: '16px',
+                                              fontWeight: 'bold',
+                                              borderRadius: '12px',
+                                              boxShadow: '0 10px 25px rgba(251, 191, 36, 0.3)'
                                             }
                                           });
                                         }
                                       }, 1000);
                                     }}
-                                    placeholder="أضف أي ملاحظات أو تعليمات خاصة..."
-                                    className="w-full px-4 py-4 border-2 border-gray-300 bg-white text-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-md transition-all placeholder-gray-400"
-                                    rows={4}
+                                    placeholder="أضف أي ملاحظات أو تعليمات خاصة للمنتج..."
+                                    className="w-full px-6 py-6 border-3 border-amber-300 bg-gradient-to-br from-white to-amber-50 text-amber-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-amber-400 focus:border-amber-500 shadow-xl transition-all placeholder-amber-500 text-lg font-medium"
+                                    rows={5}
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="block text-lg font-bold text-gray-800 mb-3">
+                                  <label className="block text-xl font-bold text-amber-900 mb-4">
                                     صور إضافية
                                   </label>
-                                  <div className="flex items-center gap-3 mb-4">
-                                    <label className="cursor-pointer bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all shadow-lg transform hover:scale-105 border border-red-500">
-                                      <Upload className="w-5 h-5" />
-                                      <span className="font-medium">رفع صور</span>
+                                  <div className="flex items-center gap-4 mb-6">
+                                    <label className="cursor-pointer bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-4 rounded-2xl flex items-center gap-4 transition-all shadow-2xl transform hover:scale-105 border-3 border-amber-400 relative overflow-hidden group">
+                                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-500"></div>
+                                      <Upload className="w-6 h-6 relative z-10" />
+                                      <span className="font-bold text-lg relative z-10">رفع صور</span>
                                       <input
                                         type="file"
                                         multiple
@@ -1365,20 +1416,26 @@ const ShoppingCart: React.FC = () => {
                                       />
                                     </label>
                                     {uploadingImages && (
-                                      <div className="text-red-600 font-medium">جاري الرفع...</div>
+                                      <div className="text-amber-700 font-bold text-lg flex items-center gap-2">
+                                        <div className="w-6 h-6 border-3 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+                                        جاري الرفع...
+                                      </div>
                                     )}
                                   </div>
                                   
-                                  {/* Uploaded Images */}
+                                  {/* Luxury Uploaded Images */}
                                   {item.attachments?.images && item.attachments.images.length > 0 && (
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                       {item.attachments.images.map((img, idx) => (
                                         <div key={idx} className="relative group">
-                                          <img
-                                            src={img}
-                                            alt={`مرفق ${idx + 1}`}
-                                            className="w-full h-24 object-cover rounded-xl border-2 border-gray-600 shadow-md group-hover:scale-105 transition-transform duration-300"
-                                          />
+                                          <div className="relative rounded-2xl overflow-hidden shadow-2xl border-3 border-amber-300 hover:border-amber-400 transition-all duration-300">
+                                            <img
+                                              src={img}
+                                              alt={`مرفق ${idx + 1}`}
+                                              className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                          </div>
                                           <button
                                             onClick={() => {
                                               const newImages = item.attachments?.images?.filter((_, i) => i !== idx) || [];
@@ -1388,10 +1445,13 @@ const ShoppingCart: React.FC = () => {
                                               ));
                                               saveOptionsToBackend(item.id, 'attachments', newAttachments);
                                             }}
-                                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-lg transform hover:scale-110 border border-red-500"
+                                            className="absolute -top-3 -right-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all shadow-2xl transform hover:scale-110 border-2 border-red-400 font-bold"
                                           >
                                             ×
                                           </button>
+                                          <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                            صورة {idx + 1}
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
@@ -1408,79 +1468,142 @@ const ShoppingCart: React.FC = () => {
               </div>
             </div>
 
-            {/* Order Summary - Takes 1 column */}
+            {/* Luxury Order Summary - Takes 1 column */}
             <div className="xl:col-span-1">
-              <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-8 border border-gray-200">
-                {/* Summary Header */}
-                <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-600 text-white p-6 border-b border-red-500">
-                  <h3 className="text-2xl font-bold text-center">ملخص الطلب</h3>
-                  <p className="text-center text-red-100 mt-2">مراجعة نهائية</p>
+              <div className="bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900 rounded-3xl shadow-2xl overflow-hidden sticky top-8 border-3 border-amber-400 backdrop-blur-sm relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/5 via-yellow-400/5 to-amber-400/5"></div>
+                
+                {/* Luxury Summary Header */}
+                <div className="bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-800 text-white p-8 border-b-3 border-amber-500 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform -skew-x-12 animate-pulse"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-center gap-4 mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-white via-amber-50 to-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white border-opacity-40 shadow-xl">
+                        <Sparkles className="w-7 h-7 text-amber-800" />
+                      </div>
+                      <h3 className="text-3xl font-bold drop-shadow-lg">ملخص الطلب</h3>
+                    </div>
+                    <p className="text-center text-amber-100 text-lg font-medium">مراجعة نهائية فاخرة</p>
+                  </div>
                 </div>
                 
-                <div className="p-6">
+                <div className="p-8 relative z-10 space-y-8">
+                  {/* Luxury Price Breakdown */}
                   <div className="space-y-6 mb-8">
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="text-gray-600">المجموع الفرعي:</span>
-                      <span className="font-bold text-red-600">{totalPrice.toFixed(2)} ر.س</span>
-                    </div>
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="text-gray-600">رسوم التوصيل:</span>
-                      <span className="text-green-600 font-bold">مجاني</span>
-                    </div>
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="text-gray-600">الضريبة:</span>
-                      <span className="text-gray-600">محتسبة</span>
-                    </div>
-                    <hr className="border-gray-300" />
-                    <div className="flex justify-between items-center text-2xl font-bold">
-                      <span className="text-gray-800">المجموع الكلي:</span>
-                      <span className="text-red-600">
-                        {totalPrice.toFixed(2)} ر.س
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Promo Code */}
-                  <div className="mb-8">
-                    <label className="block text-lg font-bold text-gray-800 mb-3">كود الخصم</label>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="أدخل كود الخصم"
-                        className="w-full px-4 py-3 border-2 border-gray-300 bg-white text-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-md transition-all placeholder-gray-400"
-                      />
-                      <button 
-                        className="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all font-bold shadow-lg transform hover:scale-105 border border-gray-500"
-                        onClick={() => {
-                          if (promoCode.trim()) {
-                            toast.info('جاري التحقق من كود الخصم...');
-                            // Add promo code logic here
-                          } else {
-                            toast.error('يرجى إدخال كود الخصم');
-                          }
-                        }}
-                      >
-                        تطبيق الكود
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Validation Warning */}
-                  {!canProceedToCheckout && (
-                    <div className="bg-gradient-to-r from-red-900 to-red-800 border-2 border-red-600 rounded-xl p-4 mb-6 shadow-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-red-300 text-xl">⚠️</span>
-                        <span className="font-bold text-red-200">يجب إكمال التفاصيل</span>
+                    <div className="bg-gradient-to-r from-slate-800 to-gray-800 p-6 rounded-2xl border-2 border-amber-300 shadow-xl backdrop-blur-sm">
+                      <div className="flex justify-between items-center text-lg">
+                        <span className="text-amber-200 font-semibold">المجموع الفرعي:</span>
+                        <span className="font-bold text-amber-400 text-2xl drop-shadow-lg">{totalPrice.toFixed(2)} ر.س</span>
                       </div>
-                      <p className="text-red-300 text-sm">
-                        {incompleteItemsDetailed.length} منتج يحتاج تحديد المقاسات
-                      </p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-emerald-800 to-green-800 p-6 rounded-2xl border-2 border-emerald-400 shadow-xl backdrop-blur-sm">
+                      <div className="flex justify-between items-center text-lg">
+                        <span className="text-emerald-200 font-semibold">رسوم التوصيل:</span>
+                        <span className="text-emerald-300 font-bold text-xl flex items-center gap-2">
+                          <span className="text-2xl">🎁</span>
+                          مجاني
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-blue-800 to-indigo-800 p-6 rounded-2xl border-2 border-blue-400 shadow-xl backdrop-blur-sm">
+                      <div className="flex justify-between items-center text-lg">
+                        <span className="text-blue-200 font-semibold">الضريبة:</span>
+                        <span className="text-blue-300 font-bold">محتسبة</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-800 p-8 rounded-3xl border-3 border-amber-400 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform -skew-x-12 animate-pulse"></div>
+                      <div className="flex justify-between items-center text-2xl font-bold relative z-10">
+                        <span className="text-white drop-shadow-lg flex items-center gap-3">
+                          <span className="text-3xl">💎</span>
+                          المجموع الكلي:
+                        </span>
+                        <span className="text-white text-4xl drop-shadow-lg">
+                          {totalPrice.toFixed(2)} ر.س
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Luxury Promo Code Section */}
+                  <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900 p-8 rounded-3xl border-3 border-purple-500 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 via-pink-400/10 to-purple-400/10"></div>
+                    <div className="relative z-10">
+                      <label className="block text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <span className="text-3xl">🎫</span>
+                        كود الخصم الحصري
+                      </label>
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={promoCode}
+                            onChange={(e) => setPromoCode(e.target.value)}
+                            placeholder="أدخل كود الخصم الحصري"
+                            className="w-full px-6 py-4 bg-gradient-to-br from-white via-purple-50 to-white text-purple-900 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-400 shadow-xl transition-all placeholder-purple-500 text-lg font-semibold border-3 border-purple-300"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-600">
+                            <Sparkles className="w-6 h-6" />
+                          </div>
+                        </div>
+                        <button 
+                          className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white py-4 rounded-2xl hover:from-purple-700 hover:to-purple-800 transition-all font-bold shadow-2xl transform hover:scale-105 border-3 border-purple-400 text-lg relative overflow-hidden group"
+                          onClick={() => {
+                            if (promoCode.trim()) {
+                              toast.info('🔍 جاري التحقق من كود الخصم...', {
+                                style: {
+                                  background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                  borderRadius: '12px'
+                                }
+                              });
+                              // Add promo code logic here
+                            } else {
+                              toast.error('⚠️ يرجى إدخال كود الخصم', {
+                                style: {
+                                  background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                  borderRadius: '12px'
+                                }
+                              });
+                            }
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-500"></div>
+                          <span className="relative z-10 flex items-center justify-center gap-3">
+                            <span className="text-2xl">✨</span>
+                            تطبيق الكود الحصري
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Luxury Validation Warning */}
+                  {!canProceedToCheckout && (
+                    <div className="bg-gradient-to-br from-red-900 via-red-800 to-red-900 border-3 border-red-500 rounded-3xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-red-400/10 via-pink-400/10 to-red-400/10"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center animate-pulse">
+                            <span className="text-white text-2xl">⚠️</span>
+                          </div>
+                          <span className="font-bold text-red-200 text-xl">يجب إكمال التفاصيل</span>
+                        </div>
+                        <p className="text-red-300 text-lg font-medium">
+                          {incompleteItemsDetailed.length} منتج يحتاج تحديد المقاسات والتفاصيل
+                        </p>
+                      </div>
                     </div>
                   )}
 
-                  <div className="space-y-4">
+                  {/* Luxury Action Buttons */}
+                  <div className="space-y-6">
                     <Link
                       to={canProceedToCheckout ? "/checkout" : "#"}
                       onClick={(e) => {
@@ -1503,13 +1626,14 @@ const ShoppingCart: React.FC = () => {
                               pauseOnHover: true,
                               draggable: true,
                               style: {
-                                background: '#DC2626',
+                                background: 'linear-gradient(135deg, #DC2626, #B91C1C)',
                                 color: 'white',
                                 fontWeight: 'bold',
                                 fontSize: '16px',
                                 borderRadius: '12px',
                                 zIndex: 999999,
-                                lineHeight: '1.5'
+                                lineHeight: '1.5',
+                                boxShadow: '0 25px 50px rgba(220, 38, 38, 0.3)'
                               }
                             }
                           );
@@ -1529,31 +1653,38 @@ const ShoppingCart: React.FC = () => {
                           console.log('✅ [Cart] All validations passed, proceeding to checkout');
                         }
                       }}
-                      className={`w-full py-4 rounded-xl font-bold text-center block transition-all text-lg shadow-lg transform ${
+                      className={`w-full py-6 rounded-3xl font-bold text-center block transition-all text-xl shadow-2xl transform border-3 relative overflow-hidden group ${
                         canProceedToCheckout 
-                          ? 'bg-gradient-to-r from-green-600 via-green-700 to-green-800 text-white hover:from-green-700 hover:via-green-800 hover:to-green-900 hover:scale-105 border border-green-500' 
-                          : 'bg-gray-600 text-gray-300 cursor-not-allowed border border-gray-500 opacity-50'
+                          ? 'bg-gradient-to-r from-emerald-700 via-green-600 to-emerald-800 text-white hover:from-emerald-800 hover:via-green-700 hover:to-emerald-900 hover:scale-105 border-emerald-400' 
+                          : 'bg-gradient-to-r from-gray-700 to-gray-800 text-gray-400 cursor-not-allowed border-gray-600 opacity-70'
                       }`}
                     >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-500"></div>
                       {canProceedToCheckout ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <span>🛒</span>
-                          <span>إتمام الطلب</span>
-                          <span className="text-green-200">({cartItems.length} منتج)</span>
+                        <span className="flex items-center justify-center gap-4 relative z-10">
+                          <span className="text-3xl">🛒</span>
+                          <span>إتمام الطلب الفاخر</span>
+                          <span className="text-emerald-200 text-lg">({cartItems.length} منتج)</span>
                         </span>
                       ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          <span>⚠️</span>
+                        <span className="flex items-center justify-center gap-4 relative z-10">
+                          <span className="text-3xl">⚠️</span>
                           <span>أكمل التفاصيل أولاً</span>
-                          <span className="text-gray-400">({incompleteItemsDetailed.length} ناقص)</span>
+                          <span className="text-gray-500 text-lg">({incompleteItemsDetailed.length} ناقص)</span>
                         </span>
                       )}
                     </Link>
+                    
                     <Link
                       to="/"
-                      className="w-full border-2 border-gray-300 bg-white text-gray-700 py-3 rounded-xl hover:bg-gray-50 hover:border-gray-400 font-bold text-center block transition-all transform hover:scale-105"
+                      className="w-full bg-gradient-to-r from-slate-700 via-gray-700 to-slate-800 border-3 border-amber-400 text-amber-200 py-5 rounded-3xl hover:from-slate-800 hover:to-gray-900 hover:border-amber-300 font-bold text-center block transition-all transform hover:scale-105 shadow-2xl text-xl relative overflow-hidden group"
                     >
-                      ← متابعة التسوق
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-10 transform -skew-x-12 transition-all duration-500"></div>
+                      <span className="flex items-center justify-center gap-4 relative z-10">
+                        <span className="text-2xl">🛍️</span>
+                        متابعة التسوق الفاخر
+                        <ArrowRight className="w-6 h-6" />
+                      </span>
                     </Link>
                   </div>
                 </div>
