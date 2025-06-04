@@ -45,7 +45,7 @@ export const buildApiUrl = (endpoint: string): string => {
 export const buildImageUrl = (imagePath: string): string => {
   // إذا لم يكن هناك مسار، استخدم صورة طبية افتراضية
   if (!imagePath) {
-    return 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3';
+    return getFallbackImage('product');
   }
   
   // إذا كان المسار يبدأ بـ http، فهو URL كامل
@@ -59,20 +59,38 @@ export const buildImageUrl = (imagePath: string): string => {
   }
   
   const baseUrl = getApiBaseUrl();
+  let finalUrl = '';
   
   // إذا كان المسار يبدأ بـ /images/ فهو مسار نسبي من الباك إند
   if (imagePath.startsWith('/images/')) {
-    return `${baseUrl}${imagePath}`;
+    finalUrl = `${baseUrl}${imagePath}`;
   }
-  
   // إذا كان المسار يبدأ بـ images/ بدون slash
-  if (imagePath.startsWith('images/')) {
-    return `${baseUrl}/${imagePath}`;
+  else if (imagePath.startsWith('images/')) {
+    finalUrl = `${baseUrl}/${imagePath}`;
+  }
+  // إذا كان مسار عادي، أضف /images/ قبله
+  else {
+    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    finalUrl = `${baseUrl}/images${cleanPath}`;
   }
   
-  // إذا كان مسار عادي، أضف /images/ قبله
-  const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${baseUrl}/images${cleanPath}`;
+  // في التطوير، اختبر توفر الصورة وأرجع احتياطية إذا كانت مفقودة
+  if (import.meta.env.DEV) {
+    // تأجيل فحص الصورة لتجنب blocking
+    setTimeout(async () => {
+      try {
+        const response = await fetch(finalUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          console.warn(`⚠️ [Image] Missing image: ${finalUrl}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [Image] Failed to check image: ${finalUrl}`, error);
+      }
+    }, 0);
+  }
+  
+  return finalUrl;
 };
 
 // دالة مساعدة للحصول على صورة احتياطية حسب النوع

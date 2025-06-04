@@ -203,6 +203,18 @@ const ShoppingCart: React.FC = () => {
 
   useEffect(() => {
     console.log('🔄 [Cart] useEffect triggered, calling fetchCart...');
+    
+    // مسح localStorage المفسد إذا كان موجود
+    const lastCartCount = localStorage.getItem('lastCartCount');
+    const lastCartValue = localStorage.getItem('lastCartValue');
+    
+    console.log('🔍 [Cart] Current localStorage values:', {
+      lastCartCount,
+      lastCartValue,
+      userData: !!localStorage.getItem('user')
+    });
+    
+    // استدعاء fetchCart
     fetchCart();
     
     // Auto-refresh مشروط - بس إذا مافيش عمليات جارية
@@ -212,7 +224,7 @@ const ShoppingCart: React.FC = () => {
         console.log('🔄 [Cart] Auto-refresh triggered');
         fetchCart();
       }
-    }, 10000); // زودت المدة ل 10 ثواني بدلاً من 3
+    }, 15000); // زودت المدة ل 15 ثانية لتقليل الضغط
     
     // التنظيف عند إلغاء التحميل
     return () => {
@@ -656,21 +668,53 @@ const ShoppingCart: React.FC = () => {
     // اختبار سريع للتأكد إن السلة فارغة فعلاً
     setTimeout(async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/cart?userId=guest');
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          console.log('🚨 [Cart] ERROR: Cart appears empty but backend has', data.length, 'items!');
-          toast.error(`🚨 خطأ! السلة تظهر فارغة لكن البكند فيه ${data.length} منتج`, {
+        const userData = localStorage.getItem('user');
+        let testEndpoint = '/api/cart?userId=guest';
+        
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            if (user && user.id) {
+              testEndpoint = `/api/user/${user.id}/cart`;
+            }
+          } catch (parseError) {
+            console.error('Parse error in test:', parseError);
+          }
+        }
+        
+        const response = await apiCall(testEndpoint);
+        if (Array.isArray(response) && response.length > 0) {
+          console.log('🚨 [Cart] ERROR: Cart appears empty but API has', response.length, 'items!');
+          console.log('🚨 [Cart] API Response:', response);
+          toast.error(`🚨 خطأ! السلة تظهر فارغة لكن البكند فيه ${response.length} منتج`, {
             position: "top-center",
-            autoClose: 5000,
+            autoClose: 8000,
             style: {
               background: '#DC2626',
               fontWeight: 'bold'
             }
           });
+          
+          // إعادة تحميل فوري
+          console.log('🔄 [Cart] Force refreshing cart due to mismatch...');
+          setCartItems(response);
+          const totalCount = response.reduce((sum, item) => sum + item.quantity, 0);
+          const totalValue = response.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+          cartSyncManager.updateCart(totalCount, totalValue);
+        } else {
+          console.log('✅ [Cart] Confirmed: Cart is actually empty');
         }
       } catch (error) {
         console.log('📡 [Cart] Backend connectivity test failed:', error);
+        toast.error(`🔧 مشكلة في الاتصال: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, {
+          position: "top-center",
+          autoClose: 5000,
+          style: {
+            background: '#F59E0B',
+            color: 'white',
+            fontWeight: 'bold'
+          }
+        });
       }
     }, 1000);
     
@@ -680,6 +724,16 @@ const ShoppingCart: React.FC = () => {
           <CartIcon className="w-20 h-20 text-gray-400 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-gray-800 mb-4">سلة التسوق فارغة</h2>
           <p className="text-gray-600 mb-6">لم تقم بإضافة أي منتجات إلى سلة التسوق بعد</p>
+          
+          {/* إضافة معلومات تشخيصية */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
+            <p className="text-blue-800 text-sm">
+              <strong>حالة التحميل:</strong> {loading ? 'جاري التحميل...' : 'مكتمل'}<br/>
+              <strong>المستخدم:</strong> {localStorage.getItem('user') ? 'مسجل' : 'ضيف'}<br/>
+              <strong>عدد المنتجات:</strong> {cartItems.length}
+            </p>
+          </div>
+          
           <div className="space-y-4">
             <Link 
               to="/" 
@@ -687,6 +741,21 @@ const ShoppingCart: React.FC = () => {
             >
               استعرض المنتجات
             </Link>
+            
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={fetchCart}
+                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-bold transition-colors text-sm"
+              >
+                🔄 إعادة تحميل
+              </button>
+              <Link
+                to="/test-cart-fix.html"
+                className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-bold transition-colors text-sm"
+              >
+                🔧 تشخيص
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -866,6 +935,11 @@ const ShoppingCart: React.FC = () => {
                                     src={buildImageUrl(item.product.mainImage)}
                                     alt={item.product?.name || 'منتج'}
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    onError={(e) => {
+                                      console.warn('🖼️ [Cart] Image load failed, using fallback:', item.product?.mainImage);
+                                      e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop&crop=center&auto=format,compress&q=80&ixlib=rb-4.0.3';
+                                      e.currentTarget.onerror = null; // منع تكرار الخطأ
+                                    }}
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-5xl">
