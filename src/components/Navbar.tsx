@@ -395,79 +395,47 @@ const Navbar: React.FC = () => {
 
               {/* Action Buttons - Left */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-                {/* Cart - تصميم احترافي محسن */}
+                {/* Cart - تصميم بسيط ومُحسن */}
                 <Link to="/cart" className="group relative">
-                  <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-white via-red-50 to-rose-100 rounded-2xl sm:rounded-3xl border border-red-100 hover:border-red-300 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 transform-gpu">
+                  <div className="flex items-center gap-2 p-2 sm:p-3 bg-gradient-to-r from-red-50 to-rose-50 rounded-lg sm:rounded-xl border border-red-200 hover:border-red-300 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105">
                     
-                    {/* Cart Icon Container */}
+                    {/* Cart Icon */}
                     <div className="relative">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-red-500 via-red-600 to-rose-700 rounded-2xl flex items-center justify-center shadow-xl transform rotate-3 group-hover:rotate-0 transition-transform duration-300">
-                        <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white drop-shadow-md" />
-                        
-                        {/* Sparkle Effect */}
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping opacity-75"></div>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-red-600 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
+                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
                       
                       {/* Cart Count Badge */}
                       {totalCartItems > 0 && (
-                        <div className="absolute -top-3 -right-3 min-w-[28px] h-7 sm:min-w-[32px] sm:h-8 md:min-w-[36px] md:h-9 bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white text-sm sm:text-base md:text-lg font-black shadow-2xl border-2 border-white animate-bounce px-1"
+                        <div className="absolute -top-2 -right-2 min-w-[20px] h-5 sm:min-w-[24px] sm:h-6 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-lg animate-pulse px-1"
                           data-cart-count>
-                          <span className="drop-shadow-sm">
-                            {totalCartItems > 99 ? '99+' : totalCartItems}
-                          </span>
+                          {totalCartItems > 99 ? '99+' : totalCartItems}
                         </div>
                       )}
                     </div>
                     
                     {/* Cart Info */}
-                    <div className="flex flex-col items-start min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl">🛒</span>
-                        <span className="text-sm sm:text-base font-bold text-gray-700">
-                          سلة التسوق
-                        </span>
+                    <div className="text-right min-w-0">
+                      <div className="text-xs sm:text-sm text-gray-600 font-medium">
+                        🛒 السلة
                       </div>
-                      
-                      <div className="text-lg sm:text-xl md:text-2xl font-black text-red-600 mb-1">
+                      <div className="text-sm sm:text-base font-bold text-red-600">
                         {totalCartItems > 0 ? (
-                          <span className="flex items-center gap-2">
-                            <span>{totalCartItems > 99 ? '99+' : totalCartItems}</span>
-                            <span className="text-sm font-medium text-gray-500">منتج</span>
-                          </span>
+                          <span>{totalCartItems > 99 ? '99+' : totalCartItems} منتج</span>
                         ) : (
-                          <span className="text-gray-400 text-base font-medium">فارغة</span>
+                          <span className="text-gray-400">فارغة</span>
                         )}
                       </div>
-                      
                       {totalCartValue > 0 && (
-                        <div className="flex items-center gap-1 text-sm sm:text-base font-black text-green-600">
-                          <span className="text-lg">💰</span>
-                          <span>
-                            {totalCartValue > 9999 
-                              ? `${(totalCartValue/1000).toFixed(1)}K` 
-                              : totalCartValue.toFixed(0)
-                            } ر.س
-                          </span>
+                        <div className="text-xs text-green-600 font-semibold">
+                          {totalCartValue > 9999 
+                            ? `${(totalCartValue/1000).toFixed(1)}K` 
+                            : totalCartValue.toFixed(0)
+                          } ر.س
                         </div>
                       )}
-                      
-                      {totalCartItems === 0 && (
-                        <div className="text-xs text-gray-400 font-medium">
-                          ابدأ التسوق الآن!
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Arrow Indicator */}
-                    <div className="text-red-400 group-hover:text-red-600 transition-colors">
-                      <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
                     </div>
                   </div>
-                  
-                  {/* Glow Effect */}
-                  <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-400 to-rose-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500 -z-10"></div>
                 </Link>
 
                 {/* Wishlist - Hidden on very small screens */}

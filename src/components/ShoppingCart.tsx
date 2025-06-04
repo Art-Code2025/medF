@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { ShoppingCart as CartIcon, Plus, Minus, Trash2, Package, Sparkles, ArrowRight, Heart, Edit3, X, Check, Upload, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { apiCall, API_ENDPOINTS, buildImageUrl, buildApiUrl } from '../config/api';
+import { cartSyncManager } from '../utils/cartSync';
 import size1Image from '../assets/size1.png';
 import size2Image from '../assets/size2.png';
 import size3Image from '../assets/size3.png';
@@ -227,6 +228,9 @@ const ShoppingCart: React.FC = () => {
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       ));
       
+      // Update cart sync manager immediately
+      await cartSyncManager.syncWithServer();
+      
       console.log('✅ [Cart] Quantity updated successfully while preserving options');
     } catch (error) {
       console.error('❌ [Cart] Error updating quantity:', error);
@@ -258,6 +262,10 @@ const ShoppingCart: React.FC = () => {
       });
       
       setCartItems(prev => prev.filter(item => item.id !== itemId));
+      
+      // Update cart sync manager immediately
+      await cartSyncManager.syncWithServer();
+      
       toast.success('تم حذف المنتج من السلة');
     } catch (error) {
       console.error('Error removing item:', error);
@@ -382,6 +390,9 @@ const ShoppingCart: React.FC = () => {
       await apiCall(endpoint, {
         method: 'DELETE'
       });
+
+      // Update cart sync manager immediately
+      await cartSyncManager.syncWithServer();
 
       toast.success('تم إفراغ السلة');
     } catch (error) {
