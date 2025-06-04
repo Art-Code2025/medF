@@ -123,7 +123,25 @@ const ShoppingCart: React.FC = () => {
 
       console.log('🛒 [Cart] Fetching cart from endpoint:', endpoint);
       
-      const data = await apiCall(endpoint);
+      // استخدام fetch مباشرة بدلاً من apiCall
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const fullUrl = `${baseUrl}${endpoint}`;
+      console.log('🌐 [Cart] Full URL:', fullUrl);
+      
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('📡 [Cart] Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
       console.log('📦 [Cart] Raw API response:', data);
       
       if (Array.isArray(data)) {
@@ -133,7 +151,18 @@ const ShoppingCart: React.FC = () => {
           sum + (item.product?.price || 0) * item.quantity, 0
         );
         
-        console.log('✅ [Cart] Cart items loaded:', data.length, 'Total count:', totalCount, 'Total value:', totalValue);
+        console.log('✅ [Cart] Cart summary:', {
+          itemsCount: data.length,
+          totalCount,
+          totalValue,
+          items: data.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            name: item.product?.name || 'Unknown',
+            quantity: item.quantity,
+            price: item.product?.price || 0
+          }))
+        });
         
         // تحديث cartSyncManager فوراً
         cartSyncManager.updateCart(totalCount, totalValue);
@@ -165,13 +194,35 @@ const ShoppingCart: React.FC = () => {
           }
         });
         setCartItems(data);
+        
+        // إرسال toast للمساعدة في التشخيص
+        if (data.length > 0) {
+          toast.success(`✅ تم تحميل ${data.length} منتج من السلة`, {
+            position: "bottom-right",
+            autoClose: 2000,
+            hideProgressBar: true,
+            style: {
+              background: '#10B981',
+              color: 'white',
+              fontSize: '14px'
+            }
+          });
+        }
       } else {
         console.log('⚠️ [Cart] Unexpected data format:', data);
         setCartItems([]);
       }
     } catch (error) {
       console.error('❌ [Cart] Error fetching cart:', error);
-      toast.error('فشل في تحميل السلة');
+      toast.error(`فشل في تحميل السلة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, {
+        position: "top-center",
+        autoClose: 4000,
+        style: {
+          background: '#DC2626',
+          color: 'white',
+          fontWeight: 'bold'
+        }
+      });
       setCartItems([]);
       setError(`فشل في تحميل السلة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
     } finally {
@@ -561,6 +612,7 @@ const ShoppingCart: React.FC = () => {
           <CartIcon className="w-16 h-16 text-blue-500 mx-auto mb-4 animate-spin" />
           <h2 className="text-xl font-bold text-gray-800">جاري تحميل السلة...</h2>
           <p className="text-gray-600 mt-2">يرجى الانتظار</p>
+          <p className="text-sm text-blue-600 mt-4">اختبار اتصال البكند...</p>
         </div>
       </div>
     );
@@ -587,6 +639,16 @@ const ShoppingCart: React.FC = () => {
             >
               🔧 تشخيص المشكلة
             </Link>
+            <button
+              onClick={async () => {
+                console.log('🔄 [Cart] Emergency reset from error screen');
+                await cartSyncManager.hardRefresh();
+                window.location.reload();
+              }}
+              className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              🔄 إعادة تعيين شامل
+            </button>
           </div>
         </div>
       </div>
@@ -594,19 +656,43 @@ const ShoppingCart: React.FC = () => {
   }
 
   if (cartItems.length === 0) {
-    console.log('📦 [Cart] Showing empty cart screen');
+    console.log('📦 [Cart] Showing empty cart screen - but checking if this is correct...');
+    
+    // اختبار سريع للتأكد إن السلة فارغة فعلاً
+    setTimeout(async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/cart?userId=guest');
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('🚨 [Cart] ERROR: Cart appears empty but backend has', data.length, 'items!');
+          toast.error(`🚨 خطأ! السلة تظهر فارغة لكن البكند فيه ${data.length} منتج`, {
+            position: "top-center",
+            autoClose: 5000,
+            style: {
+              background: '#DC2626',
+              fontWeight: 'bold'
+            }
+          });
+        }
+      } catch (error) {
+        console.log('📡 [Cart] Backend connectivity test failed:', error);
+      }
+    }, 1000);
+    
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
         <div className="text-center">
           <CartIcon className="w-20 h-20 text-gray-400 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-gray-800 mb-4">سلة التسوق فارغة</h2>
           <p className="text-gray-600 mb-6">لم تقم بإضافة أي منتجات إلى سلة التسوق بعد</p>
-          <Link 
-            to="/" 
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-bold transition-colors"
-          >
-            استعرض المنتجات
-          </Link>
+          <div className="space-y-4">
+            <Link 
+              to="/" 
+              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-bold transition-colors inline-block"
+            >
+              استعرض المنتجات
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -1601,6 +1687,68 @@ const ShoppingCart: React.FC = () => {
           </div>
         </div>
       )}
+
+      <button
+        onClick={async () => {
+          console.log('🧪 [TEST] Manual API test starting...');
+          
+          toast.info('🧪 اختبار اتصال البكند...', {
+            position: "top-center",
+            autoClose: 2000
+          });
+          
+          try {
+            // اختبار مباشر للـ API
+            const url = 'http://localhost:3001/api/cart?userId=guest';
+            console.log('🌐 [TEST] Testing URL:', url);
+            
+            const response = await fetch(url);
+            console.log('📡 [TEST] Response:', response.status, response.statusText);
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('🎯 [TEST] Data received:', data);
+              
+              if (Array.isArray(data) && data.length > 0) {
+                toast.success(`🎉 نجح! وجدت ${data.length} منتج في السلة`, {
+                  position: "top-center",
+                  autoClose: 3000,
+                  style: {
+                    background: '#10B981',
+                    fontWeight: 'bold'
+                  }
+                });
+                
+                // تحديث البيانات يدوياً
+                setCartItems(data);
+                setLoading(false);
+                setIsInitialLoading(false);
+                setError(null);
+              } else {
+                toast.warning('⚠️ السلة فارغة في البكند فعلاً', {
+                  position: "top-center",
+                  autoClose: 3000
+                });
+              }
+            } else {
+              throw new Error(`HTTP ${response.status}`);
+            }
+          } catch (error) {
+            console.error('❌ [TEST] Test failed:', error);
+            toast.error(`❌ فشل الاختبار: ${error}`, {
+              position: "top-center",
+              autoClose: 3000,
+              style: {
+                background: '#DC2626',
+                fontWeight: 'bold'
+              }
+            });
+          }
+        }}
+        className="bg-gradient-to-r from-yellow-600 to-orange-700 text-white px-6 py-3 rounded-full hover:from-yellow-700 hover:to-orange-800 transition-all shadow-lg transform hover:scale-105 border border-yellow-500"
+      >
+        🧪 اختبار مباشر
+      </button>
     </div>
   );
 };
