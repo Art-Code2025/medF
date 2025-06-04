@@ -1,8 +1,8 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Heart, Eye } from 'lucide-react';
+import { Heart, Eye, Loader2, Check } from 'lucide-react';
 import { createProductSlug } from '../utils/slugify';
 import { addToCartUnified, addToWishlistUnified, removeFromWishlistUnified } from '../utils/cartUtils';
 import { buildImageUrl, apiCall, API_ENDPOINTS, getFallbackImage } from '../config/api';
@@ -31,8 +31,14 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
   const [isInWishlist, setIsInWishlist] = useState(false);
-  // No loading states - instant actions
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isCartAdded, setIsCartAdded] = useState(false);
+  
+  // حماية من multiple clicks
+  const lastClickTimeRef = useRef<number>(0);
+  const isProcessingRef = useRef<boolean>(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -103,13 +109,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
 
   const isOutOfStock = product.stock <= 0;
 
-  const addToCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); // منع فتح صفحة المنتج
-    e.stopPropagation(); // منع انتشار الحدث
+  const addToCart = async (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // حماية من double-tap والـ multiple clicks
+    const now = Date.now();
+    if (now - lastClickTimeRef.current < 1000) { // منع الضغط أكثر من مرة في الثانية
+      console.log('🚫 [ProductCard] Prevented duplicate click - too fast!');
+      return;
+    }
+    
+    if (isProcessingRef.current || isAddingToCart) {
+      console.log('🚫 [ProductCard] Already processing, ignoring click');
+      return;
+    }
+    
+    lastClickTimeRef.current = now;
+    isProcessingRef.current = true;
     
     console.log('🛒 [ProductCard] addToCart called:', { productId: product.id, quantity });
     
     try {
+      // تحديث UI فوراً
+      setIsAddingToCart(true);
+      
       // تحديث فوري لعدد السلة في localStorage
       const currentCount = parseInt(localStorage.getItem('lastCartCount') || '0');
       const newCount = currentCount + quantity;
@@ -119,6 +143,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
       window.dispatchEvent(new Event('cartUpdated'));
       window.dispatchEvent(new Event('productAddedToCart'));
       window.dispatchEvent(new Event('forceCartUpdate'));
+      
+      // عرض success state فوراً
+      setTimeout(() => {
+        setIsAddingToCart(false);
+        setIsCartAdded(true);
+        
+        // إخفاء success state بعد ثانيتين
+        setTimeout(() => {
+          setIsCartAdded(false);
+        }, 2000);
+      }, 300);
       
       // عرض رسالة نجاح فورية
       toast.success(`🛒 تم إضافة ${quantity} من "${product.name}" إلى السلة بنجاح!`, {
@@ -147,6 +182,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
         localStorage.setItem('lastCartCount', currentCount.toString());
         window.dispatchEvent(new Event('forceCartUpdate'));
         
+        // إعادة تعيين UI state
+        setIsCartAdded(false);
+        
         toast.error('⚠️ حدث خطأ أثناء إضافة المنتج للسلة، يرجى المحاولة مرة أخرى');
       }
     } catch (error) {
@@ -158,11 +196,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
       localStorage.setItem('lastCartCount', revertedCount.toString());
       window.dispatchEvent(new Event('forceCartUpdate'));
       
+      // إعادة تعيين UI state
+      setIsAddingToCart(false);
+      setIsCartAdded(false);
+      
       toast.error('💥 حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+    } finally {
+      isProcessingRef.current = false;
     }
   };
 
-  const increaseQuantity = (e: React.MouseEvent) => {
+  const increaseQuantity = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (quantity < product.stock) {
@@ -170,7 +214,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     }
   };
 
-  const decreaseQuantity = (e: React.MouseEvent) => {
+  const decreaseQuantity = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (quantity > 1) {
@@ -295,11 +339,45 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                 <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={addToCart}
-                    disabled={false}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-4 rounded-xl font-black text-sm sm:text-base md:text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 border-green-400/30 hover:scale-[1.02] hover:shadow-2xl"
+                    onTouchEnd={addToCart} // إضافة touch support
+                    disabled={isAddingToCart || isCartAdded || isOutOfStock}
+                    className={`
+                      w-full px-4 sm:px-6 py-4 sm:py-5 rounded-xl font-black text-base sm:text-lg shadow-xl 
+                      transition-all duration-300 backdrop-blur-sm border-2 
+                      flex items-center justify-center gap-3
+                      touch-manipulation select-none
+                      ${isCartAdded 
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 border-green-400/30 text-white' 
+                        : isAddingToCart 
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400/30 text-white cursor-wait' 
+                          : 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400/30 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl active:scale-95'
+                      }
+                      disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
+                      focus:outline-none focus:ring-4 focus:ring-green-300/50
+                    `}
+                    style={{
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none'
+                    }}
                   >
-                    <span>🛒 إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
-                    {quantity > 1 && <span className="bg-white/20 px-2 py-1 rounded-full text-xs font-bold">{quantity}</span>}
+                    {isAddingToCart ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>جاري الإضافة...</span>
+                      </>
+                    ) : isCartAdded ? (
+                      <>
+                        <Check className="w-5 h-5" />
+                        <span>تم الإضافة! ✅</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🛒 إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
+                        {quantity > 1 && <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{quantity}</span>}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -434,14 +512,48 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
               </div>
             </div>
             
-            {/* Big Add to Cart Button */}
+            {/* Big Add to Cart Button - محسن للموبايل */}
             <button
               onClick={addToCart}
-              disabled={false}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 sm:px-6 py-4 sm:py-5 rounded-xl font-black text-base sm:text-lg shadow-xl hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 transition-all duration-300 backdrop-blur-sm border-2 border-green-400/30 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
+              onTouchEnd={addToCart} // إضافة touch support
+              disabled={isAddingToCart || isCartAdded || isOutOfStock}
+              className={`
+                w-full px-4 sm:px-6 py-4 sm:py-5 rounded-xl font-black text-base sm:text-lg shadow-xl 
+                transition-all duration-300 backdrop-blur-sm border-2 
+                flex items-center justify-center gap-3
+                touch-manipulation select-none
+                ${isCartAdded 
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 border-green-400/30 text-white' 
+                  : isAddingToCart 
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400/30 text-white cursor-wait' 
+                    : 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400/30 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl active:scale-95'
+                }
+                disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
+                focus:outline-none focus:ring-4 focus:ring-green-300/50
+              `}
+              style={{
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                userSelect: 'none'
+              }}
             >
-              <span>🛒 إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
-              {quantity > 1 && <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{quantity}</span>}
+              {isAddingToCart ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>جاري الإضافة...</span>
+                </>
+              ) : isCartAdded ? (
+                <>
+                  <Check className="w-5 h-5" />
+                  <span>تم الإضافة! ✅</span>
+                </>
+              ) : (
+                <>
+                  <span>🛒 إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
+                  {quantity > 1 && <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{quantity}</span>}
+                </>
+              )}
             </button>
           </div>
         )}

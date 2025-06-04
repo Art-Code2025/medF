@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ChevronLeft, ChevronRight, Menu, X, Search, ShoppingCart, Heart, User, Package, Gift, Sparkles, ArrowLeft, Plus, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu, X, Search, ShoppingCart, Heart, User, Package, Gift, Sparkles, ArrowLeft, Plus, Minus, Loader2, Check } from 'lucide-react';
 
 // Import components directly for debugging
 import ImageSlider from './components/ImageSlider';
@@ -57,6 +57,12 @@ const App: React.FC = () => {
   const [cartCount, setCartCount] = useState(0);
   // Add quantity state for mobile cards
   const [quantities, setQuantities] = useState<{[key: number]: number}>({});
+  
+  // حماية من multiple clicks
+  const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
+  const [addedToCartIds, setAddedToCartIds] = useState<Set<number>>(new Set());
+  const lastClickTimeRef = useRef<{[key: number]: number}>({});
+  const isProcessingRef = useRef<{[key: number]: boolean}>({});
 
   const heroSlides = [
     {
@@ -197,16 +203,54 @@ const App: React.FC = () => {
 
   const handleAddToCart = async (product: Product) => {
     const quantity = quantities[product.id] || 1;
+    
+    // حماية من multiple clicks
+    const now = Date.now();
+    const lastClickTime = lastClickTimeRef.current[product.id] || 0;
+    
+    if (now - lastClickTime < 1000) { // منع الضغط أكثر من مرة في الثانية
+      console.log('🚫 [App] Prevented duplicate click for product:', product.id);
+      return;
+    }
+    
+    if (isProcessingRef.current[product.id] || addingToCartId === product.id) {
+      console.log('🚫 [App] Already processing product:', product.id);
+      return;
+    }
+    
+    lastClickTimeRef.current[product.id] = now;
+    isProcessingRef.current[product.id] = true;
+    
     try {
+      setAddingToCartId(product.id);
+      
       const success = await addToCartUnified(product.id, product.name, quantity);
       if (success) {
         // Update cart count
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const totalCount = cart.reduce((sum: number, item: any) => sum + item.quantity, 0);
         setCartCount(totalCount);
+        
+        // إظهار success state
+        setAddingToCartId(null);
+        setAddedToCartIds(prev => new Set([...prev, product.id]));
+        
+        // إخفاء success state بعد ثانيتين
+        setTimeout(() => {
+          setAddedToCartIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(product.id);
+            return newSet;
+          });
+        }, 2000);
+      } else {
+        setAddingToCartId(null);
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      setAddingToCartId(null);
+    } finally {
+      isProcessingRef.current[product.id] = false;
     }
   };
 
@@ -642,16 +686,55 @@ const App: React.FC = () => {
                                 </button>
                               </div>
                               
-                              {/* Add to Cart Button */}
+                              {/* Add to Cart Button - محسن للموبايل */}
                               <button
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   handleAddToCart(product);
                                 }}
-                                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 px-4 rounded-xl hover:from-pink-600 hover:to-rose-600 transition-all duration-300 text-sm font-bold hover:scale-105 hover:shadow-xl"
+                                onTouchEnd={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAddToCart(product);
+                                }}
+                                disabled={addingToCartId === product.id || addedToCartIds.has(product.id)}
+                                className={`
+                                  w-full py-3 px-4 rounded-xl font-bold text-sm 
+                                  transition-all duration-300 flex items-center justify-center gap-2
+                                  touch-manipulation select-none
+                                  ${addedToCartIds.has(product.id)
+                                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
+                                    : addingToCartId === product.id
+                                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-wait'
+                                      : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 hover:scale-105 hover:shadow-xl active:scale-95'
+                                  }
+                                  disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
+                                  focus:outline-none focus:ring-2 focus:ring-pink-300/50
+                                `}
+                                style={{
+                                  WebkitTapHighlightColor: 'transparent',
+                                  WebkitTouchCallout: 'none',
+                                  WebkitUserSelect: 'none',
+                                  userSelect: 'none'
+                                }}
                               >
-                                إضافة للسلة
+                                {addingToCartId === product.id ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>جاري الإضافة...</span>
+                                  </>
+                                ) : addedToCartIds.has(product.id) ? (
+                                  <>
+                                    <Check className="w-4 h-4" />
+                                    <span>تم الإضافة ✅</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="w-4 h-4" />
+                                    <span>إضافة للسلة</span>
+                                  </>
+                                )}
                               </button>
                             </div>
                           )}

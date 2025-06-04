@@ -70,6 +70,26 @@ export const addToCartUnified = async (
       window.dispatchEvent(new Event('productAddedToCart'));
       window.dispatchEvent(new Event('forceCartUpdate'));
       
+      // رسالة نجاح موجزة للموبايل - محسنة
+      toast.success(`✅ تم إضافة "${productName}" للسلة!`, {
+        position: "top-center",
+        autoClose: 1500, // أقصر للموبايل
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false, // منع pause على الموبايل
+        draggable: false, // منع السحب على الموبايل
+        style: {
+          background: '#10b981',
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '14px',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+          zIndex: 999999
+        }
+      });
+      
       return true;
     } else {
       console.error('❌ [CartUtils] addToCartOptimized returned null/false');
@@ -78,24 +98,38 @@ export const addToCartUnified = async (
   } catch (error: any) {
     console.error('❌ [CartUtils] Error in addToCartUnified:', error);
     
-    // رسائل خطأ مخصصة حسب نوع الخطأ
+    // رسائل خطأ مخصصة حسب نوع الخطأ - محسنة للموبايل
     let errorMessage = 'حدث خطأ في إضافة المنتج للسلة';
     
     if (error.message) {
-      errorMessage = error.message;
-    } else if (error.toString().includes('timeout')) {
-      errorMessage = 'انتهت مهلة الاتصال. يرجى التحقق من اتصال الإنترنت.';
-    } else if (error.toString().includes('network')) {
-      errorMessage = 'مشكلة في الاتصال بالخادم. يرجى المحاولة مرة أخرى.';
+      // رسائل مبسطة للموبايل
+      if (error.message.includes('timeout') || error.message.includes('انتهت مهلة')) {
+        errorMessage = '⏱️ اتصال بطيء - يرجى المحاولة مرة أخرى';
+      } else if (error.message.includes('network') || error.message.includes('شبكة')) {
+        errorMessage = '📶 مشكلة في الاتصال - تحقق من الإنترنت';
+      } else if (error.message.includes('CORS') || error.message.includes('blocked')) {
+        errorMessage = '🔄 يرجى تحديث الصفحة والمحاولة مرة أخرى';
+      } else {
+        errorMessage = error.message;
+      }
     }
     
     toast.error(errorMessage, {
       position: "top-center",
-      autoClose: 4000,
+      autoClose: 3000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
       style: {
-        background: '#DC2626',
+        background: '#ef4444',
         color: 'white',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        fontSize: '14px',
+        borderRadius: '12px',
+        padding: '12px 16px',
+        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+        zIndex: 999999
       }
     });
     

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Star, Heart, ShoppingCart, Package, Truck, Shield, Award, Phone, Mail, MapPin, Clock, Facebook, Twitter, Instagram, Eye, Users, Briefcase, Home, Accessibility, Stethoscope, Sparkles, Crown, Gem, Zap } from 'lucide-react';
+import { ChevronRight, Star, Heart, ShoppingCart, Package, Truck, Shield, Award, Phone, Mail, MapPin, Clock, Facebook, Twitter, Instagram, Eye, Users, Briefcase, Home, Accessibility, Stethoscope, Sparkles, Crown, Gem, Zap, Loader2, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { buildImageUrl, apiCall, API_ENDPOINTS, getFallbackImage } from '../config/api';
 import { addToCartUnified } from '../utils/cartUtils';
@@ -31,6 +31,12 @@ const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // حماية من multiple clicks
+  const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
+  const [addedToCartIds, setAddedToCartIds] = useState<Set<number>>(new Set());
+  const lastClickTimeRef = useRef<{[key: number]: number}>({});
+  const isProcessingRef = useRef<{[key: number]: boolean}>({});
 
   useEffect(() => {
     loadData();
@@ -53,13 +59,59 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleAddToCart = async (product: Product) => {
+  const handleAddToCart = async (product: Product, e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // حماية من multiple clicks
+    const now = Date.now();
+    const lastClickTime = lastClickTimeRef.current[product.id] || 0;
+    
+    if (now - lastClickTime < 1000) { // منع الضغط أكثر من مرة في الثانية
+      console.log('🚫 [HomePage] Prevented duplicate click for product:', product.id);
+      return;
+    }
+    
+    if (isProcessingRef.current[product.id] || addingToCartId === product.id) {
+      console.log('🚫 [HomePage] Already processing product:', product.id);
+      return;
+    }
+    
+    lastClickTimeRef.current[product.id] = now;
+    isProcessingRef.current[product.id] = true;
+    
     try {
-      await addToCartUnified(product.id, product.name, 1);
-      toast.success(`تم إضافة ${product.name} إلى السلة`);
+      setAddingToCartId(product.id);
+      
+      const success = await addToCartUnified(product.id, product.name, 1);
+      
+      if (success) {
+        // إظهار success state
+        setAddingToCartId(null);
+        setAddedToCartIds(prev => new Set([...prev, product.id]));
+        
+        // إخفاء success state بعد ثانيتين
+        setTimeout(() => {
+          setAddedToCartIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(product.id);
+            return newSet;
+          });
+        }, 2000);
+        
+        toast.success(`✅ تم إضافة ${product.name} إلى السلة`);
+      } else {
+        setAddingToCartId(null);
+        toast.error('حدث خطأ في إضافة المنتج للسلة');
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      setAddingToCartId(null);
       toast.error('حدث خطأ في إضافة المنتج للسلة');
+    } finally {
+      isProcessingRef.current[product.id] = false;
     }
   };
 
@@ -111,6 +163,55 @@ const HomePage: React.FC = () => {
 
   const featuredProducts = products.slice(0, 8);
   const newProducts = products.slice(0, 6);
+
+  const getAddToCartButtonContent = (product: Product) => {
+    const isAdding = addingToCartId === product.id;
+    const isAdded = addedToCartIds.has(product.id);
+    
+    if (isAdding) {
+      return (
+        <>
+          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+          <span className="text-xs">جاري...</span>
+        </>
+      );
+    }
+    
+    if (isAdded) {
+      return (
+        <>
+          <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="text-xs">تم ✅</span>
+        </>
+      );
+    }
+    
+    return (
+      <>
+        <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+        <span className="text-xs">إضافة</span>
+      </>
+    );
+  };
+
+  const getAddToCartButtonClass = (product: Product) => {
+    const isAdding = addingToCartId === product.id;
+    const isAdded = addedToCartIds.has(product.id);
+    
+    if (product.stock === 0) {
+      return 'bg-gray-200 text-gray-500 cursor-not-allowed';
+    }
+    
+    if (isAdded) {
+      return 'bg-gradient-to-r from-green-600 to-emerald-600 text-white';
+    }
+    
+    if (isAdding) {
+      return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-wait';
+    }
+    
+    return 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95';
+  };
 
   if (loading) {
     return (
@@ -270,18 +371,27 @@ const HomePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Add to Cart Button - smaller */}
+                  {/* Add to Cart Button - محسن للموبايل */}
                   <button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={product.stock === 0}
-                    className={`w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
-                      product.stock === 0
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105'
-                    }`}
+                    onClick={(e) => handleAddToCart(product, e)}
+                    onTouchEnd={(e) => handleAddToCart(product, e)}
+                    disabled={product.stock === 0 || addingToCartId === product.id}
+                    className={`
+                      w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs 
+                      transition-all duration-300 flex items-center justify-center gap-1
+                      touch-manipulation select-none
+                      ${getAddToCartButtonClass(product)}
+                      disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
+                      focus:outline-none focus:ring-2 focus:ring-green-300/50
+                    `}
+                    style={{
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none'
+                    }}
                   >
-                    <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="text-xs">إضافة</span>
+                    {getAddToCartButtonContent(product)}
                   </button>
                 </div>
               </div>
@@ -450,18 +560,49 @@ const HomePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Add to Cart Button */}
+                  {/* Add to Cart Button - محسن للموبايل */}
                   <button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={product.stock === 0}
-                    className={`w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
-                      product.stock === 0
+                    onClick={(e) => handleAddToCart(product, e)}
+                    onTouchEnd={(e) => handleAddToCart(product, e)}
+                    disabled={product.stock === 0 || addingToCartId === product.id}
+                    className={`
+                      w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs 
+                      transition-all duration-300 flex items-center justify-center gap-1
+                      touch-manipulation select-none
+                      ${product.stock === 0 
                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transform hover:scale-105'
-                    }`}
+                        : addedToCartIds.has(product.id)
+                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
+                          : addingToCartId === product.id
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-wait'
+                            : 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
+                      }
+                      disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
+                      focus:outline-none focus:ring-2 focus:ring-red-300/50
+                    `}
+                    style={{
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none'
+                    }}
                   >
-                    <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {product.stock === 0 ? 'نفد' : 'إضافة'}
+                    {addingToCartId === product.id ? (
+                      <>
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                        <span>جاري...</span>
+                      </>
+                    ) : addedToCartIds.has(product.id) ? (
+                      <>
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>تم ✅</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+                        {product.stock === 0 ? 'نفد' : 'إضافة'}
+                      </>
+                    )}
                   </button>
 
                   {/* Stock Status */}

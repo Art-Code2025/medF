@@ -2,6 +2,7 @@
 @import './styles/ultraFastCart.css';
 @import './styles/instantCart.css';
 @import './styles/mobile-enhancements.css';
+@import './styles/mobile-touch-optimization.css';
 
 @tailwind base;
 @tailwind components;

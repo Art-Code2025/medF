@@ -1,0 +1,352 @@
+/* 📱 MOBILE TOUCH OPTIMIZATION CSS - تحسين تجربة اللمس للموبايل */
+
+/* ===== CRITICAL MOBILE OPTIMIZATIONS ===== */
+
+/* منع انبعاج اللمس الافتراضي */
+* {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* السماح بالتحديد للنصوص المهمة */
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* تحسين touch targets */
+button, [role="button"], .btn, .button {
+  touch-action: manipulation;
+  min-height: 44px; /* Apple guidelines */
+  min-width: 44px;
+  cursor: pointer;
+}
+
+/* تحسين scroll للموبايل */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ===== CART BUTTON MOBILE OPTIMIZATIONS ===== */
+
+/* زر إضافة للسلة محسن للموبايل */
+.cart-btn-mobile {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* منع double-tap zoom */
+  -ms-touch-action: manipulation;
+  
+  /* تحسين الاستجابة */
+  transition: transform 0.1s ease-out, background-color 0.2s ease-out;
+}
+
+.cart-btn-mobile:active {
+  transform: scale(0.95);
+}
+
+.cart-btn-mobile:disabled {
+  transform: none !important;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* حالات مختلفة للزر */
+.cart-btn-adding {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.cart-btn-added {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  pointer-events: none;
+}
+
+.cart-btn-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* ===== MOBILE-SPECIFIC LOADING STATES ===== */
+
+.mobile-loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===== IMPROVED TOUCH FEEDBACK ===== */
+
+/* تحسين feedback للمس */
+.touch-feedback {
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-feedback::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease-out, height 0.3s ease-out;
+}
+
+.touch-feedback:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* ===== MOBILE PERFORMANCE OPTIMIZATIONS ===== */
+
+/* Hardware acceleration */
+.hw-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+/* Remove will-change after animation */
+.hw-accelerated:not(:active):not(:hover) {
+  will-change: auto;
+}
+
+/* ===== MOBILE SAFE AREAS ===== */
+
+/* Support for notched screens */
+.mobile-safe-area {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ===== PREVENT ZOOM ON INPUTS ===== */
+
+/* منع zoom عند التركيز على inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ===== MOBILE HOVER STATES ===== */
+
+/* إزالة hover effects على الموبايل */
+@media (hover: none) and (pointer: coarse) {
+  .hover-only:hover {
+    background: initial;
+    color: initial;
+    transform: initial;
+  }
+  
+  .cart-btn-mobile:hover {
+    transform: initial;
+    box-shadow: initial;
+  }
+}
+
+/* ===== MOBILE BUTTON SIZES ===== */
+
+/* أحجام أزرار محسنة للموبايل */
+@media (max-width: 768px) {
+  .mobile-btn-sm {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+  
+  .mobile-btn-md {
+    min-height: 44px;
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+  
+  .mobile-btn-lg {
+    min-height: 48px;
+    padding: 16px 24px;
+    font-size: 18px;
+  }
+}
+
+/* ===== MOBILE SCROLL OPTIMIZATIONS ===== */
+
+/* تحسين scrolling للموبايل */
+.mobile-scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* منع over-scroll */
+.mobile-no-overscroll {
+  overscroll-behavior: none;
+}
+
+/* ===== MOBILE ACCESSIBILITY ===== */
+
+/* تحسين accessibility للموبايل */
+.mobile-a11y-focus:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* تحسين contrast للموبايل */
+@media (prefers-contrast: high) {
+  .cart-btn-mobile {
+    border: 2px solid #000;
+  }
+}
+
+/* ===== REDUCE MOTION FOR PERFORMANCE ===== */
+
+/* تقليل الحركة للأداء */
+@media (prefers-reduced-motion: reduce) {
+  .cart-btn-mobile,
+  .mobile-loading-spinner,
+  .touch-feedback::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ===== MOBILE DARK MODE SUPPORT ===== */
+
+@media (prefers-color-scheme: dark) {
+  .cart-btn-mobile {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .touch-feedback::before {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ===== PORTRAIT/LANDSCAPE OPTIMIZATIONS ===== */
+
+@media (orientation: portrait) {
+  .mobile-portrait-only {
+    display: block;
+  }
+  
+  .mobile-landscape-only {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) {
+  .mobile-portrait-only {
+    display: none;
+  }
+  
+  .mobile-landscape-only {
+    display: block;
+  }
+}
+
+/* ===== MOBILE MODAL OPTIMIZATIONS ===== */
+
+.mobile-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ===== HIGH DPI OPTIMIZATIONS ===== */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .mobile-high-dpi {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* ===== MOBILE TYPOGRAPHY OPTIMIZATIONS ===== */
+
+@media (max-width: 768px) {
+  .mobile-text-readable {
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.touch-none { touch-action: none; }
+.touch-auto { touch-action: auto; }
+.touch-pan-x { touch-action: pan-x; }
+.touch-pan-y { touch-action: pan-y; }
+.touch-manipulation { touch-action: manipulation; }
+
+.select-none { user-select: none; }
+.select-text { user-select: text; }
+.select-all { user-select: all; }
+
+.pointer-events-none { pointer-events: none; }
+.pointer-events-auto { pointer-events: auto; }
+
+/* ===== MOBILE DEBUGGING ===== */
+
+.mobile-debug {
+  border: 2px dashed #ff0000;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.mobile-touch-area {
+  min-width: 44px;
+  min-height: 44px;
+  position: relative;
+}
+
+.mobile-touch-area::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px dashed #00ff00;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.mobile-debug .mobile-touch-area::after {
+  opacity: 0.5;
+} 
