@@ -112,17 +112,34 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           />
         </Routes>
         
-        <ToastContainer 
+        <ToastContainer
           position="top-center"
           autoClose={3000}
           hideProgressBar={false}
-          newestOnTop={false}
+          newestOnTop={true}
           closeOnClick
-          rtl
+          rtl={true}
           pauseOnFocusLoss
           draggable
           pauseOnHover
           theme="light"
+          style={{
+            fontSize: '16px',
+            fontWeight: 'bold',
+            zIndex: 999999,
+            top: '80px'
+          }}
+          toastStyle={{
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            fontFamily: 'Cairo, -apple-system, BlinkMacSystemFont, sans-serif',
+            textAlign: 'center',
+            padding: '16px 20px',
+            minHeight: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         />
       </div>
     </Router>

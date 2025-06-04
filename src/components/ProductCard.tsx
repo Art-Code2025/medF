@@ -110,14 +110,55 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     console.log('🛒 [ProductCard] addToCart called:', { productId: product.id, quantity });
     
     try {
+      // تحديث فوري لعدد السلة في localStorage
+      const currentCount = parseInt(localStorage.getItem('lastCartCount') || '0');
+      const newCount = currentCount + quantity;
+      localStorage.setItem('lastCartCount', newCount.toString());
+      
+      // إرسال أحداث التحديث الفورية
+      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new Event('productAddedToCart'));
+      window.dispatchEvent(new Event('forceCartUpdate'));
+      
+      // عرض رسالة نجاح فورية
+      toast.success(`🛒 تم إضافة ${quantity} من "${product.name}" إلى السلة بنجاح!`, {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
+      // استدعاء API في الخلفية
       const success = await addToCartUnified(product.id, product.name, quantity);
+      
       if (success) {
-        console.log('✅ [ProductCard] Product added to cart successfully');
+        console.log('✅ [ProductCard] Product added to cart successfully via API');
+        
+        // تحديث إضافي للتأكد من التزامن مع قاعدة البيانات
+        setTimeout(() => {
+          window.dispatchEvent(new Event('forceCartUpdate'));
+        }, 500);
       } else {
-        console.log('❌ [ProductCard] Failed to add to cart');
+        console.log('❌ [ProductCard] Failed to add to cart via API, reverting local changes');
+        
+        // إذا فشل API، نعكس التغييرات المحلية
+        localStorage.setItem('lastCartCount', currentCount.toString());
+        window.dispatchEvent(new Event('forceCartUpdate'));
+        
+        toast.error('⚠️ حدث خطأ أثناء إضافة المنتج للسلة، يرجى المحاولة مرة أخرى');
       }
     } catch (error) {
       console.error('❌ [ProductCard] Error in addToCart:', error);
+      
+      // إعادة العدد للحالة السابقة في حالة الخطأ
+      const currentCount = parseInt(localStorage.getItem('lastCartCount') || '0');
+      const revertedCount = Math.max(0, currentCount - quantity);
+      localStorage.setItem('lastCartCount', revertedCount.toString());
+      window.dispatchEvent(new Event('forceCartUpdate'));
+      
+      toast.error('💥 حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
     }
   };
 
@@ -229,15 +270,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                   <button
                     onClick={decreaseQuantity}
                     disabled={quantity <= 1}
-                    className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-md sm:rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-600 font-bold text-sm transition-colors duration-200"
+                    className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 text-sm sm:text-base shadow-sm border border-gray-200"
                   >
                     -
                   </button>
-                  <span className="w-8 sm:w-10 md:w-12 text-center font-semibold text-gray-800 text-sm sm:text-base">{quantity}</span>
+                  <span className="w-10 sm:w-12 md:w-14 h-7 sm:h-8 md:h-9 flex items-center justify-center font-bold text-gray-800 text-base sm:text-lg md:text-xl bg-gradient-to-r from-red-50 to-rose-50 rounded-lg border-2 border-red-200 shadow-sm">{quantity}</span>
                   <button
                     onClick={increaseQuantity}
                     disabled={quantity >= product.stock}
-                    className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-md sm:rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-600 font-bold text-sm transition-colors duration-200"
+                    className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 text-sm sm:text-base shadow-sm border border-gray-200"
                   >
                     +
                   </button>
@@ -247,9 +288,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                   <button
                     onClick={addToCart}
                     disabled={false}
-                    className="flex-1 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm md:text-base shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+                    className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 disabled:opacity-50 text-white px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-3.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm md:text-base shadow-lg transition-all duration-300 flex items-center justify-center gap-2 border border-red-400/30 hover:scale-[1.02] hover:shadow-xl"
                   >
-                    <span>إضافة للسلة</span>
+                    <span>إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
+                    {quantity > 1 && <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{quantity}</span>}
                   </button>
                 </div>
               </div>
@@ -355,15 +397,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
               <button
                 onClick={decreaseQuantity}
                 disabled={quantity <= 1}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-600 font-bold transition-all duration-200 hover:scale-105 sm:hover:scale-110 text-sm sm:text-base"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 sm:hover:scale-110 text-base shadow-sm border border-gray-200"
               >
                 -
               </button>
-              <span className="w-10 sm:w-12 text-center font-bold text-gray-800 text-base sm:text-lg bg-gray-50 py-1 rounded-md sm:rounded-lg">{quantity}</span>
+              <span className="w-12 sm:w-14 h-8 sm:h-9 flex items-center justify-center font-bold text-gray-800 text-lg sm:text-xl bg-gradient-to-r from-red-50 to-rose-50 rounded-lg border-2 border-red-200 shadow-sm">{quantity}</span>
               <button
                 onClick={increaseQuantity}
                 disabled={quantity >= product.stock}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-600 font-bold transition-all duration-200 hover:scale-105 sm:hover:scale-110 text-sm sm:text-base"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-all duration-200 hover:scale-105 sm:hover:scale-110 text-base shadow-sm border border-gray-200"
               >
                 +
               </button>
@@ -373,9 +415,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             <button
               onClick={addToCart}
               disabled={false}
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-md sm:shadow-lg hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 transition-all duration-300 backdrop-blur-sm border border-pink-400/30 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-lg sm:hover:shadow-xl"
+              className="w-full bg-gradient-to-r from-red-500 to-rose-500 text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base shadow-lg hover:from-red-600 hover:to-rose-600 disabled:opacity-50 transition-all duration-300 backdrop-blur-sm border border-red-400/30 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-xl flex items-center justify-center gap-2"
             >
-              إضافة للسلة
+              <span>إضافة {quantity > 1 ? `${quantity} قطع` : ''} للسلة</span>
+              {quantity > 1 && <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{quantity}</span>}
             </button>
           </div>
         )}
