@@ -33,7 +33,6 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   // حماية من multiple clicks
-  const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
   const [addedToCartIds, setAddedToCartIds] = useState<Set<number>>(new Set());
   const lastClickTimeRef = useRef<{[key: number]: number}>({});
   const isProcessingRef = useRef<{[key: number]: boolean}>({});
@@ -65,17 +64,15 @@ const HomePage: React.FC = () => {
       e.stopPropagation();
     }
     
-    // حماية من multiple clicks
+    // حماية بسيطة جداً - 200ms فقط
     const now = Date.now();
     const lastClickTime = lastClickTimeRef.current[product.id] || 0;
     
-    if (now - lastClickTime < 1000) { // منع الضغط أكثر من مرة في الثانية
-      console.log('🚫 [HomePage] Prevented duplicate click for product:', product.id);
+    if (now - lastClickTime < 200) {
       return;
     }
     
-    if (isProcessingRef.current[product.id] || addingToCartId === product.id) {
-      console.log('🚫 [HomePage] Already processing product:', product.id);
+    if (isProcessingRef.current[product.id]) {
       return;
     }
     
@@ -83,33 +80,70 @@ const HomePage: React.FC = () => {
     isProcessingRef.current[product.id] = true;
     
     try {
-      setAddingToCartId(product.id);
+      // إضافة فورية للسلة محلياً
+      const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existingItemIndex = currentCart.findIndex((item: any) => item.productId === product.id);
       
-      const success = await addToCartUnified(product.id, product.name, 1);
-      
-      if (success) {
-        // إظهار success state
-        setAddingToCartId(null);
-        setAddedToCartIds(prev => new Set([...prev, product.id]));
-        
-        // إخفاء success state بعد ثانيتين
-        setTimeout(() => {
-          setAddedToCartIds(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(product.id);
-            return newSet;
-          });
-        }, 2000);
-        
-        toast.success(`✅ تم إضافة ${product.name} إلى السلة`);
+      if (existingItemIndex >= 0) {
+        currentCart[existingItemIndex].quantity += 1;
       } else {
-        setAddingToCartId(null);
-        toast.error('حدث خطأ في إضافة المنتج للسلة');
+        currentCart.push({
+          id: Date.now(),
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.mainImage,
+          quantity: 1
+        });
       }
+      
+      // حفظ فوري
+      localStorage.setItem('cart', JSON.stringify(currentCart));
+      const totalQuantity = currentCart.reduce((total: number, item: any) => total + item.quantity, 0);
+      localStorage.setItem('lastCartCount', totalQuantity.toString());
+      
+      // تحديث UI فوراً
+      setAddedToCartIds(prev => new Set([...prev, product.id]));
+      
+      // إرسال أحداث فوراً
+      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new Event('productAddedToCart'));
+      
+      // رسالة نجاح فورية
+      toast.success(`✅ تم إضافة ${product.name} للسلة!`, {
+        position: "top-center",
+        autoClose: 1000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '14px',
+          borderRadius: '12px',
+          padding: '8px 12px'
+        }
+      });
+      
+      // إخفاء success state بعد ثانية
+      setTimeout(() => {
+        setAddedToCartIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(product.id);
+          return newSet;
+        });
+      }, 1000);
+      
+      // API في الخلفية
+      addToCartUnified(product.id, product.name, 1).catch(error => {
+        console.warn('API sync failed:', error);
+      });
+      
     } catch (error) {
       console.error('Error adding to cart:', error);
-      setAddingToCartId(null);
-      toast.error('حدث خطأ في إضافة المنتج للسلة');
+      toast.error('حدث خطأ، يرجى المحاولة مرة أخرى');
     } finally {
       isProcessingRef.current[product.id] = false;
     }
@@ -165,17 +199,7 @@ const HomePage: React.FC = () => {
   const newProducts = products.slice(0, 6);
 
   const getAddToCartButtonContent = (product: Product) => {
-    const isAdding = addingToCartId === product.id;
     const isAdded = addedToCartIds.has(product.id);
-    
-    if (isAdding) {
-      return (
-        <>
-          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-          <span className="text-xs">جاري...</span>
-        </>
-      );
-    }
     
     if (isAdded) {
       return (
@@ -195,7 +219,6 @@ const HomePage: React.FC = () => {
   };
 
   const getAddToCartButtonClass = (product: Product) => {
-    const isAdding = addingToCartId === product.id;
     const isAdded = addedToCartIds.has(product.id);
     
     if (product.stock === 0) {
@@ -204,10 +227,6 @@ const HomePage: React.FC = () => {
     
     if (isAdded) {
       return 'bg-gradient-to-r from-green-600 to-emerald-600 text-white';
-    }
-    
-    if (isAdding) {
-      return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-wait';
     }
     
     return 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95';
@@ -375,7 +394,7 @@ const HomePage: React.FC = () => {
                   <button
                     onClick={(e) => handleAddToCart(product, e)}
                     onTouchEnd={(e) => handleAddToCart(product, e)}
-                    disabled={product.stock === 0 || addingToCartId === product.id}
+                    disabled={product.stock === 0}
                     className={`
                       w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs 
                       transition-all duration-300 flex items-center justify-center gap-1
@@ -391,7 +410,17 @@ const HomePage: React.FC = () => {
                       userSelect: 'none'
                     }}
                   >
-                    {getAddToCartButtonContent(product)}
+                    {addedToCartIds.has(product.id) ? (
+                      <>
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>تم ✅</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+                        {product.stock === 0 ? 'نفد' : 'إضافة'}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -564,19 +593,12 @@ const HomePage: React.FC = () => {
                   <button
                     onClick={(e) => handleAddToCart(product, e)}
                     onTouchEnd={(e) => handleAddToCart(product, e)}
-                    disabled={product.stock === 0 || addingToCartId === product.id}
+                    disabled={product.stock === 0}
                     className={`
                       w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-bold text-xs 
                       transition-all duration-300 flex items-center justify-center gap-1
                       touch-manipulation select-none
-                      ${product.stock === 0 
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : addedToCartIds.has(product.id)
-                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
-                          : addingToCartId === product.id
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-wait'
-                            : 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
-                      }
+                      ${getAddToCartButtonClass(product)}
                       disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
                       focus:outline-none focus:ring-2 focus:ring-red-300/50
                     `}
@@ -587,12 +609,7 @@ const HomePage: React.FC = () => {
                       userSelect: 'none'
                     }}
                   >
-                    {addingToCartId === product.id ? (
-                      <>
-                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                        <span>جاري...</span>
-                      </>
-                    ) : addedToCartIds.has(product.id) ? (
+                    {addedToCartIds.has(product.id) ? (
                       <>
                         <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>تم ✅</span>

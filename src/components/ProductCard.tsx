@@ -113,15 +113,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     e.preventDefault();
     e.stopPropagation();
     
-    // حماية من double-tap والـ multiple clicks
+    // حماية بسيطة جداً - 200ms فقط للحماية من double tap
     const now = Date.now();
-    if (now - lastClickTimeRef.current < 1000) { // منع الضغط أكثر من مرة في الثانية
-      console.log('🚫 [ProductCard] Prevented duplicate click - too fast!');
+    if (now - lastClickTimeRef.current < 200) {
       return;
     }
     
-    if (isProcessingRef.current || isAddingToCart) {
-      console.log('🚫 [ProductCard] Already processing, ignoring click');
+    if (isProcessingRef.current) {
       return;
     }
     
@@ -131,76 +129,72 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     console.log('🛒 [ProductCard] addToCart called:', { productId: product.id, quantity });
     
     try {
+      // إضافة فورية للسلة محلياً أولاً
+      const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existingItemIndex = currentCart.findIndex((item: any) => item.productId === product.id);
+      
+      if (existingItemIndex >= 0) {
+        currentCart[existingItemIndex].quantity += quantity;
+      } else {
+        currentCart.push({
+          id: Date.now(),
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.mainImage,
+          quantity: quantity
+        });
+      }
+      
+      // حفظ فوري في localStorage
+      localStorage.setItem('cart', JSON.stringify(currentCart));
+      
+      // تحديث العداد فوراً
+      const totalQuantity = currentCart.reduce((total: number, item: any) => total + item.quantity, 0);
+      localStorage.setItem('lastCartCount', totalQuantity.toString());
+      
       // تحديث UI فوراً
-      setIsAddingToCart(true);
+      setIsCartAdded(true);
       
-      // تحديث فوري لعدد السلة في localStorage
-      const currentCount = parseInt(localStorage.getItem('lastCartCount') || '0');
-      const newCount = currentCount + quantity;
-      localStorage.setItem('lastCartCount', newCount.toString());
-      
-      // إرسال أحداث التحديث الفورية
+      // إرسال أحداث التحديث فوراً
       window.dispatchEvent(new Event('cartUpdated'));
       window.dispatchEvent(new Event('productAddedToCart'));
       window.dispatchEvent(new Event('forceCartUpdate'));
       
-      // عرض success state فوراً
-      setTimeout(() => {
-        setIsAddingToCart(false);
-        setIsCartAdded(true);
-        
-        // إخفاء success state بعد ثانيتين
-        setTimeout(() => {
-          setIsCartAdded(false);
-        }, 2000);
-      }, 300);
-      
-      // عرض رسالة نجاح فورية
-      toast.success(`🛒 تم إضافة ${quantity} من "${product.name}" إلى السلة بنجاح!`, {
+      // رسالة نجاح فورية
+      toast.success(`✅ تم إضافة ${product.name} للسلة!`, {
         position: "top-center",
-        autoClose: 2000,
-        hideProgressBar: false,
+        autoClose: 1000,
+        hideProgressBar: true,
         closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '14px',
+          borderRadius: '12px',
+          padding: '8px 12px'
+        }
       });
       
-      // استدعاء API في الخلفية
-      const success = await addToCartUnified(product.id, product.name, quantity);
-      
-      if (success) {
-        console.log('✅ [ProductCard] Product added to cart successfully via API');
-        
-        // تحديث إضافي للتأكد من التزامن مع قاعدة البيانات
-        setTimeout(() => {
-          window.dispatchEvent(new Event('forceCartUpdate'));
-        }, 500);
-      } else {
-        console.log('❌ [ProductCard] Failed to add to cart via API, reverting local changes');
-        
-        // إذا فشل API، نعكس التغييرات المحلية
-        localStorage.setItem('lastCartCount', currentCount.toString());
-        window.dispatchEvent(new Event('forceCartUpdate'));
-        
-        // إعادة تعيين UI state
+      // إخفاء success state بعد ثانية واحدة
+      setTimeout(() => {
         setIsCartAdded(false);
-        
-        toast.error('⚠️ حدث خطأ أثناء إضافة المنتج للسلة، يرجى المحاولة مرة أخرى');
-      }
+      }, 1000);
+      
+      // استدعاء API في الخلفية لمزامنة الخادم (بدون انتظار)
+      addToCartUnified(product.id, product.name, quantity).catch(error => {
+        console.warn('API sync failed but local cart updated:', error);
+        // في حالة فشل API، لا نعكس التغيير لأن المستخدم شاف النجاح
+        // ممكن نعمل retry mechanism في الخلفية
+      });
+      
     } catch (error) {
       console.error('❌ [ProductCard] Error in addToCart:', error);
-      
-      // إعادة العدد للحالة السابقة في حالة الخطأ
-      const currentCount = parseInt(localStorage.getItem('lastCartCount') || '0');
-      const revertedCount = Math.max(0, currentCount - quantity);
-      localStorage.setItem('lastCartCount', revertedCount.toString());
-      window.dispatchEvent(new Event('forceCartUpdate'));
-      
-      // إعادة تعيين UI state
-      setIsAddingToCart(false);
       setIsCartAdded(false);
-      
-      toast.error('💥 حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
+      toast.error('حدث خطأ، يرجى المحاولة مرة أخرى');
     } finally {
       isProcessingRef.current = false;
     }
@@ -340,7 +334,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                   <button
                     onClick={addToCart}
                     onTouchEnd={addToCart} // إضافة touch support
-                    disabled={isAddingToCart || isCartAdded || isOutOfStock}
+                    disabled={isCartAdded || isOutOfStock}
                     className={`
                       w-full px-4 sm:px-6 py-4 sm:py-5 rounded-xl font-black text-base sm:text-lg shadow-xl 
                       transition-all duration-300 backdrop-blur-sm border-2 
@@ -348,9 +342,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                       touch-manipulation select-none
                       ${isCartAdded 
                         ? 'bg-gradient-to-r from-green-600 to-emerald-600 border-green-400/30 text-white' 
-                        : isAddingToCart 
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400/30 text-white cursor-wait' 
-                          : 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400/30 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl active:scale-95'
+                        : 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400/30 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl active:scale-95'
                       }
                       disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
                       focus:outline-none focus:ring-4 focus:ring-green-300/50
@@ -362,12 +354,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                       userSelect: 'none'
                     }}
                   >
-                    {isAddingToCart ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>جاري الإضافة...</span>
-                      </>
-                    ) : isCartAdded ? (
+                    {isCartAdded ? (
                       <>
                         <Check className="w-5 h-5" />
                         <span>تم الإضافة! ✅</span>
@@ -516,7 +503,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
             <button
               onClick={addToCart}
               onTouchEnd={addToCart} // إضافة touch support
-              disabled={isAddingToCart || isCartAdded || isOutOfStock}
+              disabled={isCartAdded || isOutOfStock}
               className={`
                 w-full px-4 sm:px-6 py-4 sm:py-5 rounded-xl font-black text-base sm:text-lg shadow-xl 
                 transition-all duration-300 backdrop-blur-sm border-2 
@@ -524,9 +511,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                 touch-manipulation select-none
                 ${isCartAdded 
                   ? 'bg-gradient-to-r from-green-600 to-emerald-600 border-green-400/30 text-white' 
-                  : isAddingToCart 
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400/30 text-white cursor-wait' 
-                    : 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400/30 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl active:scale-95'
+                  : 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400/30 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-[1.02] sm:hover:scale-105 hover:shadow-2xl active:scale-95'
                 }
                 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
                 focus:outline-none focus:ring-4 focus:ring-green-300/50
@@ -538,12 +523,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                 userSelect: 'none'
               }}
             >
-              {isAddingToCart ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>جاري الإضافة...</span>
-                </>
-              ) : isCartAdded ? (
+              {isCartAdded ? (
                 <>
                   <Check className="w-5 h-5" />
                   <span>تم الإضافة! ✅</span>

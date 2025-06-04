@@ -59,7 +59,6 @@ const App: React.FC = () => {
   const [quantities, setQuantities] = useState<{[key: number]: number}>({});
   
   // حماية من multiple clicks
-  const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
   const [addedToCartIds, setAddedToCartIds] = useState<Set<number>>(new Set());
   const lastClickTimeRef = useRef<{[key: number]: number}>({});
   const isProcessingRef = useRef<{[key: number]: boolean}>({});
@@ -204,17 +203,15 @@ const App: React.FC = () => {
   const handleAddToCart = async (product: Product) => {
     const quantity = quantities[product.id] || 1;
     
-    // حماية من multiple clicks
+    // حماية بسيطة جداً - 200ms فقط
     const now = Date.now();
     const lastClickTime = lastClickTimeRef.current[product.id] || 0;
     
-    if (now - lastClickTime < 1000) { // منع الضغط أكثر من مرة في الثانية
-      console.log('🚫 [App] Prevented duplicate click for product:', product.id);
+    if (now - lastClickTime < 200) {
       return;
     }
     
-    if (isProcessingRef.current[product.id] || addingToCartId === product.id) {
-      console.log('🚫 [App] Already processing product:', product.id);
+    if (isProcessingRef.current[product.id]) {
       return;
     }
     
@@ -222,33 +219,71 @@ const App: React.FC = () => {
     isProcessingRef.current[product.id] = true;
     
     try {
-      setAddingToCartId(product.id);
+      // إضافة فورية للسلة محلياً
+      const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existingItemIndex = currentCart.findIndex((item: any) => item.productId === product.id);
       
-      const success = await addToCartUnified(product.id, product.name, quantity);
-      if (success) {
-        // Update cart count
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const totalCount = cart.reduce((sum: number, item: any) => sum + item.quantity, 0);
-        setCartCount(totalCount);
-        
-        // إظهار success state
-        setAddingToCartId(null);
-        setAddedToCartIds(prev => new Set([...prev, product.id]));
-        
-        // إخفاء success state بعد ثانيتين
-        setTimeout(() => {
-          setAddedToCartIds(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(product.id);
-            return newSet;
-          });
-        }, 2000);
+      if (existingItemIndex >= 0) {
+        currentCart[existingItemIndex].quantity += quantity;
       } else {
-        setAddingToCartId(null);
+        currentCart.push({
+          id: Date.now(),
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.mainImage,
+          quantity: quantity
+        });
       }
+      
+      // حفظ فوري
+      localStorage.setItem('cart', JSON.stringify(currentCart));
+      const totalQuantity = currentCart.reduce((total: number, item: any) => total + item.quantity, 0);
+      localStorage.setItem('lastCartCount', totalQuantity.toString());
+      setCartCount(totalQuantity);
+      
+      // تحديث UI فوراً
+      setAddedToCartIds(prev => new Set([...prev, product.id]));
+      
+      // إرسال أحداث فوراً
+      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new Event('productAddedToCart'));
+      
+      // رسالة نجاح فورية
+      toast.success(`✅ تم إضافة ${product.name} للسلة!`, {
+        position: "top-center",
+        autoClose: 1000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '14px',
+          borderRadius: '12px',
+          padding: '8px 12px'
+        }
+      });
+      
+      // إخفاء success state بعد ثانية
+      setTimeout(() => {
+        setAddedToCartIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(product.id);
+          return newSet;
+        });
+      }, 1000);
+      
+      // API في الخلفية
+      addToCartUnified(product.id, product.name, quantity).catch(error => {
+        console.warn('API sync failed:', error);
+      });
+      
     } catch (error) {
       console.error('Error adding to cart:', error);
-      setAddingToCartId(null);
+      toast.error('حدث خطأ، يرجى المحاولة مرة أخرى');
     } finally {
       isProcessingRef.current[product.id] = false;
     }
@@ -698,16 +733,14 @@ const App: React.FC = () => {
                                   e.stopPropagation();
                                   handleAddToCart(product);
                                 }}
-                                disabled={addingToCartId === product.id || addedToCartIds.has(product.id)}
+                                disabled={addedToCartIds.has(product.id)}
                                 className={`
                                   w-full py-3 px-4 rounded-xl font-bold text-sm 
                                   transition-all duration-300 flex items-center justify-center gap-2
                                   touch-manipulation select-none
                                   ${addedToCartIds.has(product.id)
                                     ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
-                                    : addingToCartId === product.id
-                                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-wait'
-                                      : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 hover:scale-105 hover:shadow-xl active:scale-95'
+                                    : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 hover:scale-105 hover:shadow-xl active:scale-95'
                                   }
                                   disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none
                                   focus:outline-none focus:ring-2 focus:ring-pink-300/50
@@ -719,12 +752,7 @@ const App: React.FC = () => {
                                   userSelect: 'none'
                                 }}
                               >
-                                {addingToCartId === product.id ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>جاري الإضافة...</span>
-                                  </>
-                                ) : addedToCartIds.has(product.id) ? (
+                                {addedToCartIds.has(product.id) ? (
                                   <>
                                     <Check className="w-4 h-4" />
                                     <span>تم الإضافة ✅</span>
