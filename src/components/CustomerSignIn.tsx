@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff, User, Mail, Lock, UserPlus, LogIn, Star, Shield, Crown, Sparkles } from 'lucide-react';
 import { buildImageUrl, API_ENDPOINTS } from '../config/api';
+import { cartSyncManager } from '../utils/cartSync';
 
 const CustomerSignIn: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -104,6 +105,9 @@ const CustomerSignIn: React.FC = () => {
         // نقل سلة الضيف إلى حساب المستخدم
         await migrateGuestCart();
         
+        // Use cart sync manager for post-login sync
+        await cartSyncManager.syncAfterLogin();
+        
         // التوجه للصفحة المطلوبة
         const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
         localStorage.removeItem('redirectAfterAuth');
@@ -178,6 +182,9 @@ const CustomerSignIn: React.FC = () => {
         // نقل سلة الضيف إلى الحساب الجديد
         await migrateGuestCart();
         
+        // Use cart sync manager for post-login sync
+        await cartSyncManager.syncAfterLogin();
+        
         // التوجه للصفحة المطلوبة
         const redirectPath = localStorage.getItem('redirectAfterAuth') || '/';
         localStorage.removeItem('redirectAfterAuth');
@@ -228,6 +235,17 @@ const CustomerSignIn: React.FC = () => {
       
       console.log('📊 [Migration] Migration for user:', user.id);
       
+      // First, check if guest has any cart items
+      const guestCartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/cart?userId=guest`);
+      let guestCartCount = 0;
+      
+      if (guestCartResponse.ok) {
+        const guestCartData = await guestCartResponse.json();
+        guestCartCount = Array.isArray(guestCartData) ? guestCartData.reduce((sum: number, item: any) => sum + item.quantity, 0) : 0;
+        console.log('🛒 [Migration] Guest cart items count:', guestCartCount);
+      }
+      
+      // Perform migration regardless of guest cart count
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/migrate-cart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -241,43 +259,131 @@ const CustomerSignIn: React.FC = () => {
         const result = await response.json();
         console.log('✅ [Migration] Cart migrated successfully:', result);
         
-        // جلب السلة الجديدة فوراً
+        // Force fetch the new cart immediately with multiple attempts
+        let cartFetched = false;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (!cartFetched && attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔄 [Migration] Fetching user cart - attempt ${attempts}`);
+          
+          try {
+            const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${user.id}/cart`);
+            if (cartResponse.ok) {
+              const cartData = await cartResponse.json();
+              const totalCount = Array.isArray(cartData) ? cartData.reduce((sum: number, item: any) => sum + item.quantity, 0) : 0;
+              const totalValue = Array.isArray(cartData) ? cartData.reduce((sum: number, item: any) => sum + (item.price || item.product?.price || 0) * item.quantity, 0) : 0;
+              
+              // Update localStorage with new values
+              localStorage.setItem('lastCartCount', totalCount.toString());
+              localStorage.setItem('lastCartValue', totalValue.toString());
+              localStorage.setItem('cartUpdated', Date.now().toString());
+              
+              console.log('💰 [Migration] New cart totals:', {
+                count: totalCount,
+                value: totalValue
+              });
+              
+              // Send multiple update events to ensure UI updates
+              setTimeout(() => {
+                const updateEvents = ['cartUpdated', 'forceCartUpdate', 'cartMigrated', 'userCartLoaded'];
+                updateEvents.forEach(eventName => {
+                  window.dispatchEvent(new CustomEvent(eventName, {
+                    detail: { 
+                      newCount: totalCount, 
+                      newValue: totalValue,
+                      migrated: true,
+                      guestCartCount 
+                    }
+                  }));
+                });
+                
+                // Update DOM directly
+                const cartCountElements = document.querySelectorAll('[data-cart-count]');
+                cartCountElements.forEach(element => {
+                  element.textContent = totalCount.toString();
+                });
+                
+                console.log('📡 [Migration] All cart update events dispatched');
+              }, 100);
+              
+              // Success messages
+              if (guestCartCount > 0 && totalCount > 0) {
+                toast.success(`🛒 تم نقل ${guestCartCount} منتج من سلة الضيف إلى حسابك!`, {
+                  position: "top-center",
+                  autoClose: 4000,
+                });
+              } else if (totalCount > 0) {
+                toast.success(`🛒 تم تحميل سلة التسوق الخاصة بك - ${totalCount} منتج`, {
+                  position: "top-center",
+                  autoClose: 3000,
+                });
+              }
+              
+              cartFetched = true;
+            } else {
+              console.warn(`⚠️ [Migration] Failed to fetch cart - attempt ${attempts}:`, cartResponse.status);
+              if (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+              }
+            }
+          } catch (fetchError) {
+            console.error(`❌ [Migration] Error fetching cart - attempt ${attempts}:`, fetchError);
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+            }
+          }
+        }
+        
+        if (!cartFetched) {
+          console.error('❌ [Migration] Failed to fetch cart after all attempts');
+          // Fallback: trigger a general cart update
+          window.dispatchEvent(new CustomEvent('forceCartUpdate'));
+        }
+        
+      } else {
+        const errorText = await response.text();
+        console.error('❌ [Migration] Migration failed:', errorText);
+        // Even if migration fails, try to load user's existing cart
         const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${user.id}/cart`);
         if (cartResponse.ok) {
           const cartData = await cartResponse.json();
-          const totalCount = cartData.reduce((sum: number, item: any) => sum + item.quantity, 0);
-          const totalValue = cartData.reduce((sum: number, item: any) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
+          const totalCount = Array.isArray(cartData) ? cartData.reduce((sum: number, item: any) => sum + item.quantity, 0) : 0;
+          const totalValue = Array.isArray(cartData) ? cartData.reduce((sum: number, item: any) => sum + (item.price || item.product?.price || 0) * item.quantity, 0) : 0;
           
-          // حفظ القيم الجديدة
           localStorage.setItem('lastCartCount', totalCount.toString());
           localStorage.setItem('lastCartValue', totalValue.toString());
           
-          console.log('💰 [Migration] New cart totals:', {
-            count: totalCount,
-            value: totalValue
-          });
-          
-          // إرسال تحديثات فورية
           window.dispatchEvent(new CustomEvent('cartUpdated', {
             detail: { newCount: totalCount, newValue: totalValue }
           }));
-          window.dispatchEvent(new CustomEvent('forceCartUpdate', {
-            detail: { newCount: totalCount, newValue: totalValue }
-          }));
-          
-          // رسالة نجاح
-          if (totalCount > 0) {
-            toast.success(`🛒 تم نقل ${totalCount} منتج بقيمة ${totalValue.toFixed(2)} ر.س`, {
-              position: "top-center",
-              autoClose: 3000,
-            });
-          }
         }
-      } else {
-        console.error('❌ [Migration] Migration failed:', await response.text());
       }
     } catch (error) {
       console.error('❌ [Migration] Error migrating cart:', error);
+      // Fallback: try to load user cart anyway
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${user.id}/cart`);
+          if (cartResponse.ok) {
+            const cartData = await cartResponse.json();
+            const totalCount = Array.isArray(cartData) ? cartData.reduce((sum: number, item: any) => sum + item.quantity, 0) : 0;
+            const totalValue = Array.isArray(cartData) ? cartData.reduce((sum: number, item: any) => sum + (item.price || item.product?.price || 0) * item.quantity, 0) : 0;
+            
+            localStorage.setItem('lastCartCount', totalCount.toString());
+            localStorage.setItem('lastCartValue', totalValue.toString());
+            
+            window.dispatchEvent(new CustomEvent('cartUpdated', {
+              detail: { newCount: totalCount, newValue: totalValue }
+            }));
+          }
+        }
+      } catch (fallbackError) {
+        console.error('❌ [Migration] Fallback cart load failed:', fallbackError);
+      }
     }
   };
 

@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify';
 import { apiCall, API_ENDPOINTS, buildApiUrl } from '../config/api';
+import { cartSyncManager } from './cartSync';
 
 // دالة موحدة لإضافة منتج إلى السلة (تدعم الضيوف والمستخدمين المسجلين)
 export const addToCartUnified = async (
@@ -85,6 +86,9 @@ export const addToCartUnified = async (
     const newCartCount = currentCartCount ? parseInt(currentCartCount) + quantity : quantity;
     localStorage.setItem('lastCartCount', newCartCount.toString());
     
+    // Use cart sync manager for immediate update
+    cartSyncManager.updateCartCount(newCartCount);
+    
     // حفظ قيمة السلة أيضاً (تقدير مبدئي)
     const currentCartValue = localStorage.getItem('lastCartValue');
     const estimatedPrice = 0; // سيتم تحديثها من الـ API
@@ -124,12 +128,13 @@ export const addToCartUnified = async (
     
     updateCartCountInDOM();
     
-    // 3. إرسال أحداث متعددة وقوية
+    // 3. إرسال أحداث متعددة وقوية مع تحسينات
     const updateEvents = [
       'cartUpdated',
       'productAddedToCart', 
       'cartCountChanged',
-      'forceCartUpdate'
+      'forceCartUpdate',
+      'cartItemUpdated'
     ];
     
     updateEvents.forEach(eventName => {
@@ -139,7 +144,8 @@ export const addToCartUnified = async (
           productName, 
           quantity, 
           newCount: newCartCount,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          action: 'add'
         }
       }));
     });
@@ -152,56 +158,51 @@ export const addToCartUnified = async (
     
     // 5. إرسال storage events متعددة
     window.dispatchEvent(new StorageEvent('storage', {
+      key: 'lastCartCount',
+      newValue: newCartCount.toString(),
+      oldValue: currentCartCount
+    }));
+    
+    window.dispatchEvent(new StorageEvent('storage', {
       key: 'cartUpdated',
       newValue: now.toString(),
       oldValue: null
     }));
     
-    // 6. أحداث مؤجلة متعددة للضمان
-    [50, 100, 200, 500, 1000].forEach(delay => {
+    // 6. أحداث مؤجلة متعددة للضمان مع تحديث DOM فوري
+    [0, 50, 100, 200, 500].forEach(delay => {
       setTimeout(() => {
         // تحديث DOM مرة أخرى للتأكد
         updateCartCountInDOM();
         
+        // إرسال أحداث مؤجلة
         window.dispatchEvent(new CustomEvent('cartUpdated', {
-          detail: { newCount: newCartCount, delay }
+          detail: { newCount: newCartCount, delay, action: 'add' }
         }));
-        console.log(`🔄 Delayed cart update event sent after ${delay}ms`);
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'lastCartCount',
+          newValue: newCartCount.toString(),
+          oldValue: currentCartCount
+        }));
+        
+        console.log(`🔄 [CartUtils] Delayed cart update event sent after ${delay}ms`);
       }, delay);
     });
     
     // 7. جلب السلة المحدثة لحساب القيمة الصحيحة
     setTimeout(async () => {
       try {
-        let cartEndpoint = '/api/cart?userId=guest';
+        // Use cart sync manager to fetch updated values
+        const { count, value } = await cartSyncManager.syncWithServer();
+        console.log('💰 [CartUtils] Updated cart from sync manager:', { count, value });
         
-        if (userData) {
-          try {
-            const user = JSON.parse(userData);
-            if (user?.id && user.id !== 'guest') {
-              cartEndpoint = `/api/user/${user.id}/cart`;
-            }
-          } catch (parseError) {
-            console.warn('Error parsing user data for value update:', parseError);
-          }
-        }
-        
-        const cartResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${cartEndpoint}`);
-        if (cartResponse.ok) {
-          const cartData = await cartResponse.json();
-          if (Array.isArray(cartData)) {
-            const totalValue = cartData.reduce((sum, item) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
-            localStorage.setItem('lastCartValue', totalValue.toString());
-            console.log('💰 [CartUtils] Updated cart value from API:', totalValue);
-            
-            // إرسال حدث تحديث القيمة
-            window.dispatchEvent(new CustomEvent('cartValueUpdated', {
-              detail: { newValue: totalValue }
-            }));
-          }
-        }
+        // إرسال حدث تحديث القيمة
+        window.dispatchEvent(new CustomEvent('cartValueUpdated', {
+          detail: { newValue: value, newCount: count }
+        }));
       } catch (error) {
-        console.error('❌ [CartUtils] Error fetching updated cart value:', error);
+        console.error('❌ [CartUtils] Error syncing with cart manager:', error);
       }
     }, 1000);
 

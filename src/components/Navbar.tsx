@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Heart, User, Menu, X, ChevronDown, Phone, Mail, Instagram, Facebook, Twitter, Stethoscope, Crown, Sparkles, Gem } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { cartSyncManager } from '../utils/cartSync';
 
 interface CartItem {
   id: number;
@@ -106,65 +107,23 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     console.log('🎯 [Navbar] Starting initialization...');
     
-    // إعداد القيم الصحيحة في localStorage مباشرة
-    const initializeCartValues = async () => {
-      try {
-        // جلب السلة من API مباشرة
-        const userData = localStorage.getItem('user');
-        let endpoint = '/api/cart?userId=guest';
-        
-        if (userData) {
-          try {
-            const user = JSON.parse(userData);
-            if (user && user.id) {
-              endpoint = `/api/user/${user.id}/cart`;
-            }
-          } catch (parseError) {
-            console.error('Error parsing user data:', parseError);
-          }
-        }
-
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${endpoint}`);
-        if (response.ok) {
-          const cartData = await response.json();
-          if (Array.isArray(cartData)) {
-            const totalCount = cartData.reduce((sum, item) => sum + item.quantity, 0);
-            const totalValue = cartData.reduce((sum, item) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
-            
-            // تحديث فوري وإجباري
-            localStorage.setItem('lastCartCount', totalCount.toString());
-            localStorage.setItem('lastCartValue', totalValue.toString());
-            setCartItemsCount(totalCount);
-            setCartValue(totalValue);
-            
-            console.log('🚀 [Navbar] IMMEDIATE cart initialization:', { count: totalCount, value: totalValue });
-          }
-        }
-      } catch (error) {
-        console.error('❌ [Navbar] Error initializing cart:', error);
-      }
-    };
-
-    // تشغيل فوري للتهيئة
-    initializeCartValues();
+    // Initialize cart sync manager
+    const unsubscribe = cartSyncManager.addUpdateListener(() => {
+      const count = cartSyncManager.getCurrentCartCount();
+      const value = cartSyncManager.getCurrentCartValue();
+      
+      setCartItemsCount(count);
+      setCartValue(value);
+      
+      console.log('🔄 [Navbar] Cart updated via sync manager:', { count, value });
+    });
     
-    // تحديث دوري كل ثانية للتأكد
-    const intervalId = setInterval(() => {
-      const savedCount = localStorage.getItem('lastCartCount');
-      const savedValue = localStorage.getItem('lastCartValue');
-      
-      if (savedCount) {
-        const count = parseInt(savedCount);
-        setCartItemsCount(count);
-        console.log('🔄 [Navbar] Periodic update - cart count:', count);
-      }
-      
-      if (savedValue) {
-        const value = parseFloat(savedValue);
-        setCartValue(value);
-        console.log('💰 [Navbar] Periodic update - cart value:', value);
-      }
-    }, 1000);
+    // Initial sync with server
+    cartSyncManager.syncWithServer().then(({ count, value }) => {
+      setCartItemsCount(count);
+      setCartValue(value);
+      console.log('🚀 [Navbar] Initial sync completed:', { count, value });
+    });
     
     // تحديث حالة تسجيل الدخول
     const customerData = localStorage.getItem('customerUser') || localStorage.getItem('user');
@@ -199,23 +158,24 @@ const Navbar: React.FC = () => {
         value: savedCartValue
       });
       
-      if (savedCartCount) {
+      if (savedCartCount !== null) {
         const count = parseInt(savedCartCount);
-        console.log('⚡ [Navbar] Setting cart count immediately:', count);
-        setCartItemsCount(count);
+        if (!isNaN(count) && count !== cartItemsCount) {
+          setCartItemsCount(count);
+          console.log('✅ [Navbar] Cart count updated:', count);
+        }
       }
       
-      if (savedCartValue) {
+      if (savedCartValue !== null) {
         const value = parseFloat(savedCartValue);
-        console.log('💵 [Navbar] Setting cart value immediately:', value);
-        setCartValue(value);
+        if (!isNaN(value) && value !== cartValue) {
+          setCartValue(value);
+          console.log('💰 [Navbar] Cart value updated:', value);
+        }
       }
       
-      // ثم جلب البيانات الحديثة من الـ API
-      setTimeout(() => {
-        console.log('🔄 [Navbar] Fetching updated cart from API...');
-        fetchCart();
-      }, 100);
+      // جلب البيانات المحدثة من الـ API أيضاً (للتأكيد)
+      fetchCart();
     };
 
     // التعامل مع تحديثات المفضلة - معالج محسن مع لوغ
@@ -232,40 +192,38 @@ const Navbar: React.FC = () => {
         setWishlistItemsCount(count);
       }
       
-      // ثم جلب البيانات الحديثة من الـ API
-      setTimeout(() => {
-        console.log('🔄 [Navbar] Fetching updated wishlist from API...');
-        fetchWishlist();
-      }, 100);
+      // جلب البيانات المحدثة من الـ API أيضاً (للتأكيد)
+      fetchWishlist();
     };
 
-    // استماع لأحداث متعددة لضمان التحديث
-    const cartEvents = [
-      'cartUpdated',
+    // إضافة معالجات الأحداث
+    const allCartEvents = [
+      'cartUpdated', 
       'productAddedToCart', 
       'cartCountChanged',
       'forceCartUpdate',
-      'cartValueUpdated'
+      'cartMigrated',
+      'userCartLoaded',
+      'cartItemRemoved',
+      'cartItemUpdated'
     ];
-
-    const wishlistEvents = [
-      'wishlistUpdated',
+    
+    const allWishlistEvents = [
+      'wishlistUpdated', 
       'productAddedToWishlist',
-      'productRemovedFromWishlist'
+      'productRemovedFromWishlist',
+      'forceWishlistUpdate'
     ];
-
-    console.log('👂 [Navbar] Setting up event listeners...');
-    cartEvents.forEach(event => {
-      window.addEventListener(event, handleCartUpdate);
-      console.log(`✅ [Navbar] Listening to cart event: ${event}`);
+    
+    allCartEvents.forEach(eventName => {
+      window.addEventListener(eventName, handleCartUpdate);
     });
-
-    wishlistEvents.forEach(event => {
-      window.addEventListener(event, handleWishlistUpdate);
-      console.log(`✅ [Navbar] Listening to wishlist event: ${event}`);
+    
+    allWishlistEvents.forEach(eventName => {
+      window.addEventListener(eventName, handleWishlistUpdate);
     });
-
-    // استماع لتغييرات localStorage مع لوغ
+    
+    // معالج تغييرات localStorage
     const handleStorageChange = (e: StorageEvent) => {
       console.log('🗄️ [Navbar] Storage event received:', e.key, e.newValue);
       if (e.key === 'lastCartCount' || e.key === 'lastCartValue' || e.key === 'cartUpdated') {
@@ -279,31 +237,32 @@ const Navbar: React.FC = () => {
     window.addEventListener('storage', handleStorageChange);
     console.log('✅ [Navbar] Storage event listener added');
 
+    // تنظيف معالجات الأحداث
     return () => {
-      console.log('🧹 [Navbar] Cleaning up event listeners...');
+      unsubscribe();
       
-      // إزالة الـ interval
-      clearInterval(intervalId);
-      
-      cartEvents.forEach(event => {
-        window.removeEventListener(event, handleCartUpdate);
+      allCartEvents.forEach(eventName => {
+        window.removeEventListener(eventName, handleCartUpdate);
       });
       
-      wishlistEvents.forEach(event => {
-        window.removeEventListener(event, handleWishlistUpdate);
+      allWishlistEvents.forEach(eventName => {
+        window.removeEventListener(eventName, handleWishlistUpdate);
       });
       
       window.removeEventListener('storage', handleStorageChange);
-      console.log('✅ [Navbar] Event listeners cleaned up');
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem('customerUser');
     localStorage.removeItem('user');
     setIsCustomerLoggedIn(false);
     setCustomerName('');
     setIsUserMenuOpen(false);
+    
+    // Use cart sync manager for post-logout sync
+    await cartSyncManager.syncAfterLogout();
+    
     toast.success('تم تسجيل الخروج بنجاح');
     navigate('/');
   }
@@ -413,30 +372,40 @@ const Navbar: React.FC = () => {
 
               {/* Action Buttons - Left */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-                {/* Cart - Always visible with BIG numbers */}
+                {/* Cart - Always visible with IMPROVED design */}
                 <Link to="/cart" className="group relative">
-                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl sm:rounded-2xl border-2 border-red-200 hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl sm:rounded-2xl border-2 border-red-200 hover:shadow-xl transition-all duration-300 hover:scale-105 hover:from-red-100 hover:to-rose-100">
                     <div className="relative">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
                         <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                       </div>
                       {totalCartItems > 0 && (
                         <div 
-                          className="absolute -top-2 -right-2 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-sm sm:text-base md:text-lg font-black shadow-xl animate-bounce"
+                          className="absolute -top-2 -right-2 min-w-[24px] h-6 sm:min-w-[28px] sm:h-7 md:min-w-[32px] md:h-8 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm md:text-base font-black shadow-xl animate-pulse px-1"
                           data-cart-count
                         >
-                          {totalCartItems}
+                          {totalCartItems > 99 ? '99+' : totalCartItems}
                         </div>
                       )}
                     </div>
-                    <div className="text-right flex flex-col items-end">
-                      <div className="text-xs sm:text-sm text-gray-600 font-bold">🛒 السلة</div>
-                      <div className="text-sm sm:text-base md:text-lg font-black text-red-600">
-                        {totalCartItems} منتج
+                    
+                    {/* Cart Info - Responsive Text */}
+                    <div className="text-right flex flex-col items-end min-w-0">
+                      <div className="text-xs sm:text-sm text-gray-600 font-bold whitespace-nowrap">
+                        🛒 السلة
+                      </div>
+                      <div className="text-sm sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap">
+                        {totalCartItems > 0 ? (
+                          <span>
+                            {totalCartItems > 99 ? '99+' : totalCartItems} منتج
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">فارغة</span>
+                        )}
                       </div>
                       {totalCartValue > 0 && (
-                        <div className="text-xs sm:text-sm font-black text-green-600">
-                          💰 {totalCartValue.toFixed(2)} ر.س
+                        <div className="text-xs sm:text-sm font-black text-green-600 whitespace-nowrap max-w-[100px] sm:max-w-none overflow-hidden">
+                          💰 {totalCartValue > 9999 ? `${(totalCartValue/1000).toFixed(1)}K` : totalCartValue.toFixed(0)} ر.س
                         </div>
                       )}
                     </div>
@@ -610,20 +579,26 @@ const Navbar: React.FC = () => {
                   className="block px-3 py-2 text-sm font-bold rounded-lg text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300 flex items-center justify-between"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <span>🛒 سلة التسوق</span>
+                  <span className="flex items-center gap-2">
+                    🛒 <span>سلة التسوق</span>
+                  </span>
                   <div className="flex items-center gap-2">
-                    {totalCartItems > 0 && (
-                      <span 
-                        className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-black"
-                        data-cart-count
-                      >
-                        {totalCartItems}
-                      </span>
-                    )}
-                    {totalCartValue > 0 && (
-                      <span className="text-xs font-bold text-green-600">
-                        {totalCartValue.toFixed(2)} ر.س
-                      </span>
+                    {totalCartItems > 0 ? (
+                      <>
+                        <span 
+                          className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-black min-w-[20px] text-center"
+                          data-cart-count
+                        >
+                          {totalCartItems > 99 ? '99+' : totalCartItems}
+                        </span>
+                        {totalCartValue > 0 && (
+                          <span className="text-xs font-bold text-green-600 whitespace-nowrap">
+                            {totalCartValue > 9999 ? `${(totalCartValue/1000).toFixed(1)}K` : totalCartValue.toFixed(0)} ر.س
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400 font-medium">فارغة</span>
                     )}
                   </div>
                 </Link>
