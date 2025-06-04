@@ -236,11 +236,14 @@ const ShoppingCart: React.FC = () => {
     console.log('🔄 [Cart] useEffect triggered, calling fetchCart...');
     fetchCart();
     
-    // Auto-refresh كل 3 ثواني
+    // Auto-refresh مشروط - بس إذا مافيش عمليات جارية
     const autoRefreshInterval = setInterval(() => {
-      console.log('🔄 [Cart] Auto-refresh triggered');
-      fetchCart();
-    }, 3000);
+      // منع التحديث إذا كان المستخدم بيتفاعل مع السلة
+      if (!loading && !uploadingImages) {
+        console.log('🔄 [Cart] Auto-refresh triggered');
+        fetchCart();
+      }
+    }, 10000); // زودت المدة ل 10 ثواني بدلاً من 3
     
     // التنظيف عند إلغاء التحميل
     return () => {
@@ -339,19 +342,49 @@ const ShoppingCart: React.FC = () => {
     }
 
     try {
-      await apiCall(endpoint, {
-        method: 'DELETE'
-      });
+      console.log('🗑️ [Cart] Removing item:', { itemId, userId, endpoint });
       
+      // تحديث الحالة المحلية فوراً قبل الطلب
       setCartItems(prev => prev.filter(item => item.id !== itemId));
+      
+      // استخدام fetch مباشرة
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const fullUrl = `${baseUrl}${endpoint}`;
+      
+      const response = await fetch(fullUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
       // Update cart sync manager immediately
       await cartSyncManager.syncWithServer();
       
-      toast.success('تم حذف المنتج من السلة');
+      toast.success('تم حذف المنتج من السلة', {
+        position: "top-center",
+        autoClose: 2000,
+        style: {
+          background: '#10B981',
+          color: 'white'
+        }
+      });
     } catch (error) {
-      console.error('Error removing item:', error);
-      toast.error('فشل في حذف المنتج');
+      console.error('❌ [Cart] Error removing item:', error);
+      // إعادة المنتج إذا فشل الحذف
+      await fetchCart();
+      toast.error(`فشل في حذف المنتج: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, {
+        position: "top-center",
+        autoClose: 3000,
+        style: {
+          background: '#DC2626',
+          color: 'white'
+        }
+      });
     }
   };
 
@@ -481,17 +514,44 @@ const ShoppingCart: React.FC = () => {
         }
       }
 
-      await apiCall(endpoint, {
-        method: 'DELETE'
+      console.log('🗑️ [Cart] Clearing cart:', { userId, endpoint });
+
+      // استخدام fetch مباشرة
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const fullUrl = `${baseUrl}${endpoint}`;
+      
+      const response = await fetch(fullUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
       // Update cart sync manager immediately
       await cartSyncManager.syncWithServer();
 
-      toast.success('تم إفراغ السلة');
+      toast.success('تم إفراغ السلة', {
+        position: "top-center",
+        autoClose: 2000,
+        style: {
+          background: '#10B981',
+          color: 'white'
+        }
+      });
     } catch (error) {
-      console.error('Error clearing cart:', error);
-      toast.error('خطأ في إفراغ السلة');
+      console.error('❌ [Cart] Error clearing cart:', error);
+      toast.error(`خطأ في إفراغ السلة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, {
+        position: "top-center",
+        autoClose: 3000,
+        style: {
+          background: '#DC2626',
+          color: 'white'
+        }
+      });
       fetchCart();
     }
   };
