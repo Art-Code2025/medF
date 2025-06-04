@@ -11,6 +11,8 @@ export const addToCartUnified = async (
   attachments?: any
 ) => {
   try {
+    console.log('🛒 [CartUtils] Starting addToCart for:', { productId, productName, quantity });
+    
     const userData = localStorage.getItem('user');
     let userId = 'guest'; // افتراضي للضيوف
     
@@ -22,17 +24,17 @@ export const addToCartUnified = async (
           userId = user.id.toString();
         }
       } catch (parseError) {
-        console.warn('Error parsing user data, using guest mode:', parseError);
+        console.warn('⚠️ [CartUtils] Error parsing user data, using guest mode:', parseError);
       }
     }
 
-    console.log('🛒 Adding to cart:', { productId, productName, quantity, selectedOptions, attachments, userId });
+    console.log('👤 [CartUtils] User ID:', userId);
 
     // التحقق من المواصفات قبل الإرسال
     if (selectedOptions && Object.keys(selectedOptions).length > 0) {
-      console.log('✅ [Cart] Valid selectedOptions found:', selectedOptions);
+      console.log('✅ [CartUtils] Valid selectedOptions found:', selectedOptions);
     } else {
-      console.log('⚠️ [Cart] No selectedOptions provided - this might be okay for simple products');
+      console.log('ℹ️ [CartUtils] No selectedOptions provided - using defaults');
     }
 
     const requestBody: any = {
@@ -43,19 +45,21 @@ export const addToCartUnified = async (
     // فقط أضف selectedOptions إذا كانت موجودة وليست فارغة
     if (selectedOptions && Object.keys(selectedOptions).length > 0) {
       requestBody.selectedOptions = selectedOptions;
-      console.log('📝 [Cart] Including selectedOptions in request:', selectedOptions);
+      console.log('📝 [CartUtils] Including selectedOptions in request:', selectedOptions);
     }
 
     // فقط أضف attachments إذا كانت موجودة
     if (attachments && (attachments.images?.length > 0 || attachments.text?.trim())) {
       requestBody.attachments = attachments;
-      console.log('📎 [Cart] Including attachments in request:', attachments);
+      console.log('📎 [CartUtils] Including attachments in request:', attachments);
     }
 
-    console.log('📤 [Cart] Final request body:', requestBody);
+    console.log('📤 [CartUtils] Final request body:', requestBody);
 
     // استخدم endpoint مختلف حسب نوع المستخدم
     let endpoint: string;
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    
     if (userId === 'guest') {
       // للضيوف: استخدم API العامة
       endpoint = 'cart';
@@ -67,16 +71,46 @@ export const addToCartUnified = async (
       endpoint = `user/${userId}/cart`;
     }
 
-    const response = await fetch(buildApiUrl(endpoint), {
+    const fullUrl = `${baseUrl}/api/${endpoint}`;
+    console.log('🌐 [CartUtils] Making request to:', fullUrl);
+
+    const response = await fetch(fullUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify(requestBody)
     });
 
+    console.log('📡 [CartUtils] Response status:', response.status);
+    console.log('📡 [CartUtils] Response headers:', response.headers);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'فشل في إضافة المنتج إلى سلة التسوق');
+      const errorText = await response.text();
+      console.error('❌ [CartUtils] API Error Response:', errorText);
+      
+      let errorMessage = 'فشل في إضافة المنتج إلى سلة التسوق';
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // إذا فشل parsing، استخدم الرسالة الافتراضية
+        if (response.status === 404) {
+          errorMessage = 'المنتج غير موجود';
+        } else if (response.status === 500) {
+          errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
+        } else if (response.status === 0 || !response.status) {
+          errorMessage = 'لا يمكن الاتصال بالخادم، تحقق من الإنترنت';
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
+
+    const responseData = await response.json();
+    console.log('✅ [CartUtils] Success response:', responseData);
 
     // تحديث فوري وقوي للكونتر
     console.log('✅ Product added to cart successfully, triggering IMMEDIATE counter update...');
@@ -112,17 +146,6 @@ export const addToCartUnified = async (
       cartBadges.forEach(element => {
         element.textContent = newCartCount.toString();
         console.log('🔄 [CartUtils] Updated cart badge:', newCartCount);
-      });
-      
-      // تحديث أي spans أخرى قد تحتوي على العداد
-      const spans = document.querySelectorAll('span');
-      spans.forEach(span => {
-        if (span.parentElement?.querySelector('.w-5.h-5.sm\\:w-6.sm\\:h-6.lg\\:w-7.lg\\:h-7') || 
-            span.classList.contains('cart-count') ||
-            span.getAttribute('data-cart-count') !== null) {
-          span.textContent = newCartCount.toString();
-          console.log('🔄 [CartUtils] Updated span cart counter:', newCartCount);
-        }
       });
     };
     
@@ -189,7 +212,7 @@ export const addToCartUnified = async (
         console.log(`🔄 [CartUtils] Delayed cart update event sent after ${delay}ms`);
       }, delay);
     });
-    
+
     // 7. جلب السلة المحدثة لحساب القيمة الصحيحة
     setTimeout(async () => {
       try {
@@ -224,13 +247,22 @@ export const addToCartUnified = async (
       }
     });
     
-    console.log('🎉 Cart success message displayed for:', productName);
+    console.log('🎉 [CartUtils] Cart success message displayed for:', productName);
 
     return true;
   } catch (error) {
-    console.error('❌ Error adding to cart:', error);
-    toast.error(`❌ فشل في إضافة "${productName}" إلى السلة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, {
-      autoClose: 4000,
+    console.error('❌ [CartUtils] Error adding to cart:', error);
+    
+    let errorMessage = 'خطأ غير معروف';
+    
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      errorMessage = 'لا يمكن الاتصال بالخادم، تحقق من الإنترنت';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
+    toast.error(`❌ فشل في إضافة "${productName}" إلى السلة: ${errorMessage}`, {
+      autoClose: 5000,
       style: {
         background: '#EF4444',
         color: 'white',

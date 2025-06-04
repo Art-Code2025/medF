@@ -75,13 +75,15 @@ export class CartSyncManager {
   // جلب عدد السلة الحالي
   getCurrentCartCount(): number {
     const savedCount = localStorage.getItem('lastCartCount');
-    return savedCount ? parseInt(savedCount, 10) || 0 : 0;
+    const count = savedCount ? parseInt(savedCount, 10) : 0;
+    return isNaN(count) || count < 0 ? 0 : count;
   }
 
   // جلب قيمة السلة الحالية
   getCurrentCartValue(): number {
     const savedValue = localStorage.getItem('lastCartValue');
-    return savedValue ? parseFloat(savedValue) || 0 : 0;
+    const value = savedValue ? parseFloat(savedValue) : 0;
+    return isNaN(value) || value < 0 ? 0 : value;
   }
 
   // تحديث عداد السلة
