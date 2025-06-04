@@ -106,39 +106,66 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     console.log('🎯 [Navbar] Starting initialization...');
     
-    // تحديث فوري من localStorage عند البداية
-    const updateFromLocalStorage = () => {
-      const savedCartCount = localStorage.getItem('lastCartCount');
-      const savedCartValue = localStorage.getItem('lastCartValue');
-      const savedWishlistCount = localStorage.getItem('lastWishlistCount');
-      
-      console.log('📊 [Navbar] Reading from localStorage:', {
-        cartCount: savedCartCount,
-        cartValue: savedCartValue,
-        wishlistCount: savedWishlistCount
-      });
-      
-      if (savedCartCount && savedCartCount !== '0') {
-        const count = parseInt(savedCartCount);
-        setCartItemsCount(count);
-        console.log('🛒 [Navbar] Set cart count from localStorage:', count);
-      }
-      
-      if (savedCartValue && savedCartValue !== '0') {
-        const value = parseFloat(savedCartValue);
-        setCartValue(value);
-        console.log('💰 [Navbar] Set cart value from localStorage:', value);
-      }
-      
-      if (savedWishlistCount && savedWishlistCount !== '0') {
-        const count = parseInt(savedWishlistCount);
-        setWishlistItemsCount(count);
-        console.log('❤️ [Navbar] Set wishlist count from localStorage:', count);
+    // إعداد القيم الصحيحة في localStorage مباشرة
+    const initializeCartValues = async () => {
+      try {
+        // جلب السلة من API مباشرة
+        const userData = localStorage.getItem('user');
+        let endpoint = '/api/cart?userId=guest';
+        
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            if (user && user.id) {
+              endpoint = `/api/user/${user.id}/cart`;
+            }
+          } catch (parseError) {
+            console.error('Error parsing user data:', parseError);
+          }
+        }
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${endpoint}`);
+        if (response.ok) {
+          const cartData = await response.json();
+          if (Array.isArray(cartData)) {
+            const totalCount = cartData.reduce((sum, item) => sum + item.quantity, 0);
+            const totalValue = cartData.reduce((sum, item) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
+            
+            // تحديث فوري وإجباري
+            localStorage.setItem('lastCartCount', totalCount.toString());
+            localStorage.setItem('lastCartValue', totalValue.toString());
+            setCartItemsCount(totalCount);
+            setCartValue(totalValue);
+            
+            console.log('🚀 [Navbar] IMMEDIATE cart initialization:', { count: totalCount, value: totalValue });
+          }
+        }
+      } catch (error) {
+        console.error('❌ [Navbar] Error initializing cart:', error);
       }
     };
 
-    updateFromLocalStorage();
-
+    // تشغيل فوري للتهيئة
+    initializeCartValues();
+    
+    // تحديث دوري كل ثانية للتأكد
+    const intervalId = setInterval(() => {
+      const savedCount = localStorage.getItem('lastCartCount');
+      const savedValue = localStorage.getItem('lastCartValue');
+      
+      if (savedCount) {
+        const count = parseInt(savedCount);
+        setCartItemsCount(count);
+        console.log('🔄 [Navbar] Periodic update - cart count:', count);
+      }
+      
+      if (savedValue) {
+        const value = parseFloat(savedValue);
+        setCartValue(value);
+        console.log('💰 [Navbar] Periodic update - cart value:', value);
+      }
+    }, 1000);
+    
     // تحديث حالة تسجيل الدخول
     const customerData = localStorage.getItem('customerUser') || localStorage.getItem('user');
     if (customerData) {
@@ -254,6 +281,10 @@ const Navbar: React.FC = () => {
 
     return () => {
       console.log('🧹 [Navbar] Cleaning up event listeners...');
+      
+      // إزالة الـ interval
+      clearInterval(intervalId);
+      
       cartEvents.forEach(event => {
         window.removeEventListener(event, handleCartUpdate);
       });

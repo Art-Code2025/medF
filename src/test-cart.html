@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار السلة</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .cart-info { 
+            background: #f0f0f0; 
+            padding: 20px; 
+            margin: 10px 0; 
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .big-text { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #e11d48;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #059669; }
+    </style>
+</head>
+<body>
+    <h1>🛒 اختبار عدادات السلة</h1>
+    
+    <div class="cart-info">
+        <h2>💰 معلومات السلة الحالية</h2>
+        <div class="big-text">
+            عدد المنتجات: <span id="cart-count">0</span><br>
+            القيمة الإجمالية: <span id="cart-value">0</span> ر.س
+        </div>
+    </div>
+
+    <div>
+        <button onclick="fetchCartFromAPI()">📡 جلب السلة من API</button>
+        <button onclick="updateLocalStorage()">💾 تحديث localStorage</button>
+        <button onclick="clearCart()">🗑️ مسح السلة</button>
+        <button onclick="addTestProduct()">➕ إضافة منتج تجريبي</button>
+    </div>
+
+    <div class="cart-info">
+        <h3>🔍 localStorage Values:</h3>
+        <div id="localStorage-values"></div>
+    </div>
+
+    <div class="cart-info">
+        <h3>📊 API Response:</h3>
+        <pre id="api-response"></pre>
+    </div>
+
+    <script>
+        function updateDisplay() {
+            const count = localStorage.getItem('lastCartCount') || '0';
+            const value = localStorage.getItem('lastCartValue') || '0';
+            
+            document.getElementById('cart-count').textContent = count;
+            document.getElementById('cart-value').textContent = parseFloat(value).toFixed(2);
+            
+            document.getElementById('localStorage-values').innerHTML = `
+                lastCartCount: ${count}<br>
+                lastCartValue: ${value}<br>
+                lastWishlistCount: ${localStorage.getItem('lastWishlistCount') || '0'}
+            `;
+        }
+
+        async function fetchCartFromAPI() {
+            try {
+                const response = await fetch('http://localhost:3001/api/cart?userId=guest');
+                const cartData = await response.json();
+                
+                document.getElementById('api-response').textContent = JSON.stringify(cartData, null, 2);
+                
+                if (Array.isArray(cartData)) {
+                    const totalCount = cartData.reduce((sum, item) => sum + item.quantity, 0);
+                    const totalValue = cartData.reduce((sum, item) => sum + (item.price || item.product?.price || 0) * item.quantity, 0);
+                    
+                    localStorage.setItem('lastCartCount', totalCount.toString());
+                    localStorage.setItem('lastCartValue', totalValue.toString());
+                    
+                    updateDisplay();
+                    alert(`✅ تم التحديث: ${totalCount} منتج، ${totalValue.toFixed(2)} ر.س`);
+                }
+            } catch (error) {
+                alert('❌ خطأ: ' + error.message);
+            }
+        }
+
+        function updateLocalStorage() {
+            localStorage.setItem('lastCartCount', '3');
+            localStorage.setItem('lastCartValue', '580');
+            updateDisplay();
+            alert('✅ تم تحديث localStorage يدوياً');
+        }
+
+        function clearCart() {
+            localStorage.setItem('lastCartCount', '0');
+            localStorage.setItem('lastCartValue', '0');
+            updateDisplay();
+            alert('🗑️ تم مسح السلة');
+        }
+
+        async function addTestProduct() {
+            try {
+                const response = await fetch('http://localhost:3001/api/cart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productId: Math.floor(Math.random() * 100),
+                        quantity: 1,
+                        userId: 'guest',
+                        productName: 'منتج تجريبي',
+                        price: 50
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('✅ تم إضافة منتج تجريبي');
+                    fetchCartFromAPI();
+                } else {
+                    alert('❌ فشل في إضافة المنتج');
+                }
+            } catch (error) {
+                alert('❌ خطأ: ' + error.message);
+            }
+        }
+
+        // تحديث العرض كل ثانية
+        setInterval(updateDisplay, 1000);
+        
+        // تحديث فوري عند التحميل
+        updateDisplay();
+        fetchCartFromAPI();
+    </script>
+</body>
+</html> 
